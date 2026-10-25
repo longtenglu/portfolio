@@ -1,4 +1,4 @@
-// The hidden terminal. Backtick opens it (or the footer button), Esc closes.
+// The hidden terminal. Backtick opens it, Esc closes.
 // Commands: help, whoami, projects, contact, clear, exit.
 
 import { lockScroll } from "./scroll";
@@ -11,7 +11,7 @@ type TerminalData = {
   projectsHeading: string;
   contactHeading: string;
   notFound: string;
-  projects: { title: string; kicker: string }[];
+  projects: { title: string }[];
   contact: { label: string; value: string; href: string }[];
 };
 
@@ -50,12 +50,8 @@ export function initTerminal() {
     whoami: () => data.whoami.forEach((l) => line(l)),
     projects: () => {
       line(data.projectsHeading, "term__accent");
-      // Two columns where they fit, otherwise the kicker drops under the title.
-      const narrow = screen.clientWidth < 520;
       data.projects.forEach((p, i) => {
-        const kicker = p.kicker.toLowerCase();
-        if (narrow) line(`  0${i + 1}  ${p.title}\n      ${kicker}`);
-        else line(`  0${i + 1}  ${p.title.padEnd(24)} ${kicker}`);
+        line(`  ${String(i + 1).padStart(2, "0")}  ${p.title}`);
       });
     },
     contact: () => {
@@ -139,6 +135,4 @@ export function initTerminal() {
     e.preventDefault();
     open();
   });
-
-  document.querySelectorAll("[data-terminal-open]").forEach((btn) => btn.addEventListener("click", open));
 }

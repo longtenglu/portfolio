@@ -27,31 +27,28 @@ import { nav, site } from "../content/copy";
   </div>
 </header>
 
-<dialog class="menu" id="menu" aria-label="Menu" data-menu>
+<dialog class="menu" id="menu" aria-label="Menu" data-menu tabindex="-1">
   <div class="menu__top">
-    <span class="brand__mark" aria-hidden="true">{"{L}"}</span>
+    <span class="menu__label">Menu</span>
     <button class="menu__close" type="button" data-menu-close>Close</button>
   </div>
   <nav class="menu__nav" aria-label="Menu">
     <ol class="menu__list">
       {
-        nav.map((item, i) => (
+        nav.map((item) => (
           <li>
             <a href={item.href} data-menu-link>
-              <span class="menu__num">0{i + 1}</span>
               {item.label}
             </a>
           </li>
         ))
       }
       <li>
-        <a href="/resume">
-          <span class="menu__num">0{nav.length + 1}</span>Resume
-        </a>
+        <a href="/resume">Resume</a>
       </li>
     </ol>
   </nav>
-  <p class="menu__foot mono">{site.email}</p>
+  <a class="menu__foot mono" href={`mailto:${site.email}`}>{site.email}</a>
 </dialog>
 
 <style>
@@ -111,10 +108,8 @@ import { nav, site } from "../content/copy";
   .header__nav a {
     display: inline-block;
     padding: 8px 12px;
-    font-family: var(--font-mono);
-    font-size: 12px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+    font-size: 14px;
+    font-weight: 500;
     color: var(--muted);
     border-radius: 999px;
     transition: color 0.2s, background 0.2s;
@@ -143,10 +138,8 @@ import { nav, site } from "../content/copy";
     gap: 12px;
     min-height: 44px;
     padding-inline: 4px;
-    font-family: var(--font-mono);
-    font-size: 12px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+    font-size: 14px;
+    font-weight: 500;
   }
 
   .menu-button__lines {
@@ -190,6 +183,10 @@ import { nav, site } from "../content/copy";
     display: flex;
   }
 
+  .menu:focus {
+    outline: none;
+  }
+
   .menu::backdrop {
     background: var(--bg);
   }
@@ -200,16 +197,21 @@ import { nav, site } from "../content/copy";
     align-items: center;
   }
 
+  .menu__label,
   .menu__close {
     min-height: 44px;
-    font-family: var(--font-mono);
-    font-size: 12px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .menu__label {
+    color: var(--muted);
   }
 
   .menu__nav {
-    margin-top: auto;
+    margin-block: auto;
   }
 
   .menu__list {
@@ -222,25 +224,21 @@ import { nav, site } from "../content/copy";
     align-items: baseline;
     gap: 16px;
     padding-block: 6px;
-    font-size: clamp(40px, 12vw, 64px);
-    font-weight: 750;
-    font-stretch: 80%;
+    font-size: clamp(32px, 9vw, 52px);
+    font-weight: 700;
     letter-spacing: -0.02em;
-    line-height: 1.05;
-    text-transform: uppercase;
-  }
-
-  .menu__num {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--accent);
-    letter-spacing: 0.1em;
+    line-height: 1.1;
   }
 
   .menu__foot {
     margin-top: 40px;
     font-size: 13px;
     color: var(--muted);
+    align-self: flex-start;
+    transition: color 0.2s;
+  }
+
+  .menu__foot:hover {
+    color: var(--accent);
   }
 </style>

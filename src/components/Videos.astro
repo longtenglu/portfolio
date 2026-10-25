@@ -1,6 +1,6 @@
 ---
-import { videos } from "../content/copy";
-import { getVideo } from "../lib/media";
+import { videos, workflow } from "../content/copy";
+import { getImage, getVideo } from "../lib/media";
 import VideoButton from "./VideoButton.astro";
 
 const items = videos.items.map((item) => ({
@@ -8,14 +8,13 @@ const items = videos.items.map((item) => ({
   media: item.films ? null : getVideo(item.id),
   films: item.films?.map((film) => ({ ...film, media: getVideo(film.id) })) ?? null,
 }));
-const feature = items.find((item) => item.media?.orientation === "landscape");
-const portraits = items.filter((item) => item !== feature && !item.films);
-const series = items.filter((item) => item.films);
+
+const steps = workflow.steps.map((step) => ({ ...step, media: getImage(step.image) }));
 
 // What the modal needs to play each file, keyed by media id.
 const playable: Record<string, { title: string; src: string; poster: string; orientation: string; note: string }> = {};
 for (const item of items) {
-  const note = [videos.credit, item.aiLabel].filter(Boolean).join(" · ");
+  const note = [item.credit, item.aiLabel].filter(Boolean).join(" · ");
   if (item.media) {
     playable[item.id] = { title: item.title, src: item.media.src, poster: item.media.poster, orientation: item.media.orientation, note };
   }
@@ -34,84 +33,83 @@ for (const item of items) {
 <section class="section videos" id="videos" aria-labelledby="videos-title">
   <div class="container">
     <div class="videos__head">
-      <h2 class="label" id="videos-title"><span class="label__num">04</span>{videos.heading}</h2>
-      <p class="videos__intro">
-        {videos.intro}{" "}
-        <span class="videos__hint videos__hint--pointer">{videos.hint}</span>
-        <span class="videos__hint videos__hint--touch">{videos.hintTouch}</span>
-      </p>
+      <h2 class="section-name" id="videos-title">{videos.heading}</h2>
+      <div class="videos__intro">
+        <p>{videos.intro}</p>
+        <p class="videos__credit">{videos.credit}</p>
+        <p class="videos__hint">
+          <span class="videos__hint--pointer">{videos.hint}</span>
+          <span class="videos__hint--touch">{videos.hintTouch}</span>
+        </p>
+      </div>
     </div>
 
-    <div class="vgrid">
+    <ol class="films">
       {
-        feature && feature.media && (
-          <article class="vcard vcard--feature" data-reveal>
-            <VideoButton id={feature.id} title={feature.title} media={feature.media} />
-            <div class="vcard__info">
-              <p class="vcard__num mono">01</p>
-              <h3 class="vcard__title">{feature.title}</h3>
-              <p class="vcard__line">{feature.line}</p>
-              <ul class="vcard__skills" aria-label="Skills">
-                {feature.skills.map((skill) => <li class="chip">{skill}</li>)}
-              </ul>
-              {feature.aiLabel && <p class="vcard__ai mono">{feature.aiLabel}</p>}
-              <p class="vcard__credit mono">{videos.credit}</p>
+        items.map((item) => (
+          <li
+            class:list={[
+              "film",
+              { "film--lead": item.id === "anniversary-dinner" },
+              { "film--landscape": item.id === "atp-promo" },
+              { "film--series": Boolean(item.films) },
+            ]}
+          >
+            <div class:list={["film__media", { "film__media--series": Boolean(item.films) }]}>
+              {item.films
+                ? item.films.map((film) => (
+                    <div class="film__film">
+                      <VideoButton id={film.id} title={`${item.title}: ${film.title}`} media={film.media} compact />
+                      <p class="film__film-title">{film.title}</p>
+                    </div>
+                  ))
+                : item.media && <VideoButton id={item.id} title={item.title} media={item.media} />}
             </div>
-          </article>
-        )
-      }
-
-      {
-        portraits.map((item, i) =>
-          item.media ? (
-            <article class="vcard vcard--portrait" data-reveal style={`--reveal-delay: ${(i % 4) * 0.06}s`}>
-              <VideoButton id={item.id} title={item.title} media={item.media} />
-              <div class="vcard__info">
-                <p class="vcard__num mono">0{i + 2}</p>
-                <h3 class="vcard__title">{item.title}</h3>
-                <p class="vcard__line">{item.line}</p>
-                <ul class="vcard__skills" aria-label="Skills">
-                  {item.skills.map((skill) => <li class="chip">{skill}</li>)}
-                </ul>
-                <p class="vcard__credit mono">{videos.credit}</p>
-              </div>
-            </article>
-          ) : null,
-        )
-      }
-
-      {
-        series.map((item) => (
-          <article class="vcard vcard--series" data-reveal>
-            <ul class="vcard__films">
-              {item.films?.map((film) => (
-                <li>
-                  <VideoButton id={film.id} title={`${item.title}: ${film.title}`} media={film.media} compact />
-                  <p class="vcard__film mono" aria-hidden="true">{film.title}</p>
-                </li>
-              ))}
-            </ul>
-            <div class="vcard__info">
-              <p class="vcard__num mono">0{portraits.length + 2}</p>
-              <h3 class="vcard__title">{item.title}</h3>
-              <p class="vcard__line">{item.line}</p>
-              <ul class="vcard__skills" aria-label="Skills">
-                {item.skills.map((skill) => <li class="chip">{skill}</li>)}
-              </ul>
-              <p class="vcard__credit mono">{videos.credit}</p>
+            <div class="film__info">
+              <h3 class="film__title">
+                {item.title}
+                {item.films && <span class="film__note">{videos.seriesNote}</span>}
+              </h3>
+              <p class="film__line">{item.line}</p>
+              {item.aiLabel && <p class="film__ai">{item.aiLabel}</p>}
+              <p class="film__credit">{item.credit}</p>
             </div>
-          </article>
+          </li>
         ))
       }
+    </ol>
+
+    <div class="workflow">
+      <h3 class="workflow__heading">{workflow.heading}</h3>
+      <p class="workflow__intro">{workflow.intro}</p>
+      <ol class="workflow__grid">
+        {
+          steps.map((step) => (
+            <li class="wstep">
+              <img
+                class="wstep__img"
+                src={step.media.src}
+                width={step.media.width}
+                height={step.media.height}
+                alt=""
+                loading="lazy"
+                decoding="async"
+              />
+              <p class="wstep__title">{step.title}</p>
+              <p class="wstep__caption">{step.caption}</p>
+            </li>
+          ))
+        }
+      </ol>
     </div>
   </div>
 </section>
 
-<dialog class="vmodal" aria-labelledby="vmodal-title" data-video-modal data-lenis-prevent>
+<dialog class="vmodal" aria-labelledby="vmodal-title" data-video-modal data-lenis-prevent tabindex="-1">
   <div class="vmodal__panel">
     <div class="vmodal__bar">
       <h2 class="vmodal__title" id="vmodal-title" data-video-title></h2>
-      <button class="vmodal__close mono" type="button" data-video-close>
+      <button class="vmodal__close" type="button" data-video-close>
         {videos.close}
         <svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2 2 12" stroke="currentColor" stroke-width="1.4"></path></svg>
       </button>
@@ -119,7 +117,7 @@ for (const item of items) {
     <div class="vmodal__player" data-video-frame>
       <video controls playsinline preload="none" data-video-player></video>
     </div>
-    <p class="vmodal__note mono" data-video-note></p>
+    <p class="vmodal__note" data-video-note></p>
   </div>
 </dialog>
 
@@ -128,15 +126,27 @@ for (const item of items) {
 <style>
   .videos__head {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
     gap: 24px;
-    align-items: end;
+    align-items: start;
   }
 
   .videos__intro {
-    color: var(--muted);
-    max-width: 46ch;
     justify-self: end;
+    max-width: 52ch;
+    color: var(--muted);
+  }
+
+  .videos__credit {
+    margin-top: 8px;
+    color: var(--text);
+    font-size: 14px;
+  }
+
+  .videos__hint {
+    margin-top: 12px;
+    font-size: 14px;
+    color: var(--dim);
   }
 
   .videos__hint--touch {
@@ -153,114 +163,146 @@ for (const item of items) {
     }
   }
 
-  .vgrid {
+  .films {
+    margin-top: 40px;
+    border-top: 1px solid var(--line);
+  }
+
+  .film {
     display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    gap: clamp(28px, 3vw, 40px) clamp(16px, 2vw, 28px);
-    margin-top: 48px;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: clamp(24px, 4vw, 64px);
+    align-items: center;
+    padding-block: clamp(22px, 2.8vw, 36px);
+    border-bottom: 1px solid var(--line);
   }
 
-  .vcard--feature {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
-    gap: clamp(20px, 3vw, 44px);
-    align-items: end;
+  .film__media {
+    width: 100%;
+    max-width: 260px;
   }
 
-  .vcard--portrait {
-    grid-column: span 3;
+  .film--lead .film__media {
+    max-width: 300px;
   }
 
-  .vcard--series {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-    gap: clamp(20px, 3vw, 44px);
-    align-items: end;
-    padding-top: 8px;
+  .film--landscape .film__media {
+    max-width: 430px;
   }
 
-  .vcard__films {
+  .film__media--series {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: clamp(10px, 1.4vw, 20px);
+    gap: clamp(8px, 1.2vw, 16px);
+    max-width: none;
   }
 
-  .vcard__info {
-    padding-top: 18px;
-  }
-
-  .vcard--feature .vcard__info,
-  .vcard--series .vcard__info {
-    padding-top: 0;
-    padding-bottom: 4px;
-  }
-
-  .vcard__num {
-    font-size: 12px;
-    letter-spacing: 0.1em;
-    color: var(--accent);
-  }
-
-  .vcard__title {
+  .film__film-title {
     margin-top: 8px;
-    font-size: 20px;
+    font-size: 13px;
+    line-height: 1.35;
+    color: var(--muted);
+  }
+
+  .film__info {
+    max-width: 56ch;
+  }
+
+  .film__title {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: clamp(22px, 2.2vw, 28px);
     font-weight: 700;
-    letter-spacing: -0.01em;
-    line-height: 1.2;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
   }
 
-  .vcard--feature .vcard__title,
-  .vcard--series .vcard__title {
-    font-size: clamp(24px, 2.4vw, 34px);
-    font-weight: 750;
+  .film--lead .film__title {
+    font-size: clamp(26px, 2.6vw, 32px);
   }
 
-  .vcard__line {
+  .film__note {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--muted);
+  }
+
+  .film__line {
     margin-top: 8px;
+    max-width: 52ch;
     color: var(--muted);
     font-size: 15px;
-    line-height: 1.5;
+    line-height: 1.55;
     text-wrap: pretty;
   }
 
-  .vcard__skills {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 14px;
-  }
-
-  .vcard__ai {
-    margin-top: 16px;
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--accent);
-  }
-
-  .vcard__credit {
+  .film__ai {
     margin-top: 12px;
-    font-size: 11px;
-    letter-spacing: 0.06em;
+    padding-left: 10px;
+    border-left: 2px solid var(--line-strong);
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .film__credit {
+    margin-top: 8px;
+    font-size: 13px;
     color: var(--dim);
   }
 
-  .vcard__film {
+  .workflow {
+    margin-top: clamp(56px, 7vw, 96px);
+  }
+
+  .workflow__heading {
+    font-size: clamp(22px, 2.4vw, 28px);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+  }
+
+  .workflow__intro {
+    margin-top: 6px;
+    font-size: 15px;
+    color: var(--muted);
+  }
+
+  .workflow__grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: clamp(12px, 1.6vw, 20px);
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+  }
+
+  .wstep__img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: 4px;
+    background: #000;
+  }
+
+  .wstep__title {
     margin-top: 10px;
-    font-size: 12px;
-    color: var(--text);
-    line-height: 1.4;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .wstep__caption {
+    margin-top: 4px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--muted);
+    text-wrap: pretty;
   }
 
   @media (max-width: 1024px) {
-    .vcard--portrait {
-      grid-column: span 6;
-    }
-
-    .vcard--series {
-      grid-template-columns: 1fr;
+    .workflow__grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
 
@@ -273,30 +315,45 @@ for (const item of items) {
       justify-self: start;
     }
 
-    .vcard--feature {
+    .film {
       grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    .film__media {
+      max-width: 280px;
+    }
+
+    .film--landscape .film__media,
+    .film__media--series {
+      max-width: 100%;
     }
   }
 
   @media (max-width: 640px) {
-    .vgrid {
-      column-gap: 14px;
+    .film__media {
+      max-width: 240px;
     }
 
-    .vcard__title {
-      font-size: 17px;
+    /* Lead with the title on a phone, so the work is named before its poster. */
+    .film__info {
+      order: -1;
     }
 
-    .vcard__line {
-      font-size: 14px;
+    .film__media--series {
+      max-width: 100%;
     }
 
-    .vcard--portrait .vcard__skills {
-      display: none;
+    .film__title {
+      font-size: 22px;
     }
 
-    .vcard__film {
-      font-size: 11px;
+    .film--lead .film__title {
+      font-size: 26px;
+    }
+
+    .workflow__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
@@ -315,6 +372,10 @@ for (const item of items) {
 
   .vmodal[data-orientation="portrait"] {
     width: min(100vw - 32px, calc((100svh - 150px) * 9 / 16 + 2px), 520px);
+  }
+
+  .vmodal:focus {
+    outline: none;
   }
 
   .vmodal__panel {
@@ -344,9 +405,7 @@ for (const item of items) {
     min-height: 40px;
     padding-inline: 14px;
     border-radius: 999px;
-    font-size: 12px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    font-size: 13px;
     box-shadow: inset 0 0 0 1px var(--line-strong);
     flex: none;
   }
@@ -378,8 +437,7 @@ for (const item of items) {
 
   .vmodal__note {
     padding: 12px 18px 14px;
-    font-size: 11px;
-    letter-spacing: 0.06em;
+    font-size: 12px;
     color: var(--muted);
   }
 </style>

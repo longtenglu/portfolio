@@ -2,11 +2,10 @@
 // Hero plus strip. On motion-friendly screens the pair sits in a sticky
 // stage for an extra screen of scroll, which drives the hands together and
 // opens the reel between them.
-import { hero, site, strip, videos } from "../content/copy";
+import { hero, site, strip } from "../content/copy";
 import { getReel } from "../lib/media";
 
 const reel = getReel();
-const atp = videos.items.find((v) => v.id === "atp-promo");
 const phrases = strip.split(" • ");
 ---
 
@@ -18,9 +17,10 @@ const phrases = strip.split(" • ");
       <div class="hero__copy container">
         <h1 id="hero-title" class="hero__title">
           <span class="hero__name">{site.name}</span>
+          <span class="hero__role">{hero.role}</span>
           <span class="hero__claim">{hero.claim}</span>
         </h1>
-        <p class="hero__sub">{hero.sub}</p>
+        <p class="hero__available">{hero.available}</p>
       </div>
 
       <div class="hero__reel" data-reel>
@@ -28,8 +28,8 @@ const phrases = strip.split(" • ");
           class="hero__reel-frame"
           type="button"
           data-reel-frame
-          data-video-open="atp-promo"
-          aria-label={`${hero.reel.action}: ${atp?.title}. ${hero.reel.label}.`}
+          data-video-open="anniversary-dinner"
+          aria-label={`${hero.reel.action}: ${hero.reel.title}. ${hero.reel.label}.`}
         >
           <video
             class="hero__reel-video"
@@ -44,22 +44,22 @@ const phrases = strip.split(" • ");
             tabindex="-1"></video>
         </button>
       </div>
-      <p class="hero__reel-caption mono" data-reel-caption>
-        <span class="hero__reel-tag">{hero.reel.label}</span>
+      <p class="hero__reel-caption" data-reel-caption>
+        <span class="hero__reel-tag">{hero.reel.title}</span>
         <span class="hero__reel-cta" aria-hidden="true">
           <svg viewBox="0 0 24 24" width="12" height="12"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"></path></svg>
           {hero.reel.watch}
         </span>
       </p>
 
-      <div class="hero__meta mono">
+      <div class="hero__meta">
         <p>{site.location}</p>
         <button
           class="hero__watch"
           type="button"
-          data-video-open="atp-promo"
+          data-video-open="anniversary-dinner"
           data-reel-rest-cta
-          aria-label={`${hero.reel.rest}: ${atp?.title}, with sound. ${hero.reel.label}.`}
+          aria-label={`${hero.reel.rest}: ${hero.reel.title}, with sound. ${hero.reel.label}.`}
         >
           <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"></path></svg>
           {hero.reel.rest}
@@ -95,8 +95,8 @@ const phrases = strip.split(" • ");
   .intro {
     position: relative;
     /* One extra screen of scroll drives the hero. */
-    height: 200vh;
-    height: 200svh;
+    height: 170vh;
+    height: 170svh;
   }
 
   .intro__stage {
@@ -125,24 +125,24 @@ const phrases = strip.split(" • ");
   }
 
   /* --p is scroll progress through the stage (set by intro.ts). The copy
-     steps back as the reel opens. */
+     stays put until the reel is open, then steps back. */
   .hero__copy {
     position: relative;
     z-index: 2;
-    padding-top: clamp(100px, 14vh, 140px);
+    padding-top: clamp(92px, 12vh, 120px);
     pointer-events: none;
   }
 
   @media (min-width: 640px) {
     .hero__copy {
-      opacity: calc(1 - clamp(0, (var(--p, 0) - 0.1) * 2.8, 1));
-      transform: translate3d(0, calc(var(--p, 0) * -48px), 0);
+      opacity: calc(1 - clamp(0, (var(--p, 0) - 0.3) * 5, 1));
+      transform: translate3d(0, calc(var(--p, 0) * -56px), 0);
     }
   }
 
   .hero__title {
     display: grid;
-    gap: 16px;
+    gap: 12px;
   }
 
   .hero__name {
@@ -154,20 +154,33 @@ const phrases = strip.split(" • ");
     line-height: 0.92;
   }
 
-  .hero__claim {
-    font-size: clamp(19px, 1.75vw, 26px);
-    font-weight: 560;
-    letter-spacing: -0.01em;
-    line-height: 1.25;
+  .hero__role {
+    font-size: clamp(19px, 1.5vw, 20px);
+    font-weight: 500;
+    line-height: 1.35;
+    letter-spacing: -0.005em;
     color: var(--text);
-    max-width: 22ch;
+    max-width: 60ch;
+    text-wrap: balance;
   }
 
-  .hero__sub {
+  .hero__claim {
+    font-size: clamp(21px, 1.8vw, 25px);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+    color: var(--text);
+    max-width: 36ch;
+    text-wrap: pretty;
+  }
+
+  .hero__available {
     margin-top: 14px;
-    max-width: 40ch;
+    max-width: 66ch;
     font-size: 15px;
+    line-height: 1.5;
     color: var(--muted);
+    text-wrap: balance;
   }
 
   /* The reel is placed and opened by the hero script, which knows where the
@@ -188,7 +201,7 @@ const phrases = strip.split(" • ");
   }
 
   /* While the reel is closed it is a sliver: it takes no clicks, and the
-     script makes its button inert, so the "Watch the promo" button below is
+     script makes its button inert, so the "Watch the film" button below is
      the trigger instead. */
   .hero__reel[data-open="false"] {
     pointer-events: none;
@@ -222,16 +235,14 @@ const phrases = strip.split(" • ");
     display: flex;
     justify-content: space-between;
     gap: 12px;
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    font-size: 12px;
     color: var(--muted);
     transform: translate3d(var(--gutter), calc(52vh + 47vw + 12px), 0);
     pointer-events: none;
   }
 
   .hero__reel-tag {
-    color: var(--accent);
+    color: var(--text);
   }
 
   .hero__reel-cta {
@@ -240,6 +251,10 @@ const phrases = strip.split(" • ");
     gap: 6px;
     flex: none;
     color: var(--text);
+  }
+
+  .hero__reel-cta svg {
+    color: var(--accent);
   }
 
   .hero__meta {
@@ -252,9 +267,7 @@ const phrases = strip.split(" • ");
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
     gap: 16px;
-    font-size: 11px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
+    font-size: 12px;
     color: var(--dim);
   }
 
@@ -270,13 +283,10 @@ const phrases = strip.split(" • ");
     align-items: center;
     gap: 8px;
     min-height: 36px;
-    padding: 8px 16px;
+    padding: 8px 15px;
     border-radius: 999px;
     box-shadow: inset 0 0 0 1px var(--line-strong);
-    font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+    font-size: 13px;
     color: var(--text);
     background: var(--bg);
     transition: box-shadow 0.2s, color 0.2s, opacity 0.35s;
@@ -327,22 +337,40 @@ const phrases = strip.split(" • ");
   .strip__phrase {
     padding-inline: 28px;
     font-size: 17px;
-    font-weight: 720;
-    font-stretch: 118%;
-    letter-spacing: 0.2em;
+    font-weight: 680;
+    font-stretch: 112%;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     white-space: nowrap;
     color: var(--text);
   }
 
   .strip__dot {
-    color: var(--accent);
+    color: var(--dim);
     font-size: 12px;
   }
 
   @media (max-width: 640px) {
     .hero__copy {
-      padding-top: 96px;
+      padding-top: 92px;
+    }
+
+    .hero__title {
+      gap: 10px;
+    }
+
+    .hero__role {
+      font-size: 19px;
+    }
+
+    .hero__claim {
+      font-size: 21px;
+      max-width: 30ch;
+    }
+
+    .hero__available {
+      font-size: 14px;
+      max-width: 38ch;
     }
 
     .hero__meta {
@@ -357,8 +385,7 @@ const phrases = strip.split(" • ");
     .hero__reel-caption {
       flex-direction: column;
       gap: 6px;
-      font-size: 10px;
-      letter-spacing: 0.06em;
+      font-size: 11px;
     }
 
     .strip {
@@ -368,6 +395,7 @@ const phrases = strip.split(" • ");
     .strip__phrase {
       font-size: 14px;
       padding-inline: 20px;
+      letter-spacing: 0.08em;
     }
   }
 
@@ -380,6 +408,12 @@ const phrases = strip.split(" • ");
 
     .intro__stage {
       position: relative;
+      height: auto;
+    }
+
+    .hero {
+      min-height: 100vh;
+      min-height: 100svh;
     }
 
     .strip {
@@ -407,6 +441,11 @@ const phrases = strip.split(" • ");
 
     .strip__unit .strip__dot:last-child {
       display: none;
+    }
+
+    .strip__phrase {
+      white-space: normal;
+      text-align: center;
     }
   }
 </style>

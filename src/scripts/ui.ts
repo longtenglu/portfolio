@@ -1,5 +1,5 @@
 // Small page behaviours: header state, the phone menu, in-page links, scroll
-// reveals, the cursor dot and the copy-email button.
+// reveals and the copy-email button.
 
 import { lockScroll, scrollToTarget } from "./scroll";
 
@@ -18,6 +18,7 @@ export function initMenu() {
   openBtn.addEventListener("click", () => {
     lockScroll(true);
     menu.showModal();
+    menu.focus({ preventScroll: true });
   });
   menu.querySelector("[data-menu-close]")?.addEventListener("click", () => menu.close());
   menu.addEventListener("close", () => lockScroll(false));
@@ -66,58 +67,6 @@ export function initReveals(reducedMotion: boolean) {
     { rootMargin: "0px 0px -8% 0px", threshold: 0.08 },
   );
   items.forEach((el) => io.observe(el));
-}
-
-export function initCursor(finePointer: boolean, reducedMotion: boolean) {
-  const dot = document.querySelector<HTMLElement>("[data-cursor]");
-  if (!dot || !finePointer) return;
-  let x = -100;
-  let y = -100;
-  let cx = x;
-  let cy = y;
-  let running = false;
-  const frame = () => {
-    cx += (x - cx) * (reducedMotion ? 1 : 0.3);
-    cy += (y - cy) * (reducedMotion ? 1 : 0.3);
-    dot.style.transform = `translate3d(${cx.toFixed(1)}px, ${cy.toFixed(1)}px, 0)`;
-    if (Math.abs(x - cx) > 0.1 || Math.abs(y - cy) > 0.1) requestAnimationFrame(frame);
-    else running = false;
-  };
-  window.addEventListener("pointermove", (e) => {
-    if (e.pointerType !== "mouse") return;
-    x = e.clientX;
-    y = e.clientY;
-    dot.classList.add("is-visible");
-    if (!running) {
-      running = true;
-      requestAnimationFrame(frame);
-    }
-  });
-  document.documentElement.addEventListener("pointerleave", () => dot.classList.remove("is-visible"));
-  document.addEventListener("pointerover", (e) => {
-    const hit = (e.target as Element | null)?.closest("a, button, [data-video-open], input");
-    dot.classList.toggle("is-hover", Boolean(hit));
-  });
-}
-
-// The live clock in the contact section, in Singapore time.
-export function initClock() {
-  const el = document.querySelector<HTMLTimeElement>("[data-clock]");
-  if (!el) return;
-  const format = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Asia/Singapore",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-  const tick = () => {
-    const now = new Date();
-    el.textContent = format.format(now);
-    el.dateTime = now.toISOString();
-    el.classList.add("is-live");
-  };
-  tick();
-  setInterval(tick, 15_000);
 }
 
 export function initCopy() {

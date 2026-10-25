@@ -69,6 +69,9 @@ export function initVideos(finePointer: boolean) {
     document.querySelectorAll<HTMLVideoElement>(".vcard__preview, [data-reel-video]").forEach((v) => v.pause());
     lockScroll(true);
     modal.showModal();
+    // Focus the dialog itself, so the close pill does not open with a focus
+    // ring that reads as a hover state. Tab moves to Close.
+    modal.focus({ preventScroll: true });
     player.play().catch(() => {});
   };
 

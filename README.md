@@ -62,10 +62,16 @@ copies from the masters with ffmpeg, one job at a time:
   with the true peak at or below -1.5 dBTP
 - AVIF posters
 - 4 to 6 second muted hover previews, plus the muted hero loop
+- AVIF stills for the six-step production strip and the brochure spread
 
-Which videos, which seconds, and the poster frames are in
-`scripts/media/videos.mjs`. The master file paths are not in the repo: list
-them in a JSON file outside it (copy `scripts/media/sources.example.json`).
+Which videos, which seconds, the crop for the hero reel, and the still
+images are in `scripts/media/videos.mjs`. The master file paths are not in
+the repo: list them in a JSON file outside it (copy
+`scripts/media/sources.example.json`).
+
+To add the RoleCall screenshot once the app is rebuilt: add an entry to `IMAGES`
+in `scripts/media/videos.mjs`, run the pipeline and the upload, then set `shot`
+(the image id) and `shotAlt` on its card in `src/content/copy.ts`.
 
 ```sh
 MEDIA_DIR=/path/to/media MEDIA_SOURCES=/path/to/media-sources.json npm run media:build
@@ -74,8 +80,8 @@ MEDIA_DIR=/path/to/media MEDIA_SOURCES=/path/to/media-sources.json npm run media
 ```
 
 It writes the files to `MEDIA_DIR` and the manifest the site reads to
-`src/data/media.json`. A file keeps its hosted URL only while its bytes are
-unchanged.
+`src/data/media.json` (`videos`, `reel` and `images`). A file keeps its
+hosted URL only while its bytes are unchanged.
 
 ## Vercel Blob
 
@@ -123,10 +129,23 @@ npm run resume:pdf      # set CHROME_PATH if Chrome is not in the usual place
 
 The resume is email-only: no phone number and no street address.
 
+## The share image
+
+`public/og.png` is the 1200x630 card shown when the site is shared in a
+message or an application email. It is rendered from the built home page so
+the name and the hands stay in step with the design:
+
+```sh
+npm run build
+npm run og:image      # writes public/og.png and dist/og.png
+```
+
+Commit the new `public/og.png` with the change that altered the hero.
+
 ## Hidden terminal
 
-Press the backtick key (`` ` ``) anywhere on the home page, or use the button
-in the footer. Commands: `help`, `whoami`, `projects`, `contact`, `clear`,
+Press the backtick key (`` ` ``) anywhere on the home page. Nothing on the
+page points to it. Commands: `help`, `whoami`, `projects`, `contact`, `clear`,
 `exit`. Esc closes it.
 
 ## Licences

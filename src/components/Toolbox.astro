@@ -4,131 +4,50 @@ import { toolbox } from "../content/copy";
 
 <section class="section toolbox" id="toolbox" aria-labelledby="toolbox-title">
   <div class="container">
-    <h2 class="label" id="toolbox-title"><span class="label__num">06</span>{toolbox.heading}</h2>
-    <p class="toolbox__intro">{toolbox.intro}</p>
-    <div class="toolbox__grid">
+    <h2 class="section-name" id="toolbox-title">{toolbox.heading}</h2>
+    <ul class="toolbox__list">
       {
-        toolbox.groups.map((group, i) => (
-          <div class="tgroup" data-reveal style={`--reveal-delay: ${i * 0.06}s`}>
-            <h3 class="tgroup__title mono">{group.title}</h3>
-            <ul class="tgroup__list">
-              {group.tools.map((tool) => (
-                <li>{tool}</li>
-              ))}
-            </ul>
-          </div>
+        toolbox.groups.map((group) => (
+          <li class="toolbox__row">
+            <span class="toolbox__label">{group.title}</span>
+            <span class="toolbox__tools">{group.tools}</span>
+          </li>
         ))
       }
-    </div>
+    </ul>
   </div>
 </section>
 
 <style>
-  .toolbox__intro {
-    margin-top: 20px;
-    color: var(--muted);
-  }
-
-  .toolbox__grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    margin-top: 44px;
+  .toolbox__list {
+    max-width: 80ch;
+    margin-top: 24px;
     border-top: 1px solid var(--line);
-    border-left: 1px solid var(--line);
   }
 
-  .tgroup {
-    border-right: 1px solid var(--line);
+  .toolbox__row {
+    display: grid;
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: 16px;
+    padding-block: 14px;
     border-bottom: 1px solid var(--line);
-  }
-
-  .tgroup__title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 16px 20px;
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--text);
-    border-bottom: 1px solid var(--line);
-    background: var(--bg-raised);
-  }
-
-  .tgroup__list li {
-    position: relative;
-    padding: 13px 20px 13px 38px;
     font-size: 15px;
-    color: var(--muted);
-    border-bottom: 1px solid var(--line);
-    transition: color 0.2s, background 0.2s;
+    line-height: 1.5;
   }
 
-  .tgroup__list li:last-child {
-    border-bottom: 0;
-  }
-
-  .tgroup__list li::before {
-    content: "";
-    position: absolute;
-    left: 20px;
-    top: 50%;
-    width: 6px;
-    height: 6px;
-    margin-top: -3px;
-    border-radius: 50%;
-    border: 1px solid var(--dim);
-    transition: background 0.2s, border-color 0.2s;
-  }
-
-  .tgroup__list li:hover {
+  .toolbox__label {
     color: var(--text);
-    background: var(--bg-raised);
+    font-weight: 600;
   }
 
-  .tgroup__list li:hover::before {
-    background: var(--accent);
-    border-color: var(--accent);
-  }
-
-  @media (max-width: 1024px) {
-    .toolbox__grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+  .toolbox__tools {
+    color: var(--muted);
   }
 
   @media (max-width: 520px) {
-    .toolbox__grid {
+    .toolbox__row {
       grid-template-columns: 1fr;
-    }
-
-    /* Two tools per row on phones keeps the list short. */
-    .tgroup__list {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .tgroup__list li {
-      padding: 12px 10px 12px 32px;
-      font-size: 14px;
-    }
-
-    .tgroup__list li::before {
-      left: 16px;
-    }
-
-    .tgroup__list li:nth-child(odd) {
-      border-right: 1px solid var(--line);
-    }
-
-    .tgroup__list li:last-child {
-      border-bottom: 1px solid var(--line);
-    }
-
-    .tgroup__list li:nth-last-child(-n + 2):nth-child(odd),
-    .tgroup__list li:last-child:nth-child(even) {
-      border-bottom: 0;
+      gap: 2px;
     }
   }
 </style>

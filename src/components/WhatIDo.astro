@@ -1,94 +1,125 @@
 ---
 import { whatIDo } from "../content/copy";
+import { getImage } from "../lib/media";
+
+const brochure = getImage(whatIDo.brochure.image);
 ---
 
 <section class="section what" id="what" aria-labelledby="what-title">
   <div class="container">
-    <h2 class="label" id="what-title"><span class="label__num">02</span>{whatIDo.heading}</h2>
+    <h2 class="section-name" id="what-title">{whatIDo.heading}</h2>
     <ol class="what__list">
       {
-        whatIDo.rows.map((row, i) => (
-          <li class="what__row" data-reveal style={`--reveal-delay: ${i * 0.06}s`}>
-            <span class="what__num mono">0{i + 1}</span>
+        whatIDo.rows.map((row) => (
+          <li class="what__row">
             <h3 class="what__title">{row.title}</h3>
             <p class="what__text">{row.text}</p>
           </li>
         ))
       }
     </ol>
+
+    <figure class="what__brochure">
+      <figcaption class="what__brochure-caption">{whatIDo.brochure.caption}</figcaption>
+      <img
+        class="what__brochure-img"
+        src={brochure.src}
+        width={brochure.width}
+        height={brochure.height}
+        alt={whatIDo.brochure.alt}
+        loading="lazy"
+        decoding="async"
+      />
+    </figure>
   </div>
 </section>
 
 <style>
   .what__list {
-    margin-top: 48px;
+    margin-top: 40px;
     border-top: 1px solid var(--line);
   }
 
   .what__row {
-    position: relative;
     display: grid;
-    grid-template-columns: 64px minmax(0, 1fr) minmax(0, 0.8fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr);
     gap: 24px;
-    align-items: center;
-    padding-block: clamp(26px, 3.4vw, 44px);
+    align-items: baseline;
+    padding-block: clamp(26px, 3vw, 34px);
     border-bottom: 1px solid var(--line);
   }
 
-  .what__row::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    bottom: -1px;
-    width: 100%;
-    height: 1px;
-    background: var(--accent);
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: transform 0.7s var(--ease);
-  }
-
-  .what__row:hover::before {
-    transform: scaleX(1);
-  }
-
-  .what__num {
-    font-size: 12px;
-    color: var(--accent);
-    letter-spacing: 0.1em;
-  }
-
   .what__title {
-    font-size: clamp(30px, 4.4vw, 64px);
-    font-weight: 800;
-    font-stretch: 78%;
-    line-height: 0.98;
-    letter-spacing: -0.01em;
-    text-transform: uppercase;
-    transition: transform 0.6s var(--ease), color 0.3s;
+    font-size: clamp(24px, 2.6vw, 34px);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    transition: transform 0.5s var(--ease);
   }
 
   .what__row:hover .what__title {
     transform: translateX(10px);
-    color: var(--accent);
   }
 
   .what__text {
     color: var(--muted);
-    max-width: 44ch;
+    max-width: 46ch;
     justify-self: end;
     text-wrap: pretty;
   }
 
+  .what__brochure {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: clamp(24px, 4vw, 56px);
+    margin-top: clamp(48px, 6vw, 80px);
+  }
+
+  .what__brochure-caption {
+    flex: 0 0 200px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--muted);
+    text-wrap: balance;
+  }
+
+  /* The spread is a light page on a dark site. Inverting it turns the paper
+     dark and the type light, and the hue rotation puts the brochure's own
+     blues and golds back, so it sits in the page and then dissolves on every
+     edge the way the portrait does. */
+  .what__brochure-img {
+    width: min(100%, 800px);
+    height: auto;
+    margin-left: auto;
+    filter: invert(1) hue-rotate(180deg) contrast(0.95) brightness(0.96);
+    -webkit-mask-image: radial-gradient(ellipse 80% 78% at 50% 50%, #000 60%, transparent 100%);
+    mask-image: radial-gradient(ellipse 80% 78% at 50% 50%, #000 60%, transparent 100%);
+  }
+
   @media (max-width: 820px) {
     .what__row {
-      grid-template-columns: 40px minmax(0, 1fr);
-      gap: 10px 14px;
+      grid-template-columns: 1fr;
+      gap: 10px;
     }
 
     .what__text {
-      grid-column: 2;
       justify-self: start;
+    }
+
+    .what__brochure {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .what__brochure-caption {
+      flex: none;
+      max-width: 34ch;
+      order: 2;
+    }
+
+    .what__brochure-img {
+      order: 1;
     }
   }
 </style>

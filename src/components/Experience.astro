@@ -1,31 +1,20 @@
 ---
-import { education, experience, statPrefix } from "../content/copy";
+import { education, experience } from "../content/copy";
 ---
 
 <section class="section exp" id="experience" aria-labelledby="exp-title">
   <div class="container">
-    <h2 class="label" id="exp-title"><span class="label__num">03</span>{experience.heading}</h2>
-    <p class="exp__intro">{experience.intro}</p>
+    <h2 class="section-name" id="exp-title">{experience.heading}</h2>
+    <p class="exp__summary">{experience.summary}</p>
 
     <ol class="exp__list">
       {
         experience.roles.map((role) => (
-          <li class="exp__item" data-reveal>
+          <li class="exp__item">
             <p class="exp__dates mono">{role.dates}</p>
             <div class="exp__body">
               <h3 class="exp__role">{role.role}</h3>
               <p class="exp__org">{role.org}</p>
-              {role.stats && (
-                <ul class="exp__stats">
-                  {role.stats.map((stat) => (
-                    <li class="stat">
-                      <span class="stat__prefix mono">{statPrefix}</span>
-                      <span class="stat__value">{stat.value}</span>
-                      <span class="stat__label">{stat.label}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
               <ul class="exp__points">
                 {role.points.map((point) => (
                   <li>{point}</li>
@@ -37,8 +26,8 @@ import { education, experience, statPrefix } from "../content/copy";
       }
     </ol>
 
-    <div class="edu" data-reveal>
-      <h3 class="edu__title mono">{education.heading}</h3>
+    <div class="edu">
+      <h3 class="edu__title">{education.heading}</h3>
       <ul class="edu__list">
         {
           education.items.map((item) => (
@@ -59,13 +48,17 @@ import { education, experience, statPrefix } from "../content/copy";
 </section>
 
 <style>
-  .exp__intro {
-    margin-top: 20px;
-    color: var(--muted);
+  .exp__summary {
+    margin-top: 18px;
+    max-width: 80ch;
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--text);
+    text-wrap: balance;
   }
 
   .exp__list {
-    margin-top: 48px;
+    margin-top: 40px;
     border-top: 1px solid var(--line);
   }
 
@@ -80,8 +73,7 @@ import { education, experience, statPrefix } from "../content/copy";
 
   .exp__dates {
     font-size: 12px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    letter-spacing: 0.02em;
     color: var(--muted);
     padding-top: 6px;
   }
@@ -95,56 +87,14 @@ import { education, experience, statPrefix } from "../content/copy";
 
   .exp__org {
     margin-top: 4px;
-    color: var(--accent);
+    color: var(--muted);
     font-weight: 500;
-  }
-
-  .exp__stats {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1px;
-    margin-top: 28px;
-    background: var(--line);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    overflow: hidden;
-  }
-
-  .stat {
-    display: grid;
-    align-content: start;
-    gap: 4px;
-    padding: 22px 22px 24px;
-    background: var(--bg);
-  }
-
-  .stat__prefix {
-    font-size: 11px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-
-  .stat__value {
-    font-size: clamp(44px, 5vw, 72px);
-    font-weight: 800;
-    font-stretch: 90%;
-    line-height: 1;
-    letter-spacing: -0.03em;
-    color: var(--accent);
-  }
-
-  .stat__label {
-    margin-top: 6px;
-    font-size: 14px;
-    line-height: 1.45;
-    color: var(--muted);
   }
 
   .exp__points {
     display: grid;
     gap: 10px;
-    margin-top: 24px;
+    margin-top: 20px;
     max-width: 68ch;
   }
 
@@ -152,6 +102,7 @@ import { education, experience, statPrefix } from "../content/copy";
     position: relative;
     padding-left: 22px;
     color: var(--muted);
+    text-wrap: pretty;
   }
 
   .exp__points li::before {
@@ -160,25 +111,22 @@ import { education, experience, statPrefix } from "../content/copy";
     left: 0;
     top: calc(0.8em - 1px);
     width: 10px;
-    height: 2px;
-    background: var(--accent);
-    opacity: 0.85;
+    height: 1px;
+    background: var(--line-strong);
   }
 
   .edu {
-    margin-top: 72px;
+    margin-top: 64px;
   }
 
   .edu__title {
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--muted);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
   }
 
   .edu__list {
-    margin-top: 20px;
+    margin-top: 18px;
     border-top: 1px solid var(--line);
   }
 
@@ -203,6 +151,7 @@ import { education, experience, statPrefix } from "../content/copy";
     max-width: 80ch;
     color: var(--muted);
     font-size: 15px;
+    line-height: 1.55;
   }
 
   @media (max-width: 820px) {
@@ -210,25 +159,6 @@ import { education, experience, statPrefix } from "../content/copy";
     .edu__item {
       grid-template-columns: 1fr;
       gap: 8px;
-    }
-
-    .exp__stats {
-      grid-template-columns: 1fr;
-    }
-
-    .stat {
-      grid-template-columns: auto auto 1fr;
-      align-items: baseline;
-      column-gap: 10px;
-      padding: 16px 18px;
-    }
-
-    .stat__value {
-      font-size: 40px;
-    }
-
-    .stat__label {
-      margin-top: 0;
     }
   }
 </style>

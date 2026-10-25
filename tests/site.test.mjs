@@ -13,7 +13,7 @@ import { findChrome } from "../scripts/lib/chrome.mjs";
 import { serveDir } from "../scripts/lib/static.mjs";
 
 const DIST = fileURLToPath(new URL("../dist", import.meta.url));
-const PROMO_TITLE = "Advanced Tax Programme promo";
+const HERO_TITLE = "20th Anniversary Dinner Reception";
 
 /** @type {{ port: number, close: () => Promise<void> }} */
 let server;
@@ -103,7 +103,7 @@ describe("hero reel, keyboard and pointer access", () => {
     try {
       assert.equal(await page.getAttribute("[data-reel]", "data-open"), "false");
       const { found, stops } = await tabUntil(page, (f) => f.restCta);
-      assert.ok(found, "Tab reaches the Watch the promo button");
+      assert.ok(found, "Tab reaches the Watch the film button");
       assert.ok(!stops.some((f) => f.reelFrame), "Tab never lands on the closed reel");
       assert.ok(stops.every((f) => !f.inert), "Tab never lands inside an inert element");
       assert.ok(found.visible, "the focused button is visible");
@@ -121,12 +121,12 @@ describe("hero reel, keyboard and pointer access", () => {
     }
   });
 
-  test("Enter on the button plays the promo and Escape returns focus to it", async () => {
+  test("Enter on the button plays the film and Escape returns focus to it", async () => {
     const { context, page } = await openHome();
     try {
       await tabUntil(page, (f) => f.restCta);
       await page.keyboard.press("Enter");
-      assert.deepEqual(await videoDialog(page), { open: true, title: PROMO_TITLE });
+      assert.deepEqual(await videoDialog(page), { open: true, title: HERO_TITLE });
       await page.keyboard.press("Escape");
       assert.equal((await videoDialog(page)).open, false);
       const focus = await describeFocus(page);
@@ -151,7 +151,7 @@ describe("hero reel, keyboard and pointer access", () => {
       assert.ok(!stops.some((f) => f.restCta), "the hidden button is skipped");
 
       await page.keyboard.press("Enter");
-      assert.deepEqual(await videoDialog(page), { open: true, title: PROMO_TITLE });
+      assert.deepEqual(await videoDialog(page), { open: true, title: HERO_TITLE });
       await page.keyboard.press("Escape");
       assert.equal((await describeFocus(page))?.reelFrame, true, "focus returns to the reel");
     } finally {
@@ -181,6 +181,52 @@ describe("hero reel, keyboard and pointer access", () => {
       assert.ok(focus, "something on the page has focus");
       assert.equal(focus.inert, false);
       assert.equal(focus.visible, true);
+    } finally {
+      await context.close();
+    }
+  });
+});
+
+describe("positioning and de-templating", () => {
+  test("the page names the roles, the availability line and the share card", async () => {
+    const { context, page } = await openHome();
+    try {
+      const text = await page.evaluate(() => document.body.innerText);
+      assert.match(text, /Programme Executive at Tax Academy of Singapore since March 2026\./);
+      assert.match(text, /Open to marketing, communications and programme roles in Singapore\./);
+      assert.doesNotMatch(text, /aspiring/i);
+      assert.equal((text.match(/Produced at Tax Academy of Singapore/g) ?? []).length, 1);
+      const nav = await page.$$eval(".header__nav a", (links) => links.map((a) => a.textContent?.trim()));
+      assert.ok(nav.includes("Experience"), "Experience is in the navigation");
+      const share = await page.evaluate(() => ({
+        og: document.querySelector('meta[property="og:image"]')?.getAttribute("content") ?? "",
+        twitter: document.querySelector('meta[name="twitter:card"]')?.getAttribute("content") ?? "",
+      }));
+      assert.match(share.og, /\/og\.png$/);
+      assert.equal(share.twitter, "summary_large_image");
+    } finally {
+      await context.close();
+    }
+  });
+});
+
+describe("fact strip", () => {
+  test("starts on its first phrase once fonts load, and carries facts only", async () => {
+    const { context, page } = await openHome();
+    try {
+      await page.evaluate(() => document.fonts.ready);
+      await page.waitForTimeout(400);
+      const strip = await page.evaluate(() => ({
+        left: document.querySelector(".strip__phrase")?.getBoundingClientRect().left ?? NaN,
+        first: document.querySelector(".strip__phrase")?.textContent?.trim() ?? "",
+        text: document.querySelector(".strip .visually-hidden")?.textContent?.trim() ?? "",
+      }));
+      assert.ok(Math.abs(strip.left) <= 1, `first phrase starts at the left edge, not ${strip.left}px`);
+      assert.equal(strip.first, "ABOUT 70 VIDEOS");
+      assert.equal(
+        strip.text,
+        "ABOUT 70 VIDEOS • 10 PROGRAMMES AND EVENTS • 50 MADE WITH AN AI-ASSISTED WORKFLOW • SINGAPORE",
+      );
     } finally {
       await context.close();
     }

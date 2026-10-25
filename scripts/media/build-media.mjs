@@ -25,19 +25,21 @@ import { createReadStream, existsSync } from "node:fs";
 import { mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { HERO_REEL, LOUDNESS, SIZES, VIDEOS } from "./videos.mjs";
+import { HERO_REEL, IMAGES, LOUDNESS, SIZES, VIDEOS } from "./videos.mjs";
 
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const MANIFEST_PATH = path.join(ROOT, "src/data/media.json");
 
 /** @typedef {import("./videos.mjs").VideoJob} VideoJob */
+/** @typedef {import("./videos.mjs").ImageJob} ImageJob */
 /**
  * @typedef {{ path: string, bytes: number, sha256: string, url: string | null,
  *   width?: number, height?: number, duration?: number,
  *   loudness?: { integrated: number, truePeak: number } }} MediaFile
  * @typedef {{ orientation: string, full: MediaFile, preview: MediaFile, poster: MediaFile }} VideoEntry
  * @typedef {{ video: MediaFile, poster: MediaFile }} ReelEntry
- * @typedef {{ videos: Record<string, VideoEntry>, reel: ReelEntry | null }} Manifest
+ * @typedef {{ videos: Record<string, VideoEntry>, reel: ReelEntry | null,
+ *   images: Record<string, MediaFile> }} Manifest
  */
 
 function parseArgs() {
@@ -228,10 +230,13 @@ async function encodeFull(src, out, size) {
  * @param {[number, number]} size
  * @param {number} start
  * @param {number} duration
- * @param {{ crf: number, fade?: boolean }} opts
+ * @param {{ crf: number, fade?: boolean, crop?: string }} opts
  */
 async function encodeExcerpt(src, out, size, start, duration, opts) {
-  const filters = [scaleFilter(size[0], size[1])];
+  /** @type {string[]} */
+  const filters = [];
+  if (opts.crop) filters.push(`crop=${opts.crop}`);
+  filters.push(scaleFilter(size[0], size[1]));
   if (opts.fade) {
     // Fade in and out of black so the loop seam reads as a cut on the dark page.
     filters.push(`fade=t=in:st=0:d=0.4,fade=t=out:st=${(duration - 0.4).toFixed(2)}:d=0.4`);
@@ -252,13 +257,37 @@ async function encodeExcerpt(src, out, size, start, duration, opts) {
  * @param {string} out
  * @param {[number, number]} size
  * @param {number} at
+ * @param {string} [crop]
  */
-async function encodePoster(src, out, size, at) {
+async function encodePoster(src, out, size, at, crop) {
+  const filters = crop ? `crop=${crop},` : "";
   await produce(out, (tmp) =>
     run("ffmpeg", [
       ...FFMPEG, "-loglevel", "error", "-ss", String(at), "-i", src, "-frames:v", "1",
-      "-vf", `${scaleFilter(size[0], size[1])},format=yuv420p`,
+      "-vf", `${filters}${scaleFilter(size[0], size[1])},format=yuv420p`,
       "-c:v", "libsvtav1", "-crf", "34", "-preset", "4", "-f", "avif", tmp,
+    ]).then(() => undefined),
+  );
+}
+
+/**
+ * A single still from a video at `at`, or from an image source. Cropped and
+ * scaled to the job size, then written as AVIF.
+ * @param {string} src
+ * @param {string} out
+ * @param {ImageJob} job
+ */
+async function encodeStill(src, out, job) {
+  /** @type {string[]} */
+  const filters = [];
+  if (job.crop) filters.push(`crop=${job.crop}`);
+  filters.push(scaleFilter(job.size[0], job.size[1]), "format=yuv420p");
+  const seek = job.at == null ? [] : ["-ss", String(job.at)];
+  await produce(out, (tmp) =>
+    run("ffmpeg", [
+      ...FFMPEG, "-loglevel", "error", "-i", src, ...seek, "-frames:v", "1",
+      "-vf", filters.join(","),
+      "-c:v", "libsvtav1", "-crf", "30", "-preset", "4", "-f", "avif", tmp,
     ]).then(() => undefined),
   );
 }
@@ -299,7 +328,7 @@ async function main() {
   /** @type {Manifest} */
   const previous = existsSync(MANIFEST_PATH)
     ? JSON.parse(await readFile(MANIFEST_PATH, "utf8"))
-    : { videos: {}, reel: null };
+    : { videos: {}, reel: null, images: {} };
 
   /** @param {string} id */
   const sourceFor = (id) => {
@@ -314,7 +343,7 @@ async function main() {
   const needs = (rel) => force || !existsSync(path.join(mediaDir, rel));
 
   /** @type {Manifest} */
-  const manifest = { videos: {}, reel: null };
+  const manifest = { videos: {}, reel: null, images: {} };
 
   for (const job of VIDEOS) {
     const size = SIZES[job.orientation];
@@ -361,11 +390,11 @@ async function main() {
     if (needs(reelRel.video)) {
       console.log(`${HERO_REEL.id}: loop`);
       await encodeExcerpt(src, path.join(mediaDir, reelRel.video), /** @type {[number, number]} */ (size.reel),
-        HERO_REEL.start, HERO_REEL.end - HERO_REEL.start, { crf: 25, fade: true });
+        HERO_REEL.start, HERO_REEL.end - HERO_REEL.start, { crf: 25, fade: true, crop: HERO_REEL.crop });
     }
     if (needs(reelRel.poster)) {
       console.log(`${HERO_REEL.id}: poster`);
-      await encodePoster(src, path.join(mediaDir, reelRel.poster), /** @type {[number, number]} */ (size.reel), HERO_REEL.start + 4.5);
+      await encodePoster(src, path.join(mediaDir, reelRel.poster), /** @type {[number, number]} */ (size.reel), HERO_REEL.start + 4.5, HERO_REEL.crop);
     }
   }
   if (existsSync(path.join(mediaDir, reelRel.video))) {
@@ -373,6 +402,16 @@ async function main() {
       video: await describe(mediaDir, reelRel.video, previous.reel?.video),
       poster: await describe(mediaDir, reelRel.poster, previous.reel?.poster),
     };
+  }
+
+  for (const job of IMAGES) {
+    const rel = `${job.id}/${job.id}.avif`;
+    if (selected(job.id) && needs(rel)) {
+      console.log(`${job.id}: still`);
+      await encodeStill(sourceFor(job.source), path.join(mediaDir, rel), job);
+    }
+    if (!existsSync(path.join(mediaDir, rel))) continue;
+    manifest.images[job.id] = await describe(mediaDir, rel, previous.images?.[job.id]);
   }
 
   const tmp = `${MANIFEST_PATH}.tmp`;

@@ -4,11 +4,13 @@
 
 export const resume = {
   title: "Longteng Lu: resume",
-  headline: "Programmes, video and AI workflows",
+  headline: "Programmes, video and marketing",
   location: "Singapore",
   pdfName: "Longteng-Lu-Resume.pdf",
+  availability:
+    "Open to marketing, communications and programme roles in Singapore. One month's notice. Singapore citizen.",
   summary:
-    "Psychology graduate who runs programmes and events, markets them, and shoots and edits the video. Builds AI tools that cut manual steps out of the work: captions and motion graphics rendered from code, a design-to-PowerPoint converter, and a research pipeline that checks its own sources. Builds with AI coding agents (Claude Code, Codex) and owns the design, testing and day-to-day use.",
+    "Programme Executive at Tax Academy of Singapore since March 2026. I run programmes and events, make the videos that promote them, and build the tools that remove manual steps from production. Psychology graduate with a background in marketing, video and client-facing work.",
   skills: [
     {
       title: "Marketing",
@@ -25,7 +27,7 @@ export const resume = {
   ],
   // The approximate Tax Academy numbers, worded for a resume.
   taStats:
-    "Since joining: helped run or managed about 10 programmes and events; made about 70 videos, about 50 of them with an AI-assisted editing workflow.",
+    "Since joining: about 10 programmes and events, about 70 videos, about 50 of them made with an AI-assisted editing workflow.",
   projectsHeading: "AI and automation projects",
   projects: [
     {

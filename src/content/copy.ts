@@ -8,10 +8,10 @@
 
 export const site = {
   name: "Longteng Lu",
-  title: "Longteng Lu: programmes, video and AI workflows",
+  title: "Longteng Lu, programmes, video and marketing, Singapore",
   description:
-    "Portfolio of Longteng Lu, a Programme Executive in Singapore who makes videos, runs programmes and builds AI workflows.",
-  location: "Based in Singapore",
+    "Programme Executive at Tax Academy of Singapore. I run programmes, make the videos and build tools for the repetitive parts. Open to marketing, communications and programme roles in Singapore.",
+  location: "Singapore",
   email: "prestonlult@gmail.com",
   github: "https://github.com/longtenglu",
   linkedin: "https://www.linkedin.com/in/longteng-l-b458971bb/",
@@ -20,33 +20,36 @@ export const site = {
 
 export const nav = [
   { label: "About", href: "#about" },
-  { label: "Work", href: "#videos" },
+  { label: "Experience", href: "#experience" },
+  { label: "Videos", href: "#videos" },
   { label: "Builds", href: "#builds" },
   { label: "Contact", href: "#contact" },
 ];
 
 export const hero = {
-  claim: "I pick up new tools and put them to work.",
-  sub: "Programme Executive in Singapore. I make videos, run programmes and build AI workflows.",
+  claim: "I run programmes, make the videos, and build tools for the repetitive parts.",
+  role: "Programme Executive at Tax Academy of Singapore since March 2026.",
+  available: "Open to marketing, communications and programme roles in Singapore.",
   scroll: "Scroll",
   reel: {
-    label: "AI-generated footage and voiceover",
-    action: "Play the full promo with sound",
+    title: "20th Anniversary Dinner Reception",
+    label: "A film I shot and edited",
+    action: "Play the full film with sound",
     watch: "Watch with sound",
     // The visible trigger while the reel is still closed.
-    rest: "Watch the promo",
+    rest: "Watch the film",
   },
 };
 
-export const strip = "DESIGN × CODE • VIDEO × AI • BUILDING WITH AGENTS • ASPIRING AI ENGINEER";
+export const strip = "ABOUT 70 VIDEOS • 10 PROGRAMMES AND EVENTS • 50 MADE WITH AN AI-ASSISTED WORKFLOW • SINGAPORE";
 
 export const about = {
   heading: "About",
   lead:
-    "I'm Longteng. I run programmes and events at Tax Academy of Singapore, make the videos that promote them, and build AI tools that take the repetitive parts off my plate.",
+    "I'm Longteng. I run programmes and events at Tax Academy of Singapore, make the videos that promote them, and build tools for the parts that repeat.",
   body: [
     "I studied psychology, and it still shapes how I write and edit: who is watching, and what makes them care enough to stay.",
-    "Most of what I can do, I learned by trying a new tool on a real deadline. Right now that tool is backend development. I'm working through Boot.dev and heading towards applied AI work.",
+    "Most of what I can do, I learned by trying a new tool on a real deadline. Right now that tool is backend development, through Boot.dev.",
   ],
   resumeView: "View resume",
   resumeDownload: "Download resume (PDF)",
@@ -66,48 +69,47 @@ export const whatIDo = {
     },
     {
       title: "Campaigns and copy",
-      text: "LinkedIn posts, email campaigns and ad copy, written for the person on the other end. I've also run Meta Ads for my own store.",
+      text: "LinkedIn posts, email campaigns and ad copy, written for the person on the other end. I've also run Meta Ads for my own Shopify store.",
     },
     {
       title: "AI workflows",
-      text: "I build AI workflows that cut manual steps out of my work: captions, video review, research and handover files.",
+      text: "I build small tools for the parts that repeat: captions, video review, research, and handover notes.",
     },
   ],
+  brochure: {
+    image: "brochure-spread",
+    alt: "A two-page spread from a Tax Academy programme brochure, showing the programme structure for two days.",
+    caption: "A spread from the IIVT programme brochure, published for the October 2026 run.",
+  },
 };
 
-export type Stat = { value: string; label: string };
 export type Role = {
   role: string;
   org: string;
   dates: string;
-  stats?: Stat[];
   points: string[];
 };
 
-export const experience: { heading: string; intro: string; roles: Role[] } = {
+export const experience: { heading: string; summary: string; roles: Role[] } = {
   heading: "Experience",
-  intro: "Where I've worked so far, newest first.",
+  summary:
+    "About 10 programmes and events, about 70 videos, about 50 of them made with an AI-assisted editing workflow.",
   roles: [
     {
       role: "Programme Executive",
       org: "Tax Academy of Singapore",
       dates: "Mar 2026 - Present",
-      stats: [
-        { value: "10", label: "programmes and events I've helped run or managed" },
-        { value: "70", label: "videos made since I joined" },
-        { value: "50", label: "of those made with my AI editing workflow" },
-      ],
       points: [
         "Plan and coordinate tax programmes and events from preparation through delivery.",
         "Produce programme marketing across LinkedIn, email campaigns, short-form and horizontal video.",
-        "Shot, directed and edited a mascot travel series with branded motion graphics.",
+        "Shot, directed and edited a three-part mascot travel series with branded motion graphics.",
         "Built tools that remove manual production steps: motion graphics rendered from code, speech-to-text captions, and a converter that turns HTML designs into editable PowerPoint.",
       ],
     },
     {
       role: "Independent e-commerce and marketing project",
-      org: "Personal project",
-      dates: "Dec 2025 - 2026",
+      org: "My own Shopify store",
+      dates: "Dec 2025 - Apr 2026",
       points: [
         "Launched a Shopify store with Meta Pixel tracking.",
         "Ran Meta Ads with CBO and ABO budget strategies and reviewed CPM and CTR.",
@@ -152,15 +154,12 @@ export const education = {
     "Google certifications, earned 2025: Digital Marketing and E-commerce Specialization; Google Ads Search, Display, AI-Powered Performance and Shopping; Google Analytics.",
 };
 
-// The about-the-numbers wording: every figure on the site is approximate.
-export const statPrefix = "about";
-
 export type Film = { id: string; title: string };
 export type VideoCopy = {
   id: string;
   title: string;
   line: string;
-  skills: string[];
+  credit: string;
   aiLabel?: string;
   films?: Film[];
 };
@@ -168,152 +167,164 @@ export type VideoCopy = {
 export const videos = {
   heading: "Selected videos",
   intro: "Most of my day-job output is video. These are the ones I'd show first.",
+  credit: "Produced at Tax Academy of Singapore.",
   hint: "Hover for a preview, click to watch with sound.",
   hintTouch: "Tap any film to watch it with sound.",
-  credit: "Produced at Tax Academy of Singapore",
   play: "Play",
   close: "Close",
+  seriesNote: "Three films",
   items: [
     {
-      id: "atp-promo",
-      title: "Advanced Tax Programme promo",
-      line: "A programme promo built from AI b-roll, motion graphics made in code and a scripted voiceover.",
-      skills: ["Direction", "AI b-roll", "Motion design", "Edit", "Script and voiceover"],
-      aiLabel: "AI-generated footage and voiceover",
+      id: "anniversary-dinner",
+      title: "20th Anniversary Dinner Reception",
+      line: "An anniversary dinner recap cut to music: the speeches, the ribbon cutting, the band and a thank you card.",
+      credit: "Shot, directed and edited.",
     },
     {
       id: "tax-is-networking",
       title: "Tax is Networking",
       line: "A masterclass day told through the connections people made, each one numbered and linked on screen.",
-      skills: ["Concept", "Motion graphics", "HyperFrames", "Edit"],
-    },
-    {
-      id: "anniversary-dinner",
-      title: "20th Anniversary Dinner Reception",
-      line: "An anniversary dinner recap cut to music: the speeches, the ribbon cutting, the band and a thank-you card.",
-      skills: ["Event coverage", "Music-led edit", "Titles", "Sound"],
-    },
-    {
-      id: "china-trip",
-      title: "China trip recap",
-      line: "Five cities in fifteen days on a research and exchange study, assembled in code as an editorial recap.",
-      skills: ["Story structure", "Information design", "Code-built edit"],
-    },
-    {
-      id: "iivt-few-words",
-      title: "IIVT, in a few words",
-      line: "Four speakers answer one question, cut vertical with branded captions and lower thirds.",
-      skills: ["Interview selection", "Social cutdown", "Captions", "CapCut"],
+      credit: "Concept, motion graphics and edit.",
     },
     {
       id: "bear-series",
       title: "The TA Bear series",
       line: "The Academy's bear mascot travels to conferences in Amsterdam and Munich. Character-led travel stories in three films.",
-      skills: ["Concept", "Shooting", "Character storytelling", "Edit", "Motion graphics"],
+      credit: "Shot, directed and edited.",
       films: [
         { id: "bear-amsterdam-pre", title: "Amsterdam, before the trip" },
         { id: "bear-amsterdam-during", title: "Amsterdam, during the trip" },
         { id: "bear-munich", title: "Bear to Munich" },
       ],
     },
+    {
+      id: "atp-promo",
+      title: "Advanced Tax Programme promo",
+      line: "A programme promo built from AI b-roll, motion graphics made in code and a scripted voiceover.",
+      credit: "Direction, AI b-roll, motion design and edit.",
+      aiLabel: "AI-generated footage and voiceover",
+    },
+    {
+      id: "iivt-few-words",
+      title: "IIVT, in a few words",
+      line: "Four speakers answer one question, cut vertical with branded captions and lower thirds.",
+      credit: "Interview selection, captions and lower thirds.",
+    },
+    {
+      id: "china-trip",
+      title: "China trip recap",
+      line: "Five cities in fifteen days on a research and exchange study, assembled in code as an editorial recap.",
+      credit: "Edit and information design, built in code.",
+    },
   ] satisfies VideoCopy[] as VideoCopy[],
+};
+
+// The six steps behind the videos, each shown with a real production still.
+export const workflow = {
+  heading: "How a film gets made",
+  intro: "Six steps, and a still from the work at each one.",
+  steps: [
+    {
+      image: "proof-script",
+      title: "Script",
+      caption: "The voiceover is scripted before any footage is made.",
+    },
+    {
+      image: "proof-broll",
+      title: "AI b-roll",
+      caption: "Google Flow and Veo make the cinematic scenes.",
+    },
+    {
+      image: "proof-motion",
+      title: "Motion in code",
+      caption: "Every fact card and connection line is built in HyperFrames.",
+    },
+    {
+      image: "proof-captions",
+      title: "Captions",
+      caption: "Navy caption boxes, timed to the voiceover.",
+    },
+    {
+      image: "proof-review",
+      title: "AI frame review",
+      caption: "Sampled every 1.5 seconds, checked against the transcript.",
+    },
+    {
+      image: "proof-finish",
+      title: "Finish",
+      caption: "Titles, captions, sound and the end card, finished in CapCut.",
+    },
+  ],
 };
 
 export type Build = {
   title: string;
-  kicker: string;
   text: string;
-  examples: string[];
   link?: { label: string; href: string };
+  /**
+   * A screenshot under the text. Set it to an id from IMAGES in
+   * scripts/media/videos.mjs (RoleCall gets one once the rebuild is done),
+   * with `shotAlt` describing it.
+   */
+  shot?: string;
+  shotAlt?: string;
 };
 
-export const builds: { heading: string; intro: string; items: Build[] } = {
+export const builds: { heading: string; intro: string; items: Build[]; learning: string } = {
   heading: "Builds",
-  intro:
-    "Things I've built or set up so I can do my work better. The real systems hold work material, so I describe them here instead of showing them.",
+  intro: "Tools I built or set up for my own work. Where there is a public link, it is below.",
   items: [
     {
       title: "My AI OS",
-      kicker: "Personal system",
       text:
         "A folder of notes, memory and agent instructions that every AI session I start reads first. It keeps context from one session to the next, so I'm not explaining myself every morning.",
-      examples: [
-        "A morning brief that gathers what changed overnight",
-        "A research routine that runs five expert viewpoints side by side, maps where they disagree, then checks key citations against the original sources",
-        "A memory log that each session adds what it learned to",
-        "A library of packaged playbooks any agent can pick up",
-      ],
     },
     {
       title: "A multi-agent setup",
-      kicker: "Runs on Firstmate",
       text:
-        "I work with a crew of coding agents through Firstmate, an open-source tool I didn't build. One supervisor takes my brief and hands tasks to workers, each in its own copy of the code, and nothing lands without a review. I set it up for my own work, decide what gets built and check what comes back.",
-      examples: [
-        "This site was built that way: I picked the look and approved the copy, the agents did the build",
-        "Each task gets a written brief, an isolated workspace and a review step before it counts as done",
-      ],
+        "I work with a crew of coding agents through Firstmate, an open-source tool I didn't build. One supervisor takes my brief and hands tasks to workers, each in its own copy of the code, and nothing lands without a review. This site was built that way: I wrote the brief, chose the look and edited every line of copy. Agents built it; I reviewed each section and fixed what was wrong.",
       link: { label: "Firstmate on GitHub", href: "https://github.com/kunchenguid/firstmate" },
     },
     {
       title: "HyperFrames video work",
-      kicker: "Video in code",
       text:
         "HyperFrames is the video tool I use: you write a scene in HTML and it renders to video. I use it for motion graphics, titles and lower thirds, and it sits in the middle of the AI editing workflow behind about 50 of my videos.",
-      examples: [
-        "Speech-to-text for captions, timed to the cut",
-        "Titles and motion graphics rendered from code instead of keyframed by hand",
-        "An AI review pass that looks at frames and the transcript together before I finish in CapCut",
-      ],
       link: { label: "HyperFrames", href: "https://hyperframes.dev" },
     },
     {
-      title: "Boot.dev projects",
-      kicker: "Learning in public",
+      title: "RoleCall",
       text:
-        "Small projects from the backend course. The first is Bookbot, a Python program that reads a book and reports its word and character counts. More will land here as the course goes on.",
-      examples: ["Bookbot, in Python", "Next up: projects from the TypeScript backend path"],
+        "A job-search app I built for myself: finds roles, checks fit against my resume, drafts tailored materials and preps me for interviews.",
     },
   ],
+  learning: "Backend development on Boot.dev: Python, Linux, the TypeScript path.",
 };
 
 export const toolbox = {
   heading: "Toolbox",
-  intro: "The tools I use on real work right now.",
   groups: [
-    { title: "Video and design", tools: ["CapCut", "HyperFrames", "Canva"] },
+    { title: "Video and design", tools: "CapCut, HyperFrames, Canva" },
     {
       title: "Marketing",
-      tools: ["Meta Ads Manager", "Meta Pixel", "Google Ads", "Google Analytics", "Shopify", "LinkedIn", "Email campaigns"],
+      tools:
+        "Meta Ads Manager, Meta Pixel, Google Ads, Google Analytics, Shopify, LinkedIn, email campaigns",
     },
-    { title: "AI", tools: ["Claude Code", "Claude", "Codex", "Ollama"] },
-    { title: "Code", tools: ["Python", "TypeScript", "Git", "GitHub", "Linux"] },
+    { title: "AI", tools: "Claude, Claude Code, Codex, Ollama" },
+    { title: "Code", tools: "Python, TypeScript, Git, GitHub, Linux" },
   ],
-};
-
-export const learning = {
-  heading: "Learning log",
-  intro: "I'm learning backend development on Boot.dev, one course at a time.",
-  link: { label: "Boot.dev", href: "https://www.boot.dev" },
-  done: "done",
-  now: "now",
-  items: [
-    { title: "Learn Python for beginners", status: "done" },
-    { title: "Learn Linux", status: "done" },
-    { title: "Build a Bookbot", status: "done" },
-    { title: "Back-end developer path, in TypeScript", status: "now" },
-  ] as { title: string; status: "done" | "now" }[],
 };
 
 export const contact = {
   heading: "Contact",
-  title: "Got a role in mind? Let's talk.",
+  title: "Hiring for marketing, communications or a programme role? Email me.",
   lead: "Email is the fastest way to reach me.",
+  availability: [
+    "Open to marketing, communications and programme roles in Singapore.",
+    "One month's notice. Singapore citizen.",
+  ],
   copy: "Copy email",
   copied: "Copied",
   copiedStatus: "Email address copied",
-  clockLabel: "Local time in Singapore",
-  clockZone: "SGT, UTC+8",
   links: [
     { label: "GitHub", href: "https://github.com/longtenglu" },
     { label: "LinkedIn", href: "https://www.linkedin.com/in/longteng-l-b458971bb/" },
@@ -322,8 +333,6 @@ export const contact = {
 
 export const footer = {
   credit: "Hands after Michelangelo's The Creation of Adam (public domain).",
-  terminalHint: { before: "Psst: press", key: "`", after: "for a terminal." },
-  terminalButton: "Open terminal",
 };
 
 // The hidden terminal. Commands print these lines.
@@ -342,8 +351,8 @@ export const terminal = {
   whoami: [
     "longteng lu, singapore",
     "programme executive at tax academy of singapore",
-    "makes the videos, runs the programmes, builds the ai workflows",
-    "learning backend on boot.dev, heading towards applied ai",
+    "runs the programmes, makes the videos, builds tools for the repetitive parts",
+    "open to marketing, communications and programme roles",
   ],
   projectsHeading: "projects:",
   contactHeading: "contact:",

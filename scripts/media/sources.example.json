@@ -6,5 +6,7 @@
   "iivt-few-words": "/absolute/path/to/iivt-in-a-few-words.mp4",
   "bear-amsterdam-pre": "/absolute/path/to/bear-to-amsterdam-pre-trip.mp4",
   "bear-amsterdam-during": "/absolute/path/to/bear-to-amsterdam-during-trip.mp4",
-  "bear-munich": "/absolute/path/to/bear-to-munich.mp4"
+  "bear-munich": "/absolute/path/to/bear-to-munich.mp4",
+  "iivt-review-sheet": "/absolute/path/to/iivt-review-frames.jpg",
+  "brochure-spread": "/absolute/path/to/brochure-spread.png"
 }

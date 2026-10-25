@@ -20,6 +20,9 @@ type VideoEntry = {
 };
 
 const videos = manifest.videos as Record<string, VideoEntry>;
+// Older manifests have no images key until the media pipeline runs again.
+const images =
+  ((manifest as unknown as { images?: Record<string, MediaFile> }).images ?? {});
 
 export function mediaUrl(file: MediaFile) {
   return file.url ?? `/media/${file.path}`;
@@ -44,6 +47,18 @@ export function getReel() {
   const reel = manifest.reel as { video: MediaFile; poster: MediaFile } | null;
   if (!reel) throw new Error("No hero reel. Run npm run media:build.");
   return { src: mediaUrl(reel.video), poster: mediaUrl(reel.poster) };
+}
+
+/** A still from the media manifest: a production still or the brochure spread. */
+export function getImage(id: string) {
+  const file = images[id];
+  if (!file) throw new Error(`No image for "${id}". Run npm run media:build.`);
+  return {
+    id,
+    src: mediaUrl(file),
+    width: file.width ?? 800,
+    height: file.height ?? 600,
+  };
 }
 
 /** 68.5 -> "1:09" */

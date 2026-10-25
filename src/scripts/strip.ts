@@ -16,6 +16,9 @@ export function initStrip(reducedMotion: boolean) {
   let last = performance.now();
   let lastScroll = window.scrollY;
   let boost = 0;
+  // Hold the first phrase still for a moment so the first read starts at the
+  // left edge, then let the belt move.
+  let holdUntil = performance.now() + 3200;
 
   // Enough copies to cover the strip twice over, so the loop never shows a gap.
   const fill = () => {
@@ -26,6 +29,12 @@ export function initStrip(reducedMotion: boolean) {
   };
 
   const frame = (now: number) => {
+    if (now < holdUntil) {
+      last = now;
+      lastScroll = window.scrollY;
+      if (visible) requestAnimationFrame(frame);
+      return;
+    }
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
     // Scrolling nudges the strip along, like a belt that catches the page.
@@ -51,7 +60,14 @@ export function initStrip(reducedMotion: boolean) {
     }
   }).observe(strip);
 
-  document.fonts.ready.then(fill);
+  // Fonts change the phrase widths, so measure again and start the first
+  // phrase at the left edge rather than mid-word.
+  document.fonts.ready.then(() => {
+    fill();
+    offset = 0;
+    track.style.transform = "translate3d(0, 0, 0)";
+    holdUntil = performance.now() + 3000;
+  });
   fill();
   requestAnimationFrame(frame);
 }

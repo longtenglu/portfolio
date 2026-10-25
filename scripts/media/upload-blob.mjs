@@ -48,6 +48,7 @@ function filesIn(manifest) {
     files.push(v.full, v.preview, v.poster);
   }
   if (manifest.reel) files.push(manifest.reel.video, manifest.reel.poster);
+  for (const file of Object.values(manifest.images ?? {})) files.push(/** @type {MediaFile} */ (file));
   return files.filter(Boolean);
 }
 

@@ -117,8 +117,10 @@ function computeLayout(width: number, height: number): Layout {
     gapX: width * 0.5,
     // Desktop: the hands sit under the name and rise to the middle as the
     // reel opens. Phones keep the name in view and the hands below it.
-    gapYRest: height * (phone ? 0.62 : 0.64),
-    gapYEnd: height * (phone ? 0.53 : 0.5),
+    gapYRest: height * (phone ? 0.62 : 0.7),
+    // Stop just above the resting gap, so the reel opens in the fingertips
+    // without rising into the copy above it.
+    gapYEnd: height * (phone ? 0.55 : 0.62),
     // At rest the fingertips nearly touch, as in the fresco. Opening the reel
     // parts them until they meet its edges.
     sepRest: TIP_GAP * scale + width * (phone ? 0.014 : 0.012),
@@ -313,20 +315,18 @@ export function initHero(opts: Options) {
   function reelState(p: number) {
     const w = layout.reelW;
     const h = (w * 9) / 16;
-    const line = easeInOut(clamp(p / 0.42));
-    const open = easeInOut(clamp((p - 0.32) / 0.5));
+    const line = easeInOut(clamp(p / 0.16));
+    const open = easeInOut(clamp((p - 0.04) / 0.22));
     const sep = lerp(layout.sepRest, layout.sepEnd, line);
     const curW = lerp(Math.min(26, layout.sepRest * 0.6), w, line);
     const curH = lerp(2, h, open);
     return { w, h, curW, curH, open, line, sep };
   }
 
-  // The still frame (reduced motion) shows the reel already open; on phones
-  // it sits a little higher so the caption clears the labels below.
+  // The still frame (reduced motion) shows the reel already open in the
+  // resting gap, so the copy above it stays clear on every screen.
   const gapYAt = (p: number) =>
-    reducedMotion
-      ? layout.gapYRest - (layout.phone ? layout.height * 0.07 : 0)
-      : lerp(layout.gapYRest, layout.gapYEnd, easeInOut(clamp(p / 0.9)));
+    reducedMotion ? layout.gapYRest : lerp(layout.gapYRest, layout.gapYEnd, easeInOut(clamp(p / 0.9)));
 
   // Top edge of the reel: centred on the gap, or (phones) hanging from it.
   const reelTop = (s: ReturnType<typeof reelState>, gapY: number) =>
@@ -341,7 +341,7 @@ export function initHero(opts: Options) {
     reel.style.height = `${s.curH.toFixed(1)}px`;
     reelFrame.style.width = `${s.w.toFixed(1)}px`;
     reelFrame.style.height = `${s.h.toFixed(1)}px`;
-    const isOpen = s.open > 0.98;
+    const isOpen = s.open > 0.8;
     reel.dataset.open = isOpen ? "true" : "false";
     if (isOpen !== wasOpen) {
       wasOpen = isOpen;

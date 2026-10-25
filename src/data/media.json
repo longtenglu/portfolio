@@ -268,20 +268,78 @@
   "reel": {
     "video": {
       "path": "hero-reel/hero-reel.mp4",
-      "bytes": 1922557,
-      "sha256": "3a08f825c9aada4b4df7f8f0cccadaf6d31b7e971144cfdd933b9d738a3ca549",
-      "width": 1280,
-      "height": 720,
-      "duration": 14,
-      "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/hero-reel/hero-reel.3a08f825c9aa.mp4"
+      "bytes": 2314900,
+      "sha256": "8c718ce6f7a29f7a2f15ffdf527aa61ee7b3596876754778ef457b4324e951e0",
+      "width": 1080,
+      "height": 608,
+      "duration": 13.01,
+      "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/hero-reel/hero-reel.8c718ce6f7a2.mp4"
     },
     "poster": {
       "path": "hero-reel/hero-reel-poster.avif",
-      "bytes": 26737,
-      "sha256": "4980951171fc647a811dcf5b86282b37185e64f1777a06cfdc4d66f38cf88f37",
-      "width": 1280,
-      "height": 720,
-      "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/hero-reel/hero-reel-poster.4980951171fc.avif"
+      "bytes": 21884,
+      "sha256": "b90cfbbb790f3d4434cc6635b9a5f0482a12f2e90ac180a2eaa3bc290c424d3a",
+      "width": 1080,
+      "height": 608,
+      "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/hero-reel/hero-reel-poster.b90cfbbb790f.avif"
+    }
+  },
+  "images": {
+    "proof-script": {
+      "path": "proof-script/proof-script.avif",
+      "bytes": 19880,
+      "sha256": "4dfc53a0ef18f0e0d19db4692ece44c8e42a94bc6bd6e43f22d2c9eecca42276",
+      "width": 800,
+      "height": 600,
+      "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/proof-script/proof-script.4dfc53a0ef18.avif"
+    },
+    "proof-broll": {
+      "path": "proof-broll/proof-broll.avif",
+      "bytes": 28320,
+      "sha256": "8b1de36c398542bc361c91fc408b4071d8f27c3bae7a5b8e9952cdff5ac60cc2",
+      "width": 800,
+      "height": 600,
+      "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/proof-broll/proof-broll.8b1de36c3985.avif"
+    },
+    "proof-motion": {
+      "path": "proof-motion/proof-motion.avif",
+      "bytes": 19829,
+      "sha256": "2ed49824cd034aa1c26feeed70bf31be22b10ed619e4477b85de0c6832b10f5b",
+      "width": 800,
+      "height": 600,
+      "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/proof-motion/proof-motion.2ed49824cd03.avif"
+    },
+    "proof-captions": {
+      "path": "proof-captions/proof-captions.avif",
+      "bytes": 25568,
+      "sha256": "b910f3f2d6bfc8434946791e7e315e527c9ac3b3e88aa1ea058710fb93a71b97",
+      "width": 800,
+      "height": 600,
+      "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/proof-captions/proof-captions.b910f3f2d6bf.avif"
+    },
+    "proof-review": {
+      "path": "proof-review/proof-review.avif",
+      "bytes": 60905,
+      "sha256": "1f40ebc7a59167e6c09f0ca3a92fecb49fe71a9b0e1ce3b8ac33af400e1816a1",
+      "width": 800,
+      "height": 568,
+      "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/proof-review/proof-review.1f40ebc7a591.avif"
+    },
+    "proof-finish": {
+      "path": "proof-finish/proof-finish.avif",
+      "bytes": 14654,
+      "sha256": "b967b9f21edbca831b9698e9bb57250f8c428a397ede732d16045b5e0812883e",
+      "width": 800,
+      "height": 600,
+      "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/proof-finish/proof-finish.b967b9f21edb.avif"
+    },
+    "brochure-spread": {
+      "path": "brochure-spread/brochure-spread.avif",
+      "bytes": 93053,
+      "sha256": "a4ba8b36281de6b9450eef9f0a2def3c80b342ea589486aa1aaccae84ba8c9d3",
+      "width": 1400,
+      "height": 990,
+      "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/brochure-spread/brochure-spread.a4ba8b36281d.avif"
     }
   }
 }

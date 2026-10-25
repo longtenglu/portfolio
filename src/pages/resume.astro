@@ -33,6 +33,7 @@ const contactLine = [
           ))
         }
       </ul>
+      <p class="cv__availability">{resume.availability}</p>
     </header>
 
     <section class="cv__section" aria-labelledby="cv-summary">
@@ -43,7 +44,7 @@ const contactLine = [
     <section class="cv__section" aria-labelledby="cv-experience">
       <h2 id="cv-experience" class="cv__h2 mono">{resume.experienceHeading}</h2>
       {
-        experience.roles.map((role) => (
+        experience.roles.map((role, i) => (
           <article class="cv__item">
             <div class="cv__row">
               <h3 class="cv__role">
@@ -52,7 +53,7 @@ const contactLine = [
               <p class="cv__dates mono">{role.dates}</p>
             </div>
             <ul class="cv__points">
-              {role.stats && <li>{resume.taStats}</li>}
+              {i === 0 && <li>{resume.taStats}</li>}
               {role.points.map((p) => (
                 <li>{p}</li>
               ))}
@@ -171,6 +172,14 @@ const contactLine = [
     color: var(--accent);
   }
 
+  .cv__availability {
+    margin-top: 8px;
+    max-width: 70ch;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--text);
+  }
+
   .cv__section {
     margin-top: 30px;
     padding-top: 18px;
@@ -253,7 +262,7 @@ const contactLine = [
     top: 0.72em;
     width: 7px;
     height: 1px;
-    background: var(--accent);
+    background: var(--line-strong);
   }
 
   .cv__skills {
@@ -347,6 +356,14 @@ const contactLine = [
       margin-top: 8px;
       font-size: 9px;
       color: #4a4a4a;
+    }
+
+    .cv__availability {
+      margin-top: 4px;
+      max-width: none;
+      font-size: 9px;
+      line-height: 1.35;
+      color: #2a2a2a;
     }
 
     .cv__section {
