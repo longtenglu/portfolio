@@ -13,54 +13,20 @@
 
 import { spawn, spawnSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
-import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { resolveInside, sendFile } from "../lib/static.mjs";
+import { findChrome } from "../lib/chrome.mjs";
+import { serveDir } from "../lib/static.mjs";
 
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const DIST = path.join(ROOT, "dist");
 const NAME = "Longteng-Lu-Resume.pdf";
 const OUT = path.join(ROOT, "public", "resume", NAME);
 
-function findChrome() {
-  const candidates = [
-    process.env.CHROME_PATH,
-    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-    "/Applications/Chromium.app/Contents/MacOS/Chromium",
-    "/usr/bin/google-chrome",
-    "/usr/bin/chromium",
-    "/usr/bin/chromium-browser",
-  ];
-  const found = candidates.find((c) => c && existsSync(c));
-  if (!found) throw new Error("Chrome not found. Set CHROME_PATH to a Chrome or Chromium binary.");
-  return found;
-}
-
 function build() {
   const res = spawnSync("npx", ["astro", "build"], { cwd: ROOT, stdio: "inherit" });
   if (res.status !== 0) throw new Error("astro build failed");
-}
-
-/** @returns {Promise<{ port: number, close: () => void }>} */
-function serve() {
-  return new Promise((resolve) => {
-    const server = createServer(async (req, res) => {
-      const file = resolveInside(DIST, req.url ?? "/");
-      if (file) {
-        for (const candidate of [file, path.join(file, "index.html")]) {
-          if (await sendFile(req, res, candidate)) return;
-        }
-      }
-      res.writeHead(404).end();
-    });
-    server.listen(0, "127.0.0.1", () => {
-      const address = server.address();
-      const port = typeof address === "object" && address ? address.port : 0;
-      resolve({ port, close: () => server.close() });
-    });
-  });
 }
 
 /**
@@ -110,12 +76,12 @@ function pageCount(file) {
 async function main() {
   const chrome = findChrome();
   build();
-  const server = await serve();
+  const server = await serveDir(DIST);
   try {
     mkdirSync(path.dirname(OUT), { recursive: true });
     await print(chrome, `http://127.0.0.1:${server.port}/resume/`, OUT);
   } finally {
-    server.close();
+    await server.close();
   }
   const distCopy = path.join(DIST, "resume", NAME);
   mkdirSync(path.dirname(distCopy), { recursive: true });

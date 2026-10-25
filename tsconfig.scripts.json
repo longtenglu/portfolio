@@ -11,5 +11,5 @@
     "resolveJsonModule": true,
     "types": ["node"]
   },
-  "include": ["scripts/**/*.mjs", "astro.config.mjs"]
+  "include": ["scripts/**/*.mjs", "tests/**/*.mjs", "astro.config.mjs"]
 }

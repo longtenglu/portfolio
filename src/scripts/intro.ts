@@ -11,10 +11,22 @@ export function initIntro(reducedMotion: boolean) {
   const reelFrame = document.querySelector<HTMLElement>("[data-reel-frame]");
   const reelVideo = document.querySelector<HTMLVideoElement>("[data-reel-video]");
   const caption = document.querySelector<HTMLElement>("[data-reel-caption]");
+  const restCta = document.querySelector<HTMLElement>("[data-reel-rest-cta]");
   if (!intro || !canvas || !reel || !reelFrame || !reelVideo) return;
 
+  // Exactly one visible trigger for the promo at any time: the reel itself
+  // once it is open, the "Watch the promo" button while it is not. Focus
+  // moves across when the one holding it switches off.
+  const setOpen = (open: boolean) => {
+    const focused = document.activeElement;
+    reelFrame.inert = !open;
+    if (restCta) restCta.inert = open;
+    if (open && focused === restCta) reelFrame.focus({ preventScroll: true });
+    else if (!open && focused === reelFrame) restCta?.focus({ preventScroll: true });
+  };
+
   const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
-  const hero = initHero({ canvas, reel, reelFrame, reelCaption: caption, reducedMotion, finePointer });
+  const hero = initHero({ canvas, reel, reelFrame, reelCaption: caption, reducedMotion, finePointer, onOpenChange: setOpen });
   if (!hero) return;
 
   let loaded = false;
@@ -51,6 +63,8 @@ export function initIntro(reducedMotion: boolean) {
   window.addEventListener("scroll", update, { passive: true });
   window.addEventListener("resize", update);
   document.addEventListener("visibilitychange", () => syncPlayback(hero.reelOpenAt(progress)));
+  // Opening a video pauses the loop; pick it back up when the dialog closes.
+  document.addEventListener("video-modal:close", () => syncPlayback(hero.reelOpenAt(progress)));
   new IntersectionObserver((entries) => {
     inView = entries.some((e) => e.isIntersecting);
     syncPlayback(hero.reelOpenAt(progress));

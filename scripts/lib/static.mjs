@@ -5,6 +5,7 @@
 
 import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
+import { createServer } from "node:http";
 import path from "node:path";
 
 /** @type {Record<string, string>} */
@@ -79,4 +80,36 @@ export async function sendFile(req, res, file, headers = {}) {
   if (req.method === "HEAD") res.end();
   else createReadStream(file).pipe(res);
   return true;
+}
+
+/**
+ * Serves a built site directory on a free local port, the way a static host
+ * does (exact file, then directory index). For scripts and tests.
+ * @param {string} root
+ * @returns {Promise<{ port: number, close: () => Promise<void> }>}
+ */
+export function serveDir(root) {
+  return new Promise((resolve) => {
+    const server = createServer(async (req, res) => {
+      const file = resolveInside(root, req.url ?? "/");
+      if (file) {
+        for (const candidate of [file, path.join(file, "index.html")]) {
+          if (await sendFile(req, res, candidate)) return;
+        }
+      }
+      res.writeHead(404).end();
+    });
+    server.listen(0, "127.0.0.1", () => {
+      const address = server.address();
+      const port = typeof address === "object" && address ? address.port : 0;
+      resolve({
+        port,
+        close: () =>
+          new Promise((done) => {
+            server.closeAllConnections();
+            server.close(() => done(undefined));
+          }),
+      });
+    });
+  });
 }

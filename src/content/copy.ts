@@ -33,6 +33,8 @@ export const hero = {
     label: "AI-generated footage and voiceover",
     action: "Play the full promo with sound",
     watch: "Watch with sound",
+    // The visible trigger while the reel is still closed.
+    rest: "Watch the promo",
   },
 };
 
@@ -98,7 +100,7 @@ export const experience: { heading: string; intro: string; roles: Role[] } = {
       points: [
         "Plan and coordinate tax programmes and events from preparation through delivery.",
         "Produce programme marketing across LinkedIn, email campaigns, short-form and horizontal video.",
-        "Shot, directed and edited a two-part mascot series with branded motion graphics.",
+        "Shot, directed and edited a mascot travel series with branded motion graphics.",
         "Built tools that remove manual production steps: motion graphics rendered from code, speech-to-text captions, and a converter that turns HTML designs into editable PowerPoint.",
       ],
     },

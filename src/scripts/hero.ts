@@ -46,6 +46,8 @@ type Options = {
   reelCaption: HTMLElement | null;
   reducedMotion: boolean;
   finePointer: boolean;
+  /** Called whenever the reel switches between open and not open. */
+  onOpenChange?: (open: boolean) => void;
 };
 
 type Layout = {
@@ -279,7 +281,7 @@ function buildAtlas(layout: Layout) {
 }
 
 export function initHero(opts: Options) {
-  const { canvas, reel, reelFrame, reelCaption, reducedMotion, finePointer } = opts;
+  const { canvas, reel, reelFrame, reelCaption, reducedMotion, finePointer, onOpenChange } = opts;
   const ctx = canvas.getContext("2d", { alpha: true });
   if (!ctx) return null;
 
@@ -292,6 +294,7 @@ export function initHero(opts: Options) {
   let raf = 0;
   let start = performance.now();
   const pointer = { x: -9999, y: -9999, active: false };
+  let wasOpen: boolean | null = null;
 
   function resize() {
     const width = canvas.clientWidth;
@@ -338,7 +341,12 @@ export function initHero(opts: Options) {
     reel.style.height = `${s.curH.toFixed(1)}px`;
     reelFrame.style.width = `${s.w.toFixed(1)}px`;
     reelFrame.style.height = `${s.h.toFixed(1)}px`;
-    reel.dataset.open = s.open > 0.98 ? "true" : "false";
+    const isOpen = s.open > 0.98;
+    reel.dataset.open = isOpen ? "true" : "false";
+    if (isOpen !== wasOpen) {
+      wasOpen = isOpen;
+      onOpenChange?.(isOpen);
+    }
     if (reelCaption) {
       reelCaption.style.transform = `translate3d(${(layout.gapX - s.w / 2).toFixed(1)}px, ${(y + s.curH + 12).toFixed(1)}px, 0)`;
       reelCaption.style.width = `${s.w.toFixed(1)}px`;

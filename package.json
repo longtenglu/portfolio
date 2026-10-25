@@ -12,6 +12,7 @@
     "build": "astro build",
     "preview": "node scripts/serve.mjs",
     "check": "astro check && tsc --noEmit -p tsconfig.scripts.json",
+    "test": "astro build && node --test tests/",
     "hero:hands": "node scripts/hero/build-hands.mjs",
     "media:build": "node scripts/media/build-media.mjs",
     "media:upload": "node scripts/media/upload-blob.mjs",
@@ -27,6 +28,7 @@
     "@astrojs/check": "^0.9.12",
     "@types/node": "^26.6.5",
     "@vercel/blob": "^2.8.2",
+    "playwright-core": "^1.63.0",
     "typescript": "^6.0.3"
   }
 }

@@ -5,6 +5,22 @@ import { lockScroll } from "./scroll";
 
 type Playable = { title: string; src: string; poster: string; orientation: string; note: string };
 
+// Can this element take focus and be seen right now?
+function usable(el: HTMLElement | null): el is HTMLElement {
+  return Boolean(el && el.isConnected && !el.closest("[inert]") && el.getClientRects().length > 0);
+}
+
+// Where focus goes when the control that opened a video is no longer usable
+// (for example the hero reel closed while the dialog was up).
+function fallbackFocus() {
+  const candidates = [
+    document.querySelector<HTMLElement>("[data-reel-rest-cta]"),
+    document.querySelector<HTMLElement>("[data-reel-frame]"),
+    ...document.querySelectorAll<HTMLElement>("main a[href], main button"),
+  ];
+  return candidates.find(usable) ?? null;
+}
+
 export function initVideos(finePointer: boolean) {
   const dataEl = document.getElementById("video-data");
   const modal = document.querySelector<HTMLDialogElement>("[data-video-modal]");
@@ -65,8 +81,9 @@ export function initVideos(finePointer: boolean) {
     player.removeAttribute("src");
     player.load();
     lockScroll(false);
-    opener?.focus({ preventScroll: true });
+    (usable(opener) ? opener : fallbackFocus())?.focus({ preventScroll: true });
     opener = null;
+    document.dispatchEvent(new Event("video-modal:close"));
   });
 
   // A click on the backdrop (the dialog element itself) closes it.

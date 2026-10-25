@@ -30,10 +30,11 @@ npm run dev             # http://localhost:4321
 before they are uploaded. Run `export $(grep -v '^#' .env | xargs)` first, or
 pass the variables inline.
 
-Checks and a production build:
+Checks, browser tests and a production build:
 
 ```sh
-npm run check           # astro check, plus type checks for scripts/
+npm run check           # astro check, plus type checks for scripts/ and tests/
+npm test                # builds, then drives local Chrome over dist/ (set CHROME_PATH if needed)
 npm run build           # static output in dist/
 MEDIA_DIR=/path/to/media npm run preview   # serve dist/ like Vercel, with /media
 ```
