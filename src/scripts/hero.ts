@@ -68,6 +68,8 @@ type Layout = {
   sepRest: number;
   sepEnd: number;
   reelW: number;
+  canOpen: boolean;
+  captionMaxY: number | null;
   pointerRadius: number;
   pointerPush: number;
 };
@@ -119,8 +121,9 @@ function inkReach(halfWidth: number) {
 // Free space on a phone: the hands sit between the headline copy and the
 // meta row, and the reel hangs from the gap into whatever is left below.
 type Band = { top: number; bottom: number };
+type CaptionHeight = (reelWidth: number) => number;
 
-function computeLayout(width: number, height: number, band: Band | null): Layout {
+function computeLayout(width: number, height: number, band: Band | null, captionHeightAt: CaptionHeight): Layout {
   const phone = width < 640;
   const tablet = !phone && width < 1024;
   const dpr = Math.min(window.devicePixelRatio || 1, phone ? 1.75 : 2);
@@ -129,29 +132,40 @@ function computeLayout(width: number, height: number, band: Band | null): Layout
   const cellH = fontSize * 1.12;
   let reelW = phone ? width * 0.84 : tablet ? width * 0.46 : Math.min(width * 0.34, 620);
 
+  let phoneCanOpen = true;
+  let phoneCaptionMaxY: number | null = null;
+
   // On a phone, grow the hands to fill the free band (never past 1.3x, or
   // the fingers stop reading as hands) and centre them in it. On a short
   // phone the open reel wins over the clearance above the hands.
   let phoneGapRest = height * 0.62;
   let phoneGapEnd = height * 0.55;
   if (phone && band && band.bottom > band.top) {
-    const captionReserve = 52;
-    const maxReelW = ((band.bottom - band.top - cellH - 12 - captionReserve) * 16) / 9;
-    reelW = Math.min(reelW, Math.max(0, maxReelW));
+    const bandHeight = band.bottom - band.top;
     const reach = inkReach(width / 2 / scale);
     const inkHeight = (reach.above + reach.below) * scale;
-    const fit = clamp(((band.bottom - band.top) * 0.86) / inkHeight, 1, 1.3);
+    const fit = clamp((bandHeight * 0.86) / inkHeight, 1, 1.3);
     scale *= fit;
     const above = reach.above * scale;
     const below = reach.below * scale;
-    const centred = band.top + (band.bottom - band.top - above - below) / 2 + above;
-    // The open reel (plus its caption) hangs below the gap and must clear
-    // the meta row, so the gap cannot sit lower than that allows.
-    const reelBelow = cellH + (reelW * 9) / 16 + 12 + captionReserve;
-    const lowest = band.bottom - reelBelow;
+    const centred = band.top + (bandHeight - above - below) / 2 + above;
     phoneGapRest = centred;
-    // Rise a little as the reel opens, but stay clear of the copy above.
-    phoneGapEnd = Math.min(centred - 22, lowest);
+
+    const minReelW = 160;
+    const captionAtMin = captionHeightAt(minReelW);
+    const maxReelW = ((bandHeight - cellH - 12 - captionAtMin) * 16) / 9;
+    if (maxReelW >= minReelW) {
+      reelW = Math.max(minReelW, Math.min(reelW, maxReelW));
+      const captionHeight = captionHeightAt(reelW);
+      const reelBelow = cellH + (reelW * 9) / 16 + 12 + captionHeight;
+      // Rise a little as the reel opens, but stay clear of the copy above.
+      phoneGapEnd = Math.min(centred - 22, band.bottom - reelBelow);
+      phoneCaptionMaxY = band.bottom - captionHeight;
+    } else {
+      phoneCanOpen = false;
+      phoneCaptionMaxY = band.bottom - captionAtMin;
+      phoneGapEnd = centred - 22;
+    }
   }
   // Phones are too narrow for a reel between the hands, so there the reel
   // unfurls downward from the spark under the fingertips instead.
@@ -176,6 +190,8 @@ function computeLayout(width: number, height: number, band: Band | null): Layout
     sepRest: TIP_GAP * scale + width * (phone ? 0.014 : 0.012),
     sepEnd: phone ? TIP_GAP * scale + width * 0.12 : reelW * 0.94,
     reelW,
+    canOpen: phoneCanOpen,
+    captionMaxY: phoneCaptionMaxY,
     pointerRadius: phone ? 0 : 110,
     pointerPush: 7,
   };
@@ -344,7 +360,13 @@ export function initHero(opts: Options) {
     return { top: copy.getBoundingClientRect().bottom - box.top + 20, bottom: meta.getBoundingClientRect().top - box.top - 8 };
   };
 
-  let layout = computeLayout(canvas.clientWidth, canvas.clientHeight, measureBand());
+  const captionHeightAt = (reelWidth: number) => {
+    if (!reelCaption) return 0;
+    reelCaption.style.width = `${reelWidth.toFixed(1)}px`;
+    return reelCaption.getBoundingClientRect().height;
+  };
+
+  let layout = computeLayout(canvas.clientWidth, canvas.clientHeight, measureBand(), captionHeightAt);
   let cells = buildCells(layout);
   let { atlas, aw, ah } = buildAtlas(layout);
   let progress = reducedMotion ? 1 : 0;
@@ -359,7 +381,7 @@ export function initHero(opts: Options) {
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
     if (!width || !height) return;
-    layout = computeLayout(width, height, measureBand());
+    layout = computeLayout(width, height, measureBand(), captionHeightAt);
     canvas.width = Math.round(width * layout.dpr);
     canvas.height = Math.round(height * layout.dpr);
     cells = buildCells(layout);
@@ -375,9 +397,10 @@ export function initHero(opts: Options) {
     const w = layout.reelW;
     const h = (w * 9) / 16;
     const line = easeInOut(clamp(p / 0.16));
-    const open = openAt(p);
+    const open = layout.canOpen ? openAt(p) : 0;
     const sep = lerp(layout.sepRest, layout.sepEnd, line);
-    const curW = lerp(Math.min(26, layout.sepRest * 0.6), w, line);
+    const closedW = Math.min(26, layout.sepRest * 0.6);
+    const curW = layout.canOpen ? lerp(closedW, w, line) : closedW;
     const curH = lerp(2, h, open);
     return { w, h, curW, curH, open, line, sep };
   }
@@ -413,7 +436,11 @@ export function initHero(opts: Options) {
       onOpenChange?.(isOpen);
     }
     if (reelCaption) {
-      reelCaption.style.transform = `translate3d(${(layout.gapX - s.w / 2).toFixed(1)}px, ${(y + s.curH + 12).toFixed(1)}px, 0)`;
+      const captionY =
+        layout.phone && layout.captionMaxY !== null
+          ? Math.min(y + s.curH + 12, layout.captionMaxY)
+          : y + s.curH + 12;
+      reelCaption.style.transform = `translate3d(${(layout.gapX - s.w / 2).toFixed(1)}px, ${captionY.toFixed(1)}px, 0)`;
       reelCaption.style.width = `${s.w.toFixed(1)}px`;
       reelCaption.style.opacity = clamp((s.open - 0.55) / 0.35).toFixed(3);
     }

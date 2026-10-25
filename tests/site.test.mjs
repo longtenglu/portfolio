@@ -97,6 +97,120 @@ const videoDialog = (page) =>
     return { open: dialog.open, title: dialog.querySelector("[data-video-title]")?.textContent ?? "" };
   });
 
+/**
+ * @param {import("playwright-core").Page} page
+ * @param {number} progress
+ */
+async function scrollHeroTo(page, progress) {
+  await page.evaluate((p) => {
+    const intro = /** @type {HTMLElement} */ (document.querySelector("[data-intro]"));
+    window.scrollTo(0, (intro.offsetHeight - window.innerHeight) * p);
+  }, progress);
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
+}
+
+/** @param {import("playwright-core").Page} page */
+const heroGeometry = (page) =>
+  page.evaluate(() => {
+    /** @param {string} selector */
+    const rect = (selector) => {
+      const el = document.querySelector(selector);
+      if (!el) throw new Error(`missing ${selector}`);
+      return el.getBoundingClientRect();
+    };
+    return {
+      copyBottom: rect("[data-hero-copy]").bottom,
+      reelTop: rect("[data-reel]").top,
+      reelBottom: rect("[data-reel]").bottom,
+      captionBottom: rect("[data-reel-caption]").bottom,
+      metaTop: rect("[data-hero-meta]").top,
+    };
+  });
+
+/**
+ * @param {import("playwright-core").Page} page
+ * @param {string} viewport
+ */
+async function assertOpenHeroClears(page, viewport) {
+  assert.equal(await page.getAttribute("[data-reel]", "data-open"), "false", `${viewport}: the reel starts closed`);
+
+  await scrollHeroTo(page, 0.18);
+  await page.waitForFunction(() => document.querySelector("[data-reel]")?.getAttribute("data-open") === "true");
+  const firstOpen = await heroGeometry(page);
+  assert.ok(
+    firstOpen.reelTop >= firstOpen.copyBottom,
+    `${viewport}: the open reel starts below the copy: reel ${firstOpen.reelTop}, copy ${firstOpen.copyBottom}`,
+  );
+  assert.ok(
+    firstOpen.reelBottom <= firstOpen.metaTop,
+    `${viewport}: the open reel clears the meta row: reel ${firstOpen.reelBottom}, meta ${firstOpen.metaTop}`,
+  );
+  assert.ok(
+    firstOpen.captionBottom <= firstOpen.metaTop,
+    `${viewport}: the caption clears the meta row: caption ${firstOpen.captionBottom}, meta ${firstOpen.metaTop}`,
+  );
+
+  await scrollHeroTo(page, 1);
+  await page.waitForFunction(() => document.querySelector("[data-reel]")?.getAttribute("data-open") === "true");
+  const end = await heroGeometry(page);
+  assert.ok(
+    end.reelTop >= end.copyBottom,
+    `${viewport}: the fully open reel starts below the copy: reel ${end.reelTop}, copy ${end.copyBottom}`,
+  );
+  assert.ok(
+    end.reelBottom <= end.metaTop,
+    `${viewport}: the fully open reel clears the meta row: reel ${end.reelBottom}, meta ${end.metaTop}`,
+  );
+  assert.ok(
+    end.captionBottom <= end.metaTop,
+    `${viewport}: the full caption clears the meta row: caption ${end.captionBottom}, meta ${end.metaTop}`,
+  );
+}
+
+/**
+ * @param {import("playwright-core").Page} page
+ * @param {string} viewport
+ */
+async function assertRestTriggerWorks(page, viewport) {
+  assert.equal(await page.getAttribute("[data-reel]", "data-open"), "false", `${viewport}: the reel starts closed`);
+
+  await scrollHeroTo(page, 0.18);
+  assert.equal(
+    await page.getAttribute("[data-reel]", "data-open"),
+    "false",
+    `${viewport}: the reel stays closed at the first open frame`,
+  );
+
+  await scrollHeroTo(page, 1);
+  assert.equal(
+    await page.getAttribute("[data-reel]", "data-open"),
+    "false",
+    `${viewport}: the reel stays closed at full scroll`,
+  );
+
+  const state = await page.evaluate(() => {
+    const cta = /** @type {HTMLElement} */ (document.querySelector("[data-reel-rest-cta]"));
+    const frame = /** @type {HTMLElement} */ (document.querySelector("[data-reel-frame]"));
+    const box = cta.getBoundingClientRect();
+    const style = getComputedStyle(cta);
+    return {
+      ctaInert: cta.inert,
+      frameInert: frame.inert,
+      ctaVisible: box.width >= 16 && box.height >= 16 && Number(style.opacity) > 0.5,
+    };
+  });
+  assert.equal(state.ctaInert, false, `${viewport}: the rest button stays active`);
+  assert.equal(state.frameInert, true, `${viewport}: the unusable reel is inert`);
+  assert.ok(state.ctaVisible, `${viewport}: the rest button is visible`);
+
+  const { found } = await tabUntil(page, (f) => f.restCta);
+  assert.ok(found && !found.inert && found.visible, `${viewport}: the rest button is focusable`);
+  await page.keyboard.press("Enter");
+  assert.deepEqual(await videoDialog(page), { open: true, title: HERO_TITLE });
+}
+
 describe("hero reel, keyboard and pointer access", () => {
   test("at rest the closed reel is skipped and the visible button is the keyboard path", async () => {
     const { context, page } = await openHome();
@@ -124,66 +238,34 @@ describe("hero reel, keyboard and pointer access", () => {
   test("on a 375x667 phone the open reel and caption clear the meta row", async () => {
     const { context, page } = await openHome({ viewport: { width: 375, height: 667 } });
     try {
-      /** @param {number} progress */
-      const atProgress = async (progress) => {
-        await page.evaluate((p) => {
-          const intro = /** @type {HTMLElement} */ (document.querySelector("[data-intro]"));
-          window.scrollTo(0, (intro.offsetHeight - window.innerHeight) * p);
-        }, progress);
-        await page.evaluate(
-          () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
-        );
-      };
-      const measure = () =>
-        page.evaluate(() => {
-          /** @param {string} selector */
-          const rect = (selector) => {
-            const el = document.querySelector(selector);
-            if (!el) throw new Error(`missing ${selector}`);
-            return el.getBoundingClientRect();
-          };
-          return {
-            copyBottom: rect("[data-hero-copy]").bottom,
-            reelTop: rect("[data-reel]").top,
-            reelBottom: rect("[data-reel]").bottom,
-            captionBottom: rect("[data-reel-caption]").bottom,
-            metaTop: rect("[data-hero-meta]").top,
-          };
-        });
+      await assertOpenHeroClears(page, "375x667");
+    } finally {
+      await context.close();
+    }
+  });
 
-      assert.equal(await page.getAttribute("[data-reel]", "data-open"), "false");
+  test("on a 390x844 phone the open reel and caption clear the meta row", async () => {
+    const { context, page } = await openHome({ viewport: { width: 390, height: 844 } });
+    try {
+      await assertOpenHeroClears(page, "390x844");
+    } finally {
+      await context.close();
+    }
+  });
 
-      await atProgress(0.18);
-      await page.waitForFunction(() => document.querySelector("[data-reel]")?.getAttribute("data-open") === "true");
-      const firstOpen = await measure();
-      assert.ok(
-        firstOpen.reelTop >= firstOpen.copyBottom,
-        `the open reel starts below the copy: reel ${firstOpen.reelTop}, copy ${firstOpen.copyBottom}`,
-      );
-      assert.ok(
-        firstOpen.reelBottom <= firstOpen.metaTop,
-        `the open reel clears the meta row: reel ${firstOpen.reelBottom}, meta ${firstOpen.metaTop}`,
-      );
-      assert.ok(
-        firstOpen.captionBottom <= firstOpen.metaTop,
-        `the caption clears the meta row: caption ${firstOpen.captionBottom}, meta ${firstOpen.metaTop}`,
-      );
+  test("on a 375x553 phone the narrow band keeps the rest button as the trigger", async () => {
+    const { context, page } = await openHome({ viewport: { width: 375, height: 553 } });
+    try {
+      await assertRestTriggerWorks(page, "375x553");
+    } finally {
+      await context.close();
+    }
+  });
 
-      await atProgress(1);
-      await page.waitForFunction(() => document.querySelector("[data-reel]")?.getAttribute("data-open") === "true");
-      const end = await measure();
-      assert.ok(
-        end.reelTop >= end.copyBottom,
-        `the fully open reel starts below the copy: reel ${end.reelTop}, copy ${end.copyBottom}`,
-      );
-      assert.ok(
-        end.reelBottom <= end.metaTop,
-        `the fully open reel clears the meta row: reel ${end.reelBottom}, meta ${end.metaTop}`,
-      );
-      assert.ok(
-        end.captionBottom <= end.metaTop,
-        `the full caption clears the meta row: caption ${end.captionBottom}, meta ${end.metaTop}`,
-      );
+  test("on a 320x568 phone the narrow band keeps the rest button as the trigger", async () => {
+    const { context, page } = await openHome({ viewport: { width: 320, height: 568 } });
+    try {
+      await assertRestTriggerWorks(page, "320x568");
     } finally {
       await context.close();
     }
