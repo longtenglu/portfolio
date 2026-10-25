@@ -120,14 +120,33 @@ const heroGeometry = (page) =>
       if (!el) throw new Error(`missing ${selector}`);
       return el.getBoundingClientRect();
     };
+    const reel = rect("[data-reel]");
     return {
       copyBottom: rect("[data-hero-copy]").bottom,
-      reelTop: rect("[data-reel]").top,
-      reelBottom: rect("[data-reel]").bottom,
+      reelTop: reel.top,
+      reelBottom: reel.bottom,
+      reelWidth: reel.width,
+      reelHeight: reel.height,
       captionBottom: rect("[data-reel-caption]").bottom,
       metaTop: rect("[data-hero-meta]").top,
     };
   });
+
+/**
+ * @param {Awaited<ReturnType<typeof heroGeometry>>} geometry
+ * @param {string} viewport
+ */
+function assertOpenReelUsable(geometry, viewport) {
+  const fullHeight = (geometry.reelWidth * 9) / 16;
+  assert.ok(
+    geometry.reelWidth >= 160,
+    `${viewport}: the open reel is at least 160px wide: ${geometry.reelWidth}`,
+  );
+  assert.ok(
+    geometry.reelHeight >= fullHeight * 0.75 && geometry.reelHeight <= fullHeight + 1,
+    `${viewport}: the open reel is a real 16:9 frame: ${geometry.reelWidth}x${geometry.reelHeight}`,
+  );
+}
 
 /**
  * @param {import("playwright-core").Page} page
@@ -139,6 +158,7 @@ async function assertOpenHeroClears(page, viewport) {
   await scrollHeroTo(page, 0.18);
   await page.waitForFunction(() => document.querySelector("[data-reel]")?.getAttribute("data-open") === "true");
   const firstOpen = await heroGeometry(page);
+  assertOpenReelUsable(firstOpen, viewport);
   assert.ok(
     firstOpen.reelTop >= firstOpen.copyBottom,
     `${viewport}: the open reel starts below the copy: reel ${firstOpen.reelTop}, copy ${firstOpen.copyBottom}`,
@@ -155,6 +175,7 @@ async function assertOpenHeroClears(page, viewport) {
   await scrollHeroTo(page, 1);
   await page.waitForFunction(() => document.querySelector("[data-reel]")?.getAttribute("data-open") === "true");
   const end = await heroGeometry(page);
+  assertOpenReelUsable(end, viewport);
   assert.ok(
     end.reelTop >= end.copyBottom,
     `${viewport}: the fully open reel starts below the copy: reel ${end.reelTop}, copy ${end.copyBottom}`,
