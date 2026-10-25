@@ -1,0 +1,3 @@
+# This site is shared by link only. Please do not index it.
+User-agent: *
+Disallow: /

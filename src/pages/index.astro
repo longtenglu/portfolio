@@ -1,0 +1,37 @@
+---
+import About from "../components/About.astro";
+import Builds from "../components/Builds.astro";
+import Contact from "../components/Contact.astro";
+import Cursor from "../components/Cursor.astro";
+import Experience from "../components/Experience.astro";
+import Header from "../components/Header.astro";
+import Intro from "../components/Intro.astro";
+import Learning from "../components/Learning.astro";
+import Terminal from "../components/Terminal.astro";
+import Toolbox from "../components/Toolbox.astro";
+import Videos from "../components/Videos.astro";
+import WhatIDo from "../components/WhatIDo.astro";
+import Base from "../layouts/Base.astro";
+---
+
+<Base>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <Header />
+  <main id="main">
+    <Intro />
+    <About />
+    <WhatIDo />
+    <Experience />
+    <Videos />
+    <Builds />
+    <Toolbox />
+    <Learning />
+    <Contact />
+  </main>
+  <Terminal />
+  <Cursor />
+</Base>
+
+<script>
+  import "../scripts/main.ts";
+</script>

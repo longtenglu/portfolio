@@ -1,0 +1,142 @@
+---
+// One playable video: the poster (with a muted hover preview) and, under it,
+// a bar with the play cue and the running time. Nothing sits on top of the
+// poster, so no title or caption baked into a poster is ever covered.
+import { videos } from "../content/copy";
+import { formatDuration, isoDuration, type getVideo } from "../lib/media";
+
+interface Props {
+  id: string;
+  title: string;
+  media: ReturnType<typeof getVideo>;
+  compact?: boolean;
+}
+
+const { id, title, media, compact = false } = Astro.props;
+const landscape = media.orientation === "landscape";
+const label = `${videos.play} ${title}, ${formatDuration(media.duration)}, with sound`;
+---
+
+<button
+  class:list={["vbtn", landscape ? "vbtn--landscape" : "vbtn--portrait", { "vbtn--compact": compact }]}
+  type="button"
+  data-video-open={id}
+  data-preview-host
+  aria-label={label}
+>
+  <span class="vbtn__frame">
+    <img
+      src={media.poster}
+      alt=""
+      width={landscape ? 1280 : 720}
+      height={landscape ? 720 : 1280}
+      loading="lazy"
+      decoding="async"
+    />
+    <video class="vcard__preview" muted loop playsinline preload="none" data-src={media.preview} aria-hidden="true" tabindex="-1"></video>
+  </span>
+  <span class="vbtn__bar mono" aria-hidden="true">
+    <span class="vbtn__play">
+      <svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"></path></svg>
+      {!compact && videos.play}
+    </span>
+    <time datetime={isoDuration(media.duration)}>{formatDuration(media.duration)}</time>
+  </span>
+</button>
+
+<style>
+  .vbtn {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    overflow: hidden;
+    border-radius: var(--radius);
+    background: var(--bg-raised);
+    box-shadow: 0 0 0 1px var(--line);
+    text-align: left;
+    transition: box-shadow 0.3s;
+  }
+
+  .vbtn:hover,
+  .vbtn:focus-visible {
+    box-shadow: 0 0 0 1px var(--accent), 0 12px 40px rgba(255, 176, 0, 0.12);
+  }
+
+  .vbtn__frame {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    background: #000;
+  }
+
+  .vbtn--landscape .vbtn__frame {
+    aspect-ratio: 16 / 9;
+  }
+
+  .vbtn--portrait .vbtn__frame {
+    aspect-ratio: 9 / 16;
+  }
+
+  .vbtn__frame img,
+  .vbtn__frame video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.9s var(--ease), opacity 0.4s;
+  }
+
+  .vbtn__frame video {
+    opacity: 0;
+  }
+
+  .vbtn.is-previewing .vbtn__frame video {
+    opacity: 1;
+  }
+
+  .vbtn:hover .vbtn__frame img,
+  .vbtn:hover .vbtn__frame video {
+    transform: scale(1.03);
+  }
+
+  .vbtn__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 12px;
+    border-top: 1px solid var(--line);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+
+  .vbtn__play {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.2s;
+  }
+
+  .vbtn__play svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .vbtn time {
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+
+  .vbtn:hover .vbtn__play,
+  .vbtn:focus-visible .vbtn__play {
+    color: var(--accent);
+  }
+
+  .vbtn--compact .vbtn__bar {
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+</style>

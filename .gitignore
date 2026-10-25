@@ -1,0 +1,28 @@
+# build output
+dist/
+.astro/
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+
+# environment variables (BLOB_READ_WRITE_TOKEN, MEDIA_DIR, MEDIA_SOURCES)
+.env
+.env.*
+!.env.example
+
+# media never lives in the repo: web copies are made into MEDIA_DIR and
+# hosted on Vercel Blob
+*.mp4
+*.mov
+*.m4v
+*.webm
+/media/
+
+# macOS
+.DS_Store
+
+# local Vercel link
+.vercel
