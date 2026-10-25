@@ -5,8 +5,8 @@
 //
 //   npm run build && MEDIA_DIR=/path/to/media npm run preview
 //
-// PORT defaults to 4321. Headers from vercel.json are applied, so the
-// noindex header can be checked locally too.
+// PORT defaults to 4321. The global headers from vercel.json are applied, so
+// the noindex header can be checked locally too.
 
 import { readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";

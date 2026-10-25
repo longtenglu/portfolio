@@ -1,5 +1,5 @@
-// Every word on the home page lives in this file, so it can be read and edited
-// in one place. The resume page adds its own lines in resume.ts and reuses the
+// The home page copy lives in this file, so it can be read and edited in one
+// place. The resume page adds its own lines in resume.ts and reuses the
 // experience and education below.
 //
 // House rules for this copy (from Voice Principles): no em dashes, no jargon,

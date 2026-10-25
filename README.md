@@ -9,16 +9,18 @@ scroll.
 
 ## Edit the words
 
-Every word on the site lives in two files:
+The copy for the home page and resume lives in two files:
 
 - `src/content/copy.ts`: the home page, the video cards, the terminal
 - `src/content/resume.ts`: lines that only appear on the resume
 
-After changing resume text, rebuild the PDF (see below).
+After changing anything that appears on the resume, rebuild the PDF (see
+below).
 
 ## Local development
 
-Needs Node 22.23.4 or newer, and ffmpeg for the media scripts.
+Needs Node 22.23.4 or newer, ffmpeg for the media scripts, and Chrome or
+Chromium for the resume PDF and the browser tests.
 
 ```sh
 npm install
