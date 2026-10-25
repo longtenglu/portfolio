@@ -7,6 +7,8 @@ import { initHero } from "./hero";
 export function initIntro(reducedMotion: boolean) {
   const intro = document.querySelector<HTMLElement>("[data-intro]");
   const canvas = document.querySelector<HTMLCanvasElement>("[data-hero-canvas]");
+  const copy = document.querySelector<HTMLElement>("[data-hero-copy]");
+  const meta = document.querySelector<HTMLElement>("[data-hero-meta]");
   const reel = document.querySelector<HTMLElement>("[data-reel]");
   const reelFrame = document.querySelector<HTMLElement>("[data-reel-frame]");
   const reelVideo = document.querySelector<HTMLVideoElement>("[data-reel-video]");
@@ -26,7 +28,7 @@ export function initIntro(reducedMotion: boolean) {
   };
 
   const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
-  const hero = initHero({ canvas, reel, reelFrame, reelCaption: caption, reducedMotion, finePointer, onOpenChange: setOpen });
+  const hero = initHero({ canvas, copy, meta, reel, reelFrame, reelCaption: caption, reducedMotion, finePointer, onOpenChange: setOpen });
   if (!hero) return;
 
   let loaded = false;

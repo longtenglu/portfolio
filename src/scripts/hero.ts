@@ -41,6 +41,9 @@ const THRESHOLD = 0.12;
 
 type Options = {
   canvas: HTMLCanvasElement;
+  /** The headline block and the meta row, which bound the free space on phones. */
+  copy: HTMLElement | null;
+  meta: HTMLElement | null;
   reel: HTMLElement;
   reelFrame: HTMLElement;
   reelCaption: HTMLElement | null;
@@ -96,15 +99,59 @@ const TIP_MID_X = ((hands.tips.left[0] + hands.tips.right[0]) / 2 + 0.5) * SAMPL
 const TIP_MID_Y = ((hands.tips.left[1] + hands.tips.right[1]) / 2 + 0.5) * SAMPLE;
 const TIP_GAP = (hands.tips.right[0] - hands.tips.left[0]) * SAMPLE;
 
-function computeLayout(width: number, height: number): Layout {
+// How far the inked rows reach above and below the fingertips, in source
+// pixels, within a window of the given half-width around them.
+function inkReach(halfWidth: number) {
+  const x0 = Math.max(0, Math.floor((TIP_MID_X - halfWidth) / SAMPLE));
+  const x1 = Math.min(MAP_COLS - 1, Math.ceil((TIP_MID_X + halfWidth) / SAMPLE));
+  let top = -1;
+  let bottom = -1;
+  for (let y = 0; y < MAP_ROWS; y++) {
+    let n = 0;
+    for (let x = x0; x <= x1; x++) if (MAP[y * MAP_COLS + x] >= THRESHOLD) n++;
+    if (n < 3) continue;
+    if (top < 0) top = y;
+    bottom = y;
+  }
+  return { above: TIP_MID_Y - top * SAMPLE, below: (bottom + 1) * SAMPLE - TIP_MID_Y };
+}
+
+// Free space on a phone: the hands sit between the headline copy and the
+// meta row, and the reel hangs from the gap into whatever is left below.
+type Band = { top: number; bottom: number };
+
+function computeLayout(width: number, height: number, band: Band | null): Layout {
   const phone = width < 640;
   const tablet = !phone && width < 1024;
   const dpr = Math.min(window.devicePixelRatio || 1, phone ? 1.75 : 2);
-  const scale = (width * (phone ? 2.6 : tablet ? 1.35 : 1.06)) / hands.crop.w;
+  let scale = (width * (phone ? 2.6 : tablet ? 1.35 : 1.06)) / hands.crop.w;
   const fontSize = clamp(width / 150, 7, 10.5);
+  const cellH = fontSize * 1.12;
+  const reelW = phone ? width * 0.84 : tablet ? width * 0.46 : Math.min(width * 0.34, 620);
+
+  // On a phone, grow the hands to fill the free band (never past 1.3x, or
+  // the fingers stop reading as hands) and centre them in it. On a short
+  // phone the open reel wins over the clearance above the hands.
+  let phoneGapRest = height * 0.62;
+  let phoneGapEnd = height * 0.55;
+  if (phone && band && band.bottom > band.top) {
+    const reach = inkReach(width / 2 / scale);
+    const inkHeight = (reach.above + reach.below) * scale;
+    const fit = clamp(((band.bottom - band.top) * 0.86) / inkHeight, 1, 1.3);
+    scale *= fit;
+    const above = reach.above * scale;
+    const below = reach.below * scale;
+    const centred = band.top + (band.bottom - band.top - above - below) / 2 + above;
+    // The open reel (plus its caption) hangs below the gap and must clear
+    // the meta row, so the gap cannot sit lower than that allows.
+    const reelBelow = cellH + (reelW * 9) / 16 + 12 + 36;
+    const lowest = band.bottom - reelBelow;
+    phoneGapRest = centred;
+    // Rise a little as the reel opens, but stay clear of the copy above.
+    phoneGapEnd = Math.min(centred - 22, lowest);
+  }
   // Phones are too narrow for a reel between the hands, so there the reel
   // unfurls downward from the spark under the fingertips instead.
-  const reelW = phone ? width * 0.84 : tablet ? width * 0.46 : Math.min(width * 0.34, 620);
   return {
     phone,
     width,
@@ -113,14 +160,14 @@ function computeLayout(width: number, height: number): Layout {
     scale,
     fontSize,
     cellW: fontSize * 0.62,
-    cellH: fontSize * 1.12,
+    cellH,
     gapX: width * 0.5,
     // Desktop: the hands sit under the name and rise to the middle as the
     // reel opens. Phones keep the name in view and the hands below it.
-    gapYRest: height * (phone ? 0.62 : 0.7),
+    gapYRest: phone ? phoneGapRest : height * 0.7,
     // Stop just above the resting gap, so the reel opens in the fingertips
     // without rising into the copy above it.
-    gapYEnd: height * (phone ? 0.55 : 0.62),
+    gapYEnd: phone ? phoneGapEnd : height * 0.62,
     // At rest the fingertips nearly touch, as in the fresco. Opening the reel
     // parts them until they meet its edges.
     sepRest: TIP_GAP * scale + width * (phone ? 0.014 : 0.012),
@@ -283,11 +330,18 @@ function buildAtlas(layout: Layout) {
 }
 
 export function initHero(opts: Options) {
-  const { canvas, reel, reelFrame, reelCaption, reducedMotion, finePointer, onOpenChange } = opts;
+  const { canvas, copy, meta, reel, reelFrame, reelCaption, reducedMotion, finePointer, onOpenChange } = opts;
   const ctx = canvas.getContext("2d", { alpha: true });
   if (!ctx) return null;
 
-  let layout = computeLayout(canvas.clientWidth, canvas.clientHeight);
+  // The free band between the headline copy and the meta row, in canvas pixels.
+  const measureBand = (): Band | null => {
+    if (!copy || !meta) return null;
+    const box = canvas.getBoundingClientRect();
+    return { top: copy.getBoundingClientRect().bottom - box.top + 20, bottom: meta.getBoundingClientRect().top - box.top - 8 };
+  };
+
+  let layout = computeLayout(canvas.clientWidth, canvas.clientHeight, measureBand());
   let cells = buildCells(layout);
   let { atlas, aw, ah } = buildAtlas(layout);
   let progress = reducedMotion ? 1 : 0;
@@ -302,7 +356,7 @@ export function initHero(opts: Options) {
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
     if (!width || !height) return;
-    layout = computeLayout(width, height);
+    layout = computeLayout(width, height, measureBand());
     canvas.width = Math.round(width * layout.dpr);
     canvas.height = Math.round(height * layout.dpr);
     cells = buildCells(layout);
@@ -323,10 +377,16 @@ export function initHero(opts: Options) {
     return { w, h, curW, curH, open, line, sep };
   }
 
-  // The still frame (reduced motion) shows the reel already open in the
-  // resting gap, so the copy above it stays clear on every screen.
+  // The still frame (reduced motion) shows the reel already open. On a
+  // desktop it sits in the resting gap, so the copy above stays clear; on a
+  // phone the reel hangs below the gap, so it uses the open position, which
+  // is where the reel clears the meta row.
   const gapYAt = (p: number) =>
-    reducedMotion ? layout.gapYRest : lerp(layout.gapYRest, layout.gapYEnd, easeInOut(clamp(p / 0.9)));
+    reducedMotion
+      ? layout.phone
+        ? layout.gapYEnd
+        : layout.gapYRest
+      : lerp(layout.gapYRest, layout.gapYEnd, easeInOut(clamp(p / 0.9)));
 
   // Top edge of the reel: centred on the gap, or (phones) hanging from it.
   const reelTop = (s: ReturnType<typeof reelState>, gapY: number) =>
@@ -495,6 +555,8 @@ export function initHero(opts: Options) {
 
   const ro = new ResizeObserver(() => resize());
   ro.observe(canvas);
+  // The copy reflows when the fonts arrive, which moves the free band.
+  if (copy) ro.observe(copy);
 
   const io = new IntersectionObserver((entries) => {
     visible = entries.some((e) => e.isIntersecting);
