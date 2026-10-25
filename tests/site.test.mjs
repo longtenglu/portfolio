@@ -133,6 +133,32 @@ const heroGeometry = (page) =>
   });
 
 /**
+ * Count the pixels the hero canvas has painted behind the headline copy and
+ * behind the meta row, which the hands must stay clear of on a phone.
+ * @param {import("playwright-core").Page} page
+ */
+const handPixelsOverText = (page) =>
+  page.evaluate(() => {
+    const canvas = /** @type {HTMLCanvasElement} */ (document.querySelector("[data-hero-canvas]"));
+    const ctx = /** @type {CanvasRenderingContext2D} */ (canvas.getContext("2d"));
+    const box = canvas.getBoundingClientRect();
+    const scale = canvas.height / box.height;
+    /** @param {string} selector */
+    const painted = (selector) => {
+      const el = /** @type {HTMLElement} */ (document.querySelector(selector));
+      const rect = el.getBoundingClientRect();
+      const top = Math.max(0, Math.floor((rect.top - box.top) * scale));
+      const bottom = Math.min(canvas.height, Math.ceil((rect.bottom - box.top) * scale));
+      if (bottom <= top) return 0;
+      const data = ctx.getImageData(0, top, canvas.width, bottom - top).data;
+      let count = 0;
+      for (let i = 3; i < data.length; i += 4) if (data[i] > 0) count++;
+      return count;
+    };
+    return { overCopy: painted("[data-hero-copy]"), overMeta: painted("[data-hero-meta]") };
+  });
+
+/**
  * @param {Awaited<ReturnType<typeof heroGeometry>>} geometry
  * @param {string} viewport
  */
@@ -289,6 +315,27 @@ describe("hero reel, keyboard and pointer access", () => {
       await assertRestTriggerWorks(page, "320x568");
     } finally {
       await context.close();
+    }
+  });
+
+  test("on phones the hands are never painted over the headline copy or the meta row", async () => {
+    for (const [width, height] of [
+      [320, 568],
+      [375, 553],
+      [375, 667],
+      [390, 844],
+    ]) {
+      const viewport = `${width}x${height}`;
+      const { context, page } = await openHome({ viewport: { width, height } });
+      try {
+        for (const progress of [0, 0.18, 1]) {
+          await scrollHeroTo(page, progress);
+          const painted = await handPixelsOverText(page);
+          assert.deepEqual(painted, { overCopy: 0, overMeta: 0 }, `${viewport} at progress ${progress}`);
+        }
+      } finally {
+        await context.close();
+      }
     }
   });
 

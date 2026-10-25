@@ -70,6 +70,9 @@ type Layout = {
   reelW: number;
   canOpen: boolean;
   captionMaxY: number | null;
+  /** Phones only: glyphs outside this band are not drawn, so the hands never sit over the copy or the meta row. */
+  clipTop: number | null;
+  clipBottom: number | null;
   pointerRadius: number;
   pointerPush: number;
 };
@@ -134,6 +137,8 @@ function computeLayout(width: number, height: number, band: Band | null, caption
 
   let phoneCanOpen = true;
   let phoneCaptionMaxY: number | null = null;
+  let phoneClipTop: number | null = null;
+  let phoneClipBottom: number | null = null;
 
   // On a phone, grow the hands to fill the free band (never past 1.3x, or
   // the fingers stop reading as hands) and centre them in it. On a short
@@ -150,6 +155,9 @@ function computeLayout(width: number, height: number, band: Band | null, caption
     const below = reach.below * scale;
     const centred = band.top + (bandHeight - above - below) / 2 + above;
     phoneGapRest = centred;
+    // A glyph is about a cell tall, so keep a margin inside the free band.
+    phoneClipTop = band.top - 8;
+    phoneClipBottom = band.bottom + 4;
 
     const minReelW = 160;
     const captionAtMin = captionHeightAt(minReelW);
@@ -192,6 +200,8 @@ function computeLayout(width: number, height: number, band: Band | null, caption
     reelW,
     canOpen: phoneCanOpen,
     captionMaxY: phoneCaptionMaxY,
+    clipTop: phoneClipTop,
+    clipBottom: phoneClipBottom,
     pointerRadius: phone ? 0 : 110,
     pointerPush: 7,
   };
@@ -538,6 +548,14 @@ export function initHero(opts: Options) {
         const drift = (1 - alpha) * 18;
         x += Math.cos(c.phase[i]) * drift;
         y += Math.sin(c.phase[i]) * drift;
+      }
+
+      // On a short phone the band is smaller than the hands: whatever would
+      // land on the copy or the meta row is dropped, and the edge fades.
+      if (layout.clipTop !== null && layout.clipBottom !== null) {
+        const inside = Math.min(y - layout.clipTop, layout.clipBottom - y);
+        if (inside < 0) continue;
+        if (inside < 14) level -= 2;
       }
 
       // A slow travelling shimmer across the interior.
