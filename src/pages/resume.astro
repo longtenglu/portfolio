@@ -44,7 +44,7 @@ const contactLine = [
     <section class="cv__section" aria-labelledby="cv-experience">
       <h2 id="cv-experience" class="cv__h2 mono">{resume.experienceHeading}</h2>
       {
-        experience.roles.map((role, i) => (
+        experience.roles.map((role) => (
           <article class="cv__item">
             <div class="cv__row">
               <h3 class="cv__role">
@@ -53,7 +53,7 @@ const contactLine = [
               <p class="cv__dates mono">{role.dates}</p>
             </div>
             <ul class="cv__points">
-              {i === 0 && <li>{resume.taStats}</li>}
+              {role.org === "Tax Academy of Singapore" && <li>{resume.taStats}</li>}
               {role.points.map((p) => (
                 <li>{p}</li>
               ))}

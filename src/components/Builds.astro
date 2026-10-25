@@ -1,8 +1,12 @@
 ---
 import { builds } from "../content/copy";
 import { getImage } from "../lib/media";
+import { validateBuildShot } from "../../scripts/lib/builds.mjs";
 
-const items = builds.items.map((item) => ({ ...item, shot: item.shot ? getImage(item.shot) : null }));
+const items = builds.items.map((item) => {
+  validateBuildShot(item);
+  return { ...item, shot: item.shot ? getImage(item.shot) : null };
+});
 ---
 
 <section class="section builds" id="builds" aria-labelledby="builds-title">

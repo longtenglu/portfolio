@@ -41,7 +41,8 @@ export const hero = {
   },
 };
 
-export const strip = "ABOUT 70 VIDEOS • 10 PROGRAMMES AND EVENTS • 50 MADE WITH AN AI-ASSISTED WORKFLOW • SINGAPORE";
+export const strip =
+  "ABOUT 70 VIDEOS • ABOUT 10 PROGRAMMES AND EVENTS • ABOUT 50 MADE WITH AN AI-ASSISTED WORKFLOW • SINGAPORE";
 
 export const about = {
   heading: "About",
@@ -242,12 +243,12 @@ export const workflow = {
     {
       image: "proof-captions",
       title: "Captions",
-      caption: "Navy caption boxes, timed to the voiceover.",
+      caption: "Caption boxes, timed to the voiceover.",
     },
     {
       image: "proof-review",
       title: "AI frame review",
-      caption: "Sampled every 1.5 seconds, checked against the transcript.",
+      caption: "Frames sampled and checked against the transcript.",
     },
     {
       image: "proof-finish",

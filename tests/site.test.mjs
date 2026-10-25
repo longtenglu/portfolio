@@ -31,11 +31,11 @@ after(async () => {
 });
 
 /**
- * @param {{ reducedMotion?: "reduce" | "no-preference" }} [opts]
+ * @param {{ reducedMotion?: "reduce" | "no-preference", viewport?: { width: number, height: number } }} [opts]
  */
 async function openHome(opts = {}) {
   const context = await browser.newContext({
-    viewport: { width: 1440, height: 900 },
+    viewport: opts.viewport ?? { width: 1440, height: 900 },
     reducedMotion: opts.reducedMotion ?? "no-preference",
   });
   await context.route(/blob\.vercel-storage\.com/, (route) => route.abort());
@@ -116,6 +116,74 @@ describe("hero reel, keyboard and pointer access", () => {
         return Boolean(el?.closest("[data-reel-frame]"));
       });
       assert.equal(hit, false);
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("on a 375x667 phone the open reel and caption clear the meta row", async () => {
+    const { context, page } = await openHome({ viewport: { width: 375, height: 667 } });
+    try {
+      /** @param {number} progress */
+      const atProgress = async (progress) => {
+        await page.evaluate((p) => {
+          const intro = /** @type {HTMLElement} */ (document.querySelector("[data-intro]"));
+          window.scrollTo(0, (intro.offsetHeight - window.innerHeight) * p);
+        }, progress);
+        await page.evaluate(
+          () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+        );
+      };
+      const measure = () =>
+        page.evaluate(() => {
+          /** @param {string} selector */
+          const rect = (selector) => {
+            const el = document.querySelector(selector);
+            if (!el) throw new Error(`missing ${selector}`);
+            return el.getBoundingClientRect();
+          };
+          return {
+            copyBottom: rect("[data-hero-copy]").bottom,
+            reelTop: rect("[data-reel]").top,
+            reelBottom: rect("[data-reel]").bottom,
+            captionBottom: rect("[data-reel-caption]").bottom,
+            metaTop: rect("[data-hero-meta]").top,
+          };
+        });
+
+      assert.equal(await page.getAttribute("[data-reel]", "data-open"), "false");
+
+      await atProgress(0.18);
+      await page.waitForFunction(() => document.querySelector("[data-reel]")?.getAttribute("data-open") === "true");
+      const firstOpen = await measure();
+      assert.ok(
+        firstOpen.reelTop >= firstOpen.copyBottom,
+        `the open reel starts below the copy: reel ${firstOpen.reelTop}, copy ${firstOpen.copyBottom}`,
+      );
+      assert.ok(
+        firstOpen.reelBottom <= firstOpen.metaTop,
+        `the open reel clears the meta row: reel ${firstOpen.reelBottom}, meta ${firstOpen.metaTop}`,
+      );
+      assert.ok(
+        firstOpen.captionBottom <= firstOpen.metaTop,
+        `the caption clears the meta row: caption ${firstOpen.captionBottom}, meta ${firstOpen.metaTop}`,
+      );
+
+      await atProgress(1);
+      await page.waitForFunction(() => document.querySelector("[data-reel]")?.getAttribute("data-open") === "true");
+      const end = await measure();
+      assert.ok(
+        end.reelTop >= end.copyBottom,
+        `the fully open reel starts below the copy: reel ${end.reelTop}, copy ${end.copyBottom}`,
+      );
+      assert.ok(
+        end.reelBottom <= end.metaTop,
+        `the fully open reel clears the meta row: reel ${end.reelBottom}, meta ${end.metaTop}`,
+      );
+      assert.ok(
+        end.captionBottom <= end.metaTop,
+        `the full caption clears the meta row: caption ${end.captionBottom}, meta ${end.metaTop}`,
+      );
     } finally {
       await context.close();
     }
@@ -225,7 +293,7 @@ describe("fact strip", () => {
       assert.equal(strip.first, "ABOUT 70 VIDEOS");
       assert.equal(
         strip.text,
-        "ABOUT 70 VIDEOS • 10 PROGRAMMES AND EVENTS • 50 MADE WITH AN AI-ASSISTED WORKFLOW • SINGAPORE",
+        "ABOUT 70 VIDEOS • ABOUT 10 PROGRAMMES AND EVENTS • ABOUT 50 MADE WITH AN AI-ASSISTED WORKFLOW • SINGAPORE",
       );
     } finally {
       await context.close();

@@ -127,7 +127,7 @@ function computeLayout(width: number, height: number, band: Band | null): Layout
   let scale = (width * (phone ? 2.6 : tablet ? 1.35 : 1.06)) / hands.crop.w;
   const fontSize = clamp(width / 150, 7, 10.5);
   const cellH = fontSize * 1.12;
-  const reelW = phone ? width * 0.84 : tablet ? width * 0.46 : Math.min(width * 0.34, 620);
+  let reelW = phone ? width * 0.84 : tablet ? width * 0.46 : Math.min(width * 0.34, 620);
 
   // On a phone, grow the hands to fill the free band (never past 1.3x, or
   // the fingers stop reading as hands) and centre them in it. On a short
@@ -135,6 +135,9 @@ function computeLayout(width: number, height: number, band: Band | null): Layout
   let phoneGapRest = height * 0.62;
   let phoneGapEnd = height * 0.55;
   if (phone && band && band.bottom > band.top) {
+    const captionReserve = 52;
+    const maxReelW = ((band.bottom - band.top - cellH - 12 - captionReserve) * 16) / 9;
+    reelW = Math.min(reelW, Math.max(0, maxReelW));
     const reach = inkReach(width / 2 / scale);
     const inkHeight = (reach.above + reach.below) * scale;
     const fit = clamp(((band.bottom - band.top) * 0.86) / inkHeight, 1, 1.3);
@@ -144,7 +147,7 @@ function computeLayout(width: number, height: number, band: Band | null): Layout
     const centred = band.top + (band.bottom - band.top - above - below) / 2 + above;
     // The open reel (plus its caption) hangs below the gap and must clear
     // the meta row, so the gap cannot sit lower than that allows.
-    const reelBelow = cellH + (reelW * 9) / 16 + 12 + 36;
+    const reelBelow = cellH + (reelW * 9) / 16 + 12 + captionReserve;
     const lowest = band.bottom - reelBelow;
     phoneGapRest = centred;
     // Rise a little as the reel opens, but stay clear of the copy above.
@@ -364,13 +367,15 @@ export function initHero(opts: Options) {
     if (reducedMotion || !running) draw(performance.now(), true);
   }
 
+  const openAt = (p: number) => easeInOut(clamp((p - 0.04) / 0.22));
+
   // How far the gap has opened for a given scroll progress: first a spark
   // widens between the fingertips (parting the hands), then it opens tall.
   function reelState(p: number) {
     const w = layout.reelW;
     const h = (w * 9) / 16;
     const line = easeInOut(clamp(p / 0.16));
-    const open = easeInOut(clamp((p - 0.04) / 0.22));
+    const open = openAt(p);
     const sep = lerp(layout.sepRest, layout.sepEnd, line);
     const curW = lerp(Math.min(26, layout.sepRest * 0.6), w, line);
     const curH = lerp(2, h, open);
@@ -386,7 +391,7 @@ export function initHero(opts: Options) {
       ? layout.phone
         ? layout.gapYEnd
         : layout.gapYRest
-      : lerp(layout.gapYRest, layout.gapYEnd, easeInOut(clamp(p / 0.9)));
+      : lerp(layout.gapYRest, layout.gapYEnd, layout.phone ? openAt(p) : easeInOut(clamp(p / 0.9)));
 
   // Top edge of the reel: centred on the gap, or (phones) hanging from it.
   const reelTop = (s: ReturnType<typeof reelState>, gapY: number) =>
