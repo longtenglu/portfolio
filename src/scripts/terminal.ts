@@ -50,7 +50,13 @@ export function initTerminal() {
     whoami: () => data.whoami.forEach((l) => line(l)),
     projects: () => {
       line(data.projectsHeading, "term__accent");
-      data.projects.forEach((p, i) => line(`  0${i + 1}  ${p.title.padEnd(24)} ${p.kicker.toLowerCase()}`));
+      // Two columns where they fit, otherwise the kicker drops under the title.
+      const narrow = screen.clientWidth < 520;
+      data.projects.forEach((p, i) => {
+        const kicker = p.kicker.toLowerCase();
+        if (narrow) line(`  0${i + 1}  ${p.title}\n      ${kicker}`);
+        else line(`  0${i + 1}  ${p.title.padEnd(24)} ${kicker}`);
+      });
     },
     contact: () => {
       line(data.contactHeading, "term__accent");

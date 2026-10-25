@@ -42,14 +42,14 @@ const phrases = strip.split(" • ");
             data-src={reel.src}
             aria-hidden="true"
             tabindex="-1"></video>
-          <span class="hero__reel-play" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"></path></svg>
-          </span>
         </button>
       </div>
       <p class="hero__reel-caption mono" data-reel-caption>
         <span class="hero__reel-tag">{hero.reel.label}</span>
-        <span class="hero__reel-cta" aria-hidden="true">Click to watch with sound</span>
+        <span class="hero__reel-cta" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="12" height="12"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"></path></svg>
+          {hero.reel.watch}
+        </span>
       </p>
 
       <p class="hero__meta hero__meta--left mono">{site.location}</p>
@@ -119,8 +119,13 @@ const phrases = strip.split(" • ");
     z-index: 2;
     padding-top: clamp(100px, 14vh, 140px);
     pointer-events: none;
-    opacity: calc(1 - clamp(0, (var(--p, 0) - 0.1) * 2.8, 1));
-    transform: translate3d(0, calc(var(--p, 0) * -48px), 0);
+  }
+
+  @media (min-width: 640px) {
+    .hero__copy {
+      opacity: calc(1 - clamp(0, (var(--p, 0) - 0.1) * 2.8, 1));
+      transform: translate3d(0, calc(var(--p, 0) * -48px), 0);
+    }
   }
 
   .hero__title {
@@ -190,31 +195,6 @@ const phrases = strip.split(" • ");
     object-fit: cover;
   }
 
-  .hero__reel-play {
-    position: absolute;
-    right: 12px;
-    bottom: 12px;
-    display: grid;
-    place-items: center;
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    background: var(--accent);
-    color: var(--on-accent);
-    opacity: var(--reel-open, 1);
-    transform: scale(calc(0.6 + var(--reel-open, 1) * 0.4));
-    transition: transform 0.3s var(--ease);
-  }
-
-  .hero__reel-play svg {
-    width: 18px;
-    height: 18px;
-  }
-
-  .hero__reel-frame:hover .hero__reel-play {
-    transform: scale(1.08);
-  }
-
   .hero__reel-caption {
     position: absolute;
     left: 0;
@@ -233,6 +213,14 @@ const phrases = strip.split(" • ");
 
   .hero__reel-tag {
     color: var(--accent);
+  }
+
+  .hero__reel-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: none;
+    color: var(--text);
   }
 
   .hero__meta {
@@ -305,8 +293,11 @@ const phrases = strip.split(" • ");
       bottom: 16px;
     }
 
-    .hero__reel-cta {
-      display: none;
+    .hero__reel-caption {
+      flex-direction: column;
+      gap: 6px;
+      font-size: 10px;
+      letter-spacing: 0.06em;
     }
 
     .strip {

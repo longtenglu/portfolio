@@ -12,15 +12,15 @@ export const resume = {
   skills: [
     {
       title: "Marketing",
-      text: "Meta Ads Manager (CBO/ABO, CPM, CTR); Meta Pixel; Google Ads and Google Analytics (certified); Shopify; LinkedIn and email campaigns (EDMs); direct-response copywriting; consumer psychology",
+      text: "Meta Ads Manager (CBO/ABO, CPM, CTR); Meta Pixel; Google Ads and Google Analytics (certified 2025); Shopify; LinkedIn and email campaigns (EDMs); direct-response copywriting; consumer psychology",
     },
     {
       title: "Video and content",
-      text: "Shooting, directing and editing; CapCut; short-form and horizontal video; motion graphics rendered from code (Remotion, HyperFrames); Canva",
+      text: "Shooting, directing and editing; CapCut; short-form and horizontal video; motion graphics rendered from code (HyperFrames); Canva",
     },
     {
       title: "AI and automation",
-      text: "AI workflows for content, research and video review; Claude, Codex and Gemini; local models (Ollama); Python and JavaScript automation; APIs; Git",
+      text: "AI workflows for content, research and video review; Claude and Codex; local models (Ollama); Python automation; APIs; Git",
     },
   ],
   // The approximate Tax Academy numbers, worded for a resume.
@@ -31,16 +31,16 @@ export const resume = {
     {
       title: "Video and research automation",
       stack: "Python, LLM APIs",
-      dates: "Jun 2026 - Present",
+      dates: "2026",
       points: [
         "Video review tool samples frames alongside the transcript so an AI model can critique both the visuals and the speech.",
         "Research pipeline runs five expert perspectives in parallel, maps where they disagree, then has a separate reviewer check key citations against primary sources.",
       ],
     },
     {
-      title: "RoleCall, job-search app",
+      title: "RoleCall, a job-search app I built for myself",
       stack: "Node.js, LLM APIs",
-      dates: "Jun 2026 - Present",
+      dates: "2026",
       points: [
         "Pulls live listings from MyCareersFuture and Adzuna, removes reposts, scores fit, checks resume keywords against each listing and drafts research and cover letters; 96 automated tests.",
       ],
@@ -48,7 +48,7 @@ export const resume = {
     {
       title: "Longteng Studio, AI workspace",
       stack: "TypeScript, React",
-      dates: "Sep 2026 - Present",
+      dates: "2026",
       points: [
         "Routes tasks between AI agents with a review step before results are accepted; its video review room turns timestamped comments into revision tasks.",
       ],

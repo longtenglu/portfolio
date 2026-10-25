@@ -10,10 +10,7 @@ import { toolbox } from "../content/copy";
       {
         toolbox.groups.map((group, i) => (
           <div class="tgroup" data-reveal style={`--reveal-delay: ${i * 0.06}s`}>
-            <h3 class="tgroup__title mono">
-              <span class="tgroup__count">{String(group.tools.length).padStart(2, "0")}</span>
-              {group.title}
-            </h3>
+            <h3 class="tgroup__title mono">{group.title}</h3>
             <ul class="tgroup__list">
               {group.tools.map((tool) => (
                 <li>{tool}</li>
@@ -57,10 +54,6 @@ import { toolbox } from "../content/copy";
     color: var(--text);
     border-bottom: 1px solid var(--line);
     background: var(--bg-raised);
-  }
-
-  .tgroup__count {
-    color: var(--accent);
   }
 
   .tgroup__list li {

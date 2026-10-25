@@ -23,7 +23,7 @@ export const VIDEOS = [
   { id: "china-trip", orientation: "portrait", poster: 7.0, preview: { start: 15.0, duration: 6.0 } },
   { id: "iivt-few-words", orientation: "portrait", poster: 9.5, preview: { start: 8.0, duration: 5.5 } },
   { id: "bear-amsterdam-pre", orientation: "portrait", poster: 16.5, preview: { start: 8.0, duration: 5.5 } },
-  { id: "bear-amsterdam-during", orientation: "portrait", poster: 47.6, preview: { start: 40.5, duration: 5.5 } },
+  { id: "bear-amsterdam-during", orientation: "portrait", poster: 3.4, preview: { start: 40.5, duration: 5.5 } },
   { id: "bear-munich", orientation: "portrait", poster: 2.0, preview: { start: 0.5, duration: 5.5 } },
 ];
 

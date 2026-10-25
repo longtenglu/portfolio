@@ -38,6 +38,8 @@ const LEVELS = 16;
 // God's red cloak pokes in at the bottom right edge. It keys as skin, so mask
 // it out (source pixels right of x and below y).
 const CLOAK = { x: 1340, y: 430 };
+// Connected shapes smaller than this many samples are dropped as noise.
+const MIN_SHAPE = 120;
 
 /** @param {number} v @param {number} [lo] @param {number} [hi] */
 const clamp = (v, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
@@ -138,6 +140,37 @@ function main() {
       }
       if (n <= 2) cleaned[y * cols + x] = 0;
     }
+  }
+
+  // Keep only sizeable connected shapes: the two hands and arms. Warm spots
+  // in the plaster would otherwise show up as stray glyphs.
+  const label = new Int32Array(cols * rows).fill(-1);
+  const sizes = [];
+  for (let start = 0; start < cols * rows; start++) {
+    if (!cleaned[start] || label[start] !== -1) continue;
+    const id = sizes.length;
+    const stack = [start];
+    label[start] = id;
+    let size = 0;
+    while (stack.length) {
+      const i = /** @type {number} */ (stack.pop());
+      size++;
+      const x = i % cols;
+      const y = (i - x) / cols;
+      for (let yy = Math.max(0, y - 1); yy <= Math.min(rows - 1, y + 1); yy++) {
+        for (let xx = Math.max(0, x - 1); xx <= Math.min(cols - 1, x + 1); xx++) {
+          const j = yy * cols + xx;
+          if (cleaned[j] && label[j] === -1) {
+            label[j] = id;
+            stack.push(j);
+          }
+        }
+      }
+    }
+    sizes.push(size);
+  }
+  for (let i = 0; i < cols * rows; i++) {
+    if (cleaned[i] && sizes[label[i]] < MIN_SHAPE) cleaned[i] = 0;
   }
 
   // Fingertips: the inked sample nearest the split on each side.

@@ -32,6 +32,7 @@ export const hero = {
   reel: {
     label: "AI-generated footage and voiceover",
     action: "Play the full promo with sound",
+    watch: "Watch with sound",
   },
 };
 
@@ -104,7 +105,7 @@ export const experience: { heading: string; intro: string; roles: Role[] } = {
     {
       role: "Independent e-commerce and marketing project",
       org: "Personal project",
-      dates: "Dec 2025 - Present",
+      dates: "Dec 2025 - 2026",
       points: [
         "Launched a Shopify store with Meta Pixel tracking.",
         "Ran Meta Ads with CBO and ABO budget strategies and reviewed CPM and CTR.",
@@ -146,7 +147,7 @@ export const education = {
     },
   ],
   certifications:
-    "Google certifications (2025): Digital Marketing and E-commerce Specialization; Google Ads Search, Display, AI-Powered Performance and Shopping; Google Analytics.",
+    "Google certifications, earned 2025: Digital Marketing and E-commerce Specialization; Google Ads Search, Display, AI-Powered Performance and Shopping; Google Analytics.",
 };
 
 // The about-the-numbers wording: every figure on the site is approximate.
@@ -278,13 +279,13 @@ export const toolbox = {
   heading: "Toolbox",
   intro: "The tools I use on real work right now.",
   groups: [
-    { title: "Video and design", tools: ["CapCut", "HyperFrames", "Remotion", "Canva"] },
+    { title: "Video and design", tools: ["CapCut", "HyperFrames", "Canva"] },
     {
       title: "Marketing",
       tools: ["Meta Ads Manager", "Meta Pixel", "Google Ads", "Google Analytics", "Shopify", "LinkedIn", "Email campaigns"],
     },
-    { title: "AI", tools: ["Claude Code", "Claude", "Codex", "Gemini", "Ollama"] },
-    { title: "Code", tools: ["Python", "JavaScript", "TypeScript", "Node.js", "Git", "GitHub", "Linux", "Playwright"] },
+    { title: "AI", tools: ["Claude Code", "Claude", "Codex", "Ollama"] },
+    { title: "Code", tools: ["Python", "TypeScript", "Git", "GitHub", "Linux"] },
   ],
 };
 

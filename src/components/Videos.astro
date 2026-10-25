@@ -1,8 +1,7 @@
 ---
 import { videos } from "../content/copy";
-import { formatDuration, getVideo, isoDuration } from "../lib/media";
-
-type Media = ReturnType<typeof getVideo>;
+import { getVideo } from "../lib/media";
+import VideoButton from "./VideoButton.astro";
 
 const items = videos.items.map((item) => ({
   ...item,
@@ -30,8 +29,6 @@ for (const item of items) {
     };
   }
 }
-
-const playLabel = (title: string, media: Media) => `Play ${title}, ${formatDuration(media.duration)}, with sound`;
 ---
 
 <section class="section videos" id="videos" aria-labelledby="videos-title">
@@ -39,7 +36,7 @@ const playLabel = (title: string, media: Media) => `Play ${title}, ${formatDurat
     <div class="videos__head">
       <h2 class="label" id="videos-title"><span class="label__num">04</span>{videos.heading}</h2>
       <p class="videos__intro">
-        {videos.intro}
+        {videos.intro}{" "}
         <span class="videos__hint videos__hint--pointer">{videos.hint}</span>
         <span class="videos__hint videos__hint--touch">{videos.hintTouch}</span>
       </p>
@@ -49,24 +46,9 @@ const playLabel = (title: string, media: Media) => `Play ${title}, ${formatDurat
       {
         feature && feature.media && (
           <article class="vcard vcard--feature" data-reveal>
-            <button
-              class="vcard__media vcard__media--landscape"
-              type="button"
-              data-video-open={feature.id}
-              data-preview-host
-              aria-label={playLabel(feature.title, feature.media)}
-            >
-              <img src={feature.media.poster} alt="" width="1280" height="720" loading="lazy" decoding="async" />
-              <video class="vcard__preview" muted loop playsinline preload="none" data-src={feature.media.preview} aria-hidden="true" tabindex="-1" />
-              <span class="vcard__play" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor" /></svg>
-              </span>
-            </button>
+            <VideoButton id={feature.id} title={feature.title} media={feature.media} />
             <div class="vcard__info">
-              <p class="vcard__num mono">
-                <span>01</span>
-                <time datetime={isoDuration(feature.media.duration)}>{formatDuration(feature.media.duration)}</time>
-              </p>
+              <p class="vcard__num mono">01</p>
               <h3 class="vcard__title">{feature.title}</h3>
               <p class="vcard__line">{feature.line}</p>
               <ul class="vcard__skills" aria-label="Skills">
@@ -83,24 +65,9 @@ const playLabel = (title: string, media: Media) => `Play ${title}, ${formatDurat
         portraits.map((item, i) =>
           item.media ? (
             <article class="vcard vcard--portrait" data-reveal style={`--reveal-delay: ${(i % 4) * 0.06}s`}>
-              <button
-                class="vcard__media vcard__media--portrait"
-                type="button"
-                data-video-open={item.id}
-                data-preview-host
-                aria-label={playLabel(item.title, item.media)}
-              >
-                <img src={item.media.poster} alt="" width="720" height="1280" loading="lazy" decoding="async" />
-                <video class="vcard__preview" muted loop playsinline preload="none" data-src={item.media.preview} aria-hidden="true" tabindex="-1" />
-                <span class="vcard__play" aria-hidden="true">
-                  <svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor" /></svg>
-                </span>
-              </button>
+              <VideoButton id={item.id} title={item.title} media={item.media} />
               <div class="vcard__info">
-                <p class="vcard__num mono">
-                  <span>0{i + 2}</span>
-                  <time datetime={isoDuration(item.media.duration)}>{formatDuration(item.media.duration)}</time>
-                </p>
+                <p class="vcard__num mono">0{i + 2}</p>
                 <h3 class="vcard__title">{item.title}</h3>
                 <p class="vcard__line">{item.line}</p>
                 <ul class="vcard__skills" aria-label="Skills">
@@ -119,23 +86,8 @@ const playLabel = (title: string, media: Media) => `Play ${title}, ${formatDurat
             <ul class="vcard__films">
               {item.films?.map((film) => (
                 <li>
-                  <button
-                    class="vcard__media vcard__media--portrait"
-                    type="button"
-                    data-video-open={film.id}
-                    data-preview-host
-                    aria-label={playLabel(`${item.title}: ${film.title}`, film.media)}
-                  >
-                    <img src={film.media.poster} alt="" width="720" height="1280" loading="lazy" decoding="async" />
-                    <video class="vcard__preview" muted loop playsinline preload="none" data-src={film.media.preview} aria-hidden="true" tabindex="-1" />
-                    <span class="vcard__play" aria-hidden="true">
-                      <svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor" /></svg>
-                    </span>
-                  </button>
-                  <p class="vcard__film mono" aria-hidden="true">
-                    <span>{film.title}</span>
-                    <time datetime={isoDuration(film.media.duration)}>{formatDuration(film.media.duration)}</time>
-                  </p>
+                  <VideoButton id={film.id} title={`${item.title}: ${film.title}`} media={film.media} compact />
+                  <p class="vcard__film mono" aria-hidden="true">{film.title}</p>
                 </li>
               ))}
             </ul>
@@ -235,80 +187,6 @@ const playLabel = (title: string, media: Media) => `Play ${title}, ${formatDurat
     gap: clamp(10px, 1.4vw, 20px);
   }
 
-  .vcard__media {
-    position: relative;
-    display: block;
-    width: 100%;
-    overflow: hidden;
-    border-radius: var(--radius);
-    background: var(--bg-raised);
-    box-shadow: 0 0 0 1px var(--line);
-    transition: box-shadow 0.3s;
-  }
-
-  .vcard__media--landscape {
-    aspect-ratio: 16 / 9;
-  }
-
-  .vcard__media--portrait {
-    aspect-ratio: 9 / 16;
-  }
-
-  .vcard__media:hover,
-  .vcard__media:focus-visible {
-    box-shadow: 0 0 0 1px var(--accent), 0 12px 40px rgba(255, 176, 0, 0.12);
-  }
-
-  .vcard__media img,
-  .vcard__preview {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.9s var(--ease), opacity 0.4s;
-  }
-
-  .vcard__preview {
-    opacity: 0;
-  }
-
-  .vcard__media.is-previewing .vcard__preview {
-    opacity: 1;
-  }
-
-  .vcard__media:hover img,
-  .vcard__media:hover .vcard__preview {
-    transform: scale(1.03);
-  }
-
-  .vcard__play {
-    position: absolute;
-    left: 14px;
-    bottom: 14px;
-    display: grid;
-    place-items: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: rgba(11, 11, 11, 0.72);
-    color: var(--text);
-    backdrop-filter: blur(6px);
-    transition: background 0.25s, color 0.25s, transform 0.4s var(--ease);
-  }
-
-  .vcard__play svg {
-    width: 18px;
-    height: 18px;
-  }
-
-  .vcard__media:hover .vcard__play,
-  .vcard__media:focus-visible .vcard__play {
-    background: var(--accent);
-    color: var(--on-accent);
-    transform: scale(1.06);
-  }
-
   .vcard__info {
     padding-top: 18px;
   }
@@ -320,18 +198,9 @@ const playLabel = (title: string, media: Media) => `Play ${title}, ${formatDurat
   }
 
   .vcard__num {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
     font-size: 12px;
     letter-spacing: 0.1em;
     color: var(--accent);
-  }
-
-  .vcard__num time,
-  .vcard__film time {
-    color: var(--muted);
-    letter-spacing: 0.04em;
   }
 
   .vcard__title {
@@ -379,9 +248,6 @@ const playLabel = (title: string, media: Media) => `Play ${title}, ${formatDurat
   }
 
   .vcard__film {
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
     margin-top: 10px;
     font-size: 12px;
     color: var(--text);
@@ -429,28 +295,7 @@ const playLabel = (title: string, media: Media) => `Play ${title}, ${formatDurat
       display: none;
     }
 
-    .vcard__play {
-      width: 38px;
-      height: 38px;
-      left: 10px;
-      bottom: 10px;
-    }
-
-    .vcard__films .vcard__play {
-      width: 30px;
-      height: 30px;
-      left: 6px;
-      bottom: 6px;
-    }
-
-    .vcard__films .vcard__play svg {
-      width: 14px;
-      height: 14px;
-    }
-
     .vcard__film {
-      flex-direction: column;
-      gap: 2px;
       font-size: 11px;
     }
   }

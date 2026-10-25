@@ -273,19 +273,20 @@ async function encodePoster(src, out, size, at) {
 async function describe(mediaDir, rel, previous, extra = {}) {
   const abs = path.join(mediaDir, rel);
   const [info, hash, st] = await Promise.all([probe(abs), sha256(abs), stat(abs)]);
-  const file = {
+  const same = previous?.sha256 === hash;
+  const loudness = extra.loudness ?? (same ? previous?.loudness : undefined);
+  // Fixed key order keeps manifest diffs readable between runs.
+  return {
     path: rel,
     bytes: st.size,
     sha256: hash,
     width: info.width,
     height: info.height,
     ...(rel.endsWith(".mp4") && info.duration ? { duration: info.duration } : {}),
-    ...extra,
+    ...(loudness ? { loudness } : {}),
     // Keep a hosted URL only while it still points at the same bytes.
-    url: previous && previous.sha256 === hash ? previous.url : null,
+    url: same ? (previous?.url ?? null) : null,
   };
-  if (!file.loudness && previous?.loudness && previous.sha256 === hash) file.loudness = previous.loudness;
-  return file;
 }
 
 async function main() {

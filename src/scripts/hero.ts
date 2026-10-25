@@ -3,10 +3,11 @@
 //
 // The hands come from a density map built at dev time from the public-domain
 // Commons photo (scripts/hero/build-hands.mjs). Each frame draws a few
-// thousand glyphs from a pre-tinted atlas. Glyphs re-roll and shimmer, scatter
-// away from the cursor and settle back, and as the page scrolls the hands
-// drift together while the reel opens between them, pushing nearby glyphs
-// aside.
+// thousand glyphs from a pre-tinted atlas, every cell once, in its own place.
+// The silhouette is traced with outline glyphs so the fingers read at a
+// glance; the interior re-rolls and shimmers; glyphs near the cursor brighten
+// and lean away. At rest the fingertips almost touch. As the page scrolls a
+// spark between them widens, parting the hands, and opens into the reel.
 
 import hands from "../data/hands.json";
 
@@ -20,12 +21,23 @@ const GROUPS = ["-_", "_;=+-", "[]<>|+", "/\\{}", "/\\|{}<>", "01469/\\|"].map((
   [...g].map((c) => CHARS.indexOf(c)),
 );
 const STROKES = [..."/\\|<>{}[];=+-_"].map((c) => CHARS.indexOf(c));
+const STROKE_GROUP = GROUPS.length;
+// Outline cells keep a fixed glyph that follows the edge direction.
+const EDGE_GROUP = GROUPS.length + 1;
+const EDGE = {
+  vertical: CHARS.indexOf("|"),
+  top: CHARS.indexOf("_"),
+  bottom: CHARS.indexOf("-"),
+  rising: CHARS.indexOf("/"),
+  falling: CHARS.indexOf("\\"),
+};
 
 // Atlas rows: six resting brightness levels, then two hot levels used near
 // the cursor.
-const LEVEL_ALPHA = [0.26, 0.36, 0.48, 0.62, 0.78, 0.94];
+const LEVEL_ALPHA = [0.22, 0.34, 0.48, 0.64, 0.82, 1];
 const HOT_LEVELS = 2;
 const LEVELS = LEVEL_ALPHA.length + HOT_LEVELS;
+const THRESHOLD = 0.12;
 
 type Options = {
   canvas: HTMLCanvasElement;
@@ -37,12 +49,11 @@ type Options = {
 };
 
 type Layout = {
-  // On phones the reel opens below the fingertips instead of between them,
-  // so the hands stay in view.
-  reelBelow: boolean;
+  phone: boolean;
   width: number;
   height: number;
   dpr: number;
+  scale: number; // CSS pixels per source pixel of the fresco
   fontSize: number;
   cellW: number;
   cellH: number;
@@ -52,7 +63,6 @@ type Layout = {
   sepRest: number;
   sepEnd: number;
   reelW: number;
-  reelH: number;
   pointerRadius: number;
   pointerPush: number;
 };
@@ -78,7 +88,8 @@ const MAP = new Float32Array(MAP_COLS * MAP_ROWS);
 hands.density.forEach((line, y) => {
   for (let x = 0; x < MAP_COLS; x++) MAP[y * MAP_COLS + x] = parseInt(line[x], 16) / (hands.levels - 1);
 });
-// The midpoint between the two fingertips, in source pixels of the crop.
+// The midpoint between the two fingertips, in source pixels of the crop, and
+// how far apart they are in the fresco.
 const TIP_MID_X = ((hands.tips.left[0] + hands.tips.right[0]) / 2 + 0.5) * SAMPLE;
 const TIP_MID_Y = ((hands.tips.left[1] + hands.tips.right[1]) / 2 + 0.5) * SAMPLE;
 const TIP_GAP = (hands.tips.right[0] - hands.tips.left[0]) * SAMPLE;
@@ -87,35 +98,33 @@ function computeLayout(width: number, height: number): Layout {
   const phone = width < 640;
   const tablet = !phone && width < 1024;
   const dpr = Math.min(window.devicePixelRatio || 1, phone ? 1.75 : 2);
-  const fontSize = clamp(width / 128, 8, 12);
+  const scale = (width * (phone ? 2.6 : tablet ? 1.35 : 1.06)) / hands.crop.w;
+  const fontSize = clamp(width / 150, 7, 10.5);
+  // Phones are too narrow for a reel between the hands, so there the reel
+  // unfurls downward from the spark under the fingertips instead.
+  const reelW = phone ? width * 0.84 : tablet ? width * 0.46 : Math.min(width * 0.34, 620);
   return {
-    reelBelow: phone,
+    phone,
     width,
     height,
     dpr,
+    scale,
     fontSize,
     cellW: fontSize * 0.62,
-    cellH: fontSize * 1.16,
+    cellH: fontSize * 1.12,
     gapX: width * 0.5,
-    // At rest the hands sit low, under the name; they rise to the middle as
-    // the reel opens.
-    gapYRest: height * (phone ? 0.6 : 0.66),
-    gapYEnd: height * (phone ? 0.3 : 0.5),
-    // Hands start apart and drift together as the page scrolls.
-    sepRest: width * (phone ? 0.16 : tablet ? 0.17 : 0.15),
-    sepEnd: width * (phone ? 0.08 : 0.07),
-    reelW: phone ? width * 0.84 : tablet ? width * 0.46 : Math.min(width * 0.34, 620),
-    reelH: 0,
-    pointerRadius: phone ? 0 : 120,
-    pointerPush: 30,
+    // Desktop: the hands sit under the name and rise to the middle as the
+    // reel opens. Phones keep the name in view and the hands below it.
+    gapYRest: height * (phone ? 0.62 : 0.64),
+    gapYEnd: height * (phone ? 0.53 : 0.5),
+    // At rest the fingertips nearly touch, as in the fresco. Opening the reel
+    // parts them until they meet its edges.
+    sepRest: TIP_GAP * scale + width * (phone ? 0.014 : 0.012),
+    sepEnd: phone ? TIP_GAP * scale + width * 0.12 : reelW * 0.94,
+    reelW,
+    pointerRadius: phone ? 0 : 110,
+    pointerPush: 7,
   };
-}
-
-// How many CSS pixels one source pixel of the fresco covers.
-function bandScale(width: number) {
-  if (width < 640) return (width * 2.75) / hands.crop.w;
-  if (width < 1024) return (width * 1.35) / hands.crop.w;
-  return (width * 0.98) / hands.crop.w;
 }
 
 type Cells = {
@@ -123,7 +132,6 @@ type Cells = {
   side: Uint8Array; // 0 left hand, 1 right hand
   rx: Float32Array; // resting position relative to the fingertip midpoint
   ry: Float32Array;
-  dens: Float32Array;
   group: Uint8Array;
   glyph: Uint8Array;
   base: Uint8Array;
@@ -135,36 +143,22 @@ type Cells = {
 };
 
 function buildCells(layout: Layout): Cells {
-  const k = bandScale(layout.width);
+  const k = layout.scale;
   const cw = layout.cellW / k; // cell size in source pixels
   const ch = layout.cellH / k;
   const cols = Math.ceil(hands.crop.w / cw);
   const rows = Math.ceil(hands.crop.h / ch);
-  const max = cols * rows;
-  const side = new Uint8Array(max);
-  const rx = new Float32Array(max);
-  const ry = new Float32Array(max);
-  const dens = new Float32Array(max);
-  const group = new Uint8Array(max);
-  const glyph = new Uint8Array(max);
-  const base = new Uint8Array(max);
-  const phase = new Float32Array(max);
-  const delay = new Float32Array(max);
-  let n = 0;
   const splitPx = SPLIT * SAMPLE;
-  const maxDist = Math.hypot(hands.crop.w, hands.crop.h) / 2;
 
+  // Pass 1: area-average the map under every cell of the glyph grid.
+  const grid = new Float32Array(cols * rows);
   for (let gy = 0; gy < rows; gy++) {
     for (let gx = 0; gx < cols; gx++) {
       const sx0 = gx * cw;
       const sy0 = gy * ch;
-      const cx = sx0 + cw / 2;
-      // A cell belongs to the hand on its side of the split; cells that
-      // straddle it are skipped so the fingertips stay clean.
-      const isLeft = sx0 + cw <= splitPx;
-      const isRight = sx0 >= splitPx;
-      if (!isLeft && !isRight) continue;
-      // Area-average the map samples under this cell.
+      // Cells that straddle the split are left empty so the fingertips
+      // stay clean and the two hands never share a cell.
+      if (sx0 < splitPx && sx0 + cw > splitPx) continue;
       const mx0 = Math.floor(sx0 / SAMPLE);
       const my0 = Math.floor(sy0 / SAMPLE);
       const mx1 = Math.min(MAP_COLS - 1, Math.floor((sx0 + cw) / SAMPLE));
@@ -177,23 +171,67 @@ function buildCells(layout: Layout): Cells {
           samples++;
         }
       }
-      let v = samples ? total / samples : 0;
-      v = clamp(v + (hash(gx, gy, 1) - 0.5) * 0.14);
-      if (v < 0.12) continue;
-      // Punch occasional holes so the hand reads as grain, not a slab.
-      if (hash(gx, gy, 2) < 0.15 * (1 - v * 0.75)) continue;
-      const g = hash(gx, gy, 3) < 0.34 ? 6 : Math.min(5, Math.floor(v * 6));
-      side[n] = isLeft ? 0 : 1;
+      grid[gy * cols + gx] = samples ? clamp(total / samples + (hash(gx, gy, 1) - 0.5) * 0.06) : 0;
+    }
+  }
+  const at = (gx: number, gy: number) => (gx < 0 || gy < 0 || gx >= cols || gy >= rows ? 0 : grid[gy * cols + gx]);
+
+  // Pass 2: one glyph per inked cell. Cells on the silhouette get an outline
+  // glyph and more light; the interior gets texture.
+  const max = cols * rows;
+  const side = new Uint8Array(max);
+  const rx = new Float32Array(max);
+  const ry = new Float32Array(max);
+  const group = new Uint8Array(max);
+  const glyph = new Uint8Array(max);
+  const base = new Uint8Array(max);
+  const phase = new Float32Array(max);
+  const delay = new Float32Array(max);
+  const maxDist = Math.hypot(hands.crop.w, hands.crop.h) / 2;
+  let n = 0;
+
+  for (let gy = 0; gy < rows; gy++) {
+    for (let gx = 0; gx < cols; gx++) {
+      const v = grid[gy * cols + gx];
+      if (v < THRESHOLD) continue;
+      const left = at(gx - 1, gy) < THRESHOLD;
+      const right = at(gx + 1, gy) < THRESHOLD;
+      const up = at(gx, gy - 1) < THRESHOLD;
+      const down = at(gx, gy + 1) < THRESHOLD;
+      const edge = left || right || up || down;
+      // Speckle the interior only, so the outline stays unbroken.
+      if (!edge && hash(gx, gy, 2) < 0.1 * (1 - v)) continue;
+
+      let g: number;
+      let pick: number;
+      let level = Math.round(clamp((v - THRESHOLD) / 0.7) * 4);
+      if (edge) {
+        g = EDGE_GROUP;
+        // The density gradient points into the hand; the outline runs across it.
+        const dx = at(gx + 1, gy) - at(gx - 1, gy);
+        const dy = at(gx, gy + 1) - at(gx, gy - 1);
+        if (Math.abs(dx) > Math.abs(dy) * 1.8) pick = EDGE.vertical;
+        else if (Math.abs(dy) > Math.abs(dx) * 1.8) pick = dy > 0 ? EDGE.top : EDGE.bottom;
+        else pick = dx * dy > 0 ? EDGE.falling : EDGE.rising;
+        level = Math.min(LEVEL_ALPHA.length - 1, Math.max(level, 2) + 2);
+      } else {
+        g = hash(gx, gy, 3) < 0.3 ? STROKE_GROUP : Math.min(GROUPS.length - 1, Math.floor(v * GROUPS.length));
+        const pool = g === STROKE_GROUP ? STROKES : GROUPS[g];
+        pick = pool[Math.floor(hash(gx, gy, 4) * pool.length)];
+        level = Math.min(LEVEL_ALPHA.length - 2, level);
+      }
+
+      const cx = gx * cw + cw / 2;
+      const cy = gy * ch + ch / 2;
+      side[n] = cx < splitPx ? 0 : 1;
       rx[n] = (cx - TIP_MID_X) * k;
-      ry[n] = (sy0 + ch / 2 - TIP_MID_Y) * k;
-      dens[n] = v;
+      ry[n] = (cy - TIP_MID_Y) * k;
       group[n] = g;
-      const pool = g === 6 ? STROKES : GROUPS[g];
-      glyph[n] = pool[Math.floor(hash(gx, gy, 4) * pool.length)];
-      base[n] = Math.min(LEVEL_ALPHA.length - 2, Math.round(v * (LEVEL_ALPHA.length - 2)));
+      glyph[n] = pick;
+      base[n] = level;
       phase[n] = hash(gx, gy, 5) * Math.PI * 2;
       // The intro spreads out from the fingertips.
-      delay[n] = (Math.hypot(cx - TIP_MID_X, sy0 - TIP_MID_Y) / maxDist) * 0.9 + hash(gx, gy, 6) * 0.25;
+      delay[n] = (Math.hypot(cx - TIP_MID_X, cy - TIP_MID_Y) / maxDist) * 0.9 + hash(gx, gy, 6) * 0.2;
       n++;
     }
   }
@@ -202,7 +240,6 @@ function buildCells(layout: Layout): Cells {
     side,
     rx,
     ry,
-    dens,
     group,
     glyph,
     base,
@@ -268,46 +305,42 @@ export function initHero(opts: Options) {
     if (reducedMotion || !running) draw(performance.now(), true);
   }
 
-  // Where the reel sits and how far it has opened, for a given progress.
+  // How far the gap has opened for a given scroll progress: first a spark
+  // widens between the fingertips (parting the hands), then it opens tall.
   function reelState(p: number) {
     const w = layout.reelW;
     const h = (w * 9) / 16;
-    // First a thin line spreads between the fingertips, then it opens.
     const line = easeInOut(clamp(p / 0.42));
     const open = easeInOut(clamp((p - 0.32) / 0.5));
-    const curW = lerp(Math.min(28, w), w, line);
+    const sep = lerp(layout.sepRest, layout.sepEnd, line);
+    const curW = lerp(Math.min(26, layout.sepRest * 0.6), w, line);
     const curH = lerp(2, h, open);
-    return { w, h, curW, curH, open, line, cy: 0 };
+    return { w, h, curW, curH, open, line, sep };
   }
 
-  // The still frame (reduced motion) keeps the hands at rest height, under
-  // the copy, with the reel already open between them.
-  const gapYAt = (p: number) => {
-    if (reducedMotion) return layout.gapYRest - (layout.reelBelow ? layout.height * 0.05 : 0);
-    return lerp(layout.gapYRest, layout.gapYEnd, easeInOut(clamp(p / 0.9)));
-  };
+  // The still frame (reduced motion) shows the reel already open; on phones
+  // it sits a little higher so the caption clears the labels below.
+  const gapYAt = (p: number) =>
+    reducedMotion
+      ? layout.gapYRest - (layout.phone ? layout.height * 0.07 : 0)
+      : lerp(layout.gapYRest, layout.gapYEnd, easeInOut(clamp(p / 0.9)));
 
-  // Vertical centre of the reel: in the gap, or sliding down below it.
-  function reelCenterY(p: number, gapY: number, h: number) {
-    if (!layout.reelBelow) return gapY;
-    return gapY + (h / 2 + 64) * easeInOut(clamp(p / 0.4));
-  }
+  // Top edge of the reel: centred on the gap, or (phones) hanging from it.
+  const reelTop = (s: ReturnType<typeof reelState>, gapY: number) =>
+    layout.phone ? gapY + layout.cellH : gapY - s.curH / 2;
 
   function placeReel(p: number, gapY: number) {
     const s = reelState(p);
-    const cy = reelCenterY(p, gapY, s.h);
     const x = layout.gapX - s.curW / 2;
-    const y = cy - s.curH / 2;
+    const y = reelTop(s, gapY);
     reel.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
     reel.style.width = `${s.curW.toFixed(1)}px`;
     reel.style.height = `${s.curH.toFixed(1)}px`;
     reelFrame.style.width = `${s.w.toFixed(1)}px`;
     reelFrame.style.height = `${s.h.toFixed(1)}px`;
     reel.dataset.open = s.open > 0.98 ? "true" : "false";
-    reel.style.setProperty("--reel-open", s.open.toFixed(3));
-    Object.assign(s, { cy });
     if (reelCaption) {
-      reelCaption.style.transform = `translate3d(${(layout.gapX - s.w / 2).toFixed(1)}px, ${(cy + s.h / 2 + 12).toFixed(1)}px, 0)`;
+      reelCaption.style.transform = `translate3d(${(layout.gapX - s.w / 2).toFixed(1)}px, ${(y + s.curH + 12).toFixed(1)}px, 0)`;
       reelCaption.style.width = `${s.w.toFixed(1)}px`;
       reelCaption.style.opacity = clamp((s.open - 0.55) / 0.35).toFixed(3);
     }
@@ -320,108 +353,103 @@ export function initHero(opts: Options) {
     const p = progress;
     const gapY = gapYAt(p);
     const s = placeReel(p, gapY);
-    const sep = lerp(layout.sepRest, layout.sepEnd, easeInOut(clamp(p / 0.85)));
-    const shift = (sep - TIP_GAP * bandScale(width)) / 2;
-    const rx0 = gapX - s.curW / 2;
-    const rx1 = gapX + s.curW / 2;
-    const ry0 = s.cy - s.curH / 2;
-    // Keep the caption under the reel clear too, once it shows.
-    const ry1 = s.cy + s.curH / 2 + (s.open > 0.5 ? 30 * s.open : 0);
-    const margin = 8 + 12 * s.open;
-    const reelActive = s.open > 0.02 || s.line > 0.5;
+    const shift = (s.sep - TIP_GAP * layout.scale) / 2;
+
+    // The reel (and its caption, once shown) is a window cut out of the
+    // field: cells under it are not drawn, cells just outside it dim.
+    const cutting = s.line > 0.04;
+    const pad = 4 + 8 * s.line;
+    const feather = 18;
+    const cx0 = gapX - s.curW / 2 - pad;
+    const cx1 = gapX + s.curW / 2 + pad;
+    const top = reelTop(s, gapY);
+    const cy0 = top - (layout.phone ? 2 : pad);
+    const cy1 = top + s.curH + pad + (s.open > 0.5 ? (layout.phone ? 52 : 30) * s.open : 0);
+
     const pr = layout.pointerRadius;
     const pointerOn = pointer.active && pr > 0 && !still;
-    const intro = still ? 1 : clamp(t / 1.6);
-    const introRunning = intro < 1;
+    const introRunning = !still && t < 1.7;
 
     ctx!.setTransform(1, 0, 0, 1, 0, 0);
     ctx!.clearRect(0, 0, canvas.width, canvas.height);
 
     const c = cells;
-    const reroll = still ? 0 : Math.ceil(c.count * 0.01);
-    for (let r = 0; r < reroll; r++) {
-      const i = (Math.random() * c.count) | 0;
-      const pool = c.group[i] === 6 ? STROKES : GROUPS[c.group[i]];
-      c.glyph[i] = pool[(Math.random() * pool.length) | 0];
+    if (!still) {
+      // Re-roll a few interior glyphs each frame; outlines stay put.
+      const reroll = Math.ceil(c.count * 0.01);
+      for (let r = 0; r < reroll; r++) {
+        const i = (Math.random() * c.count) | 0;
+        if (c.group[i] === EDGE_GROUP) continue;
+        const pool = c.group[i] === STROKE_GROUP ? STROKES : GROUPS[c.group[i]];
+        c.glyph[i] = pool[(Math.random() * pool.length) | 0];
+      }
     }
 
     for (let i = 0; i < c.count; i++) {
-      const baseX = gapX + c.rx[i] + (c.side[i] === 0 ? -shift : shift);
-      const baseY = gapY + c.ry[i];
+      const homeX = gapX + c.rx[i] + (c.side[i] === 0 ? -shift : shift);
+      const homeY = gapY + c.ry[i];
+      if (homeX < -16 || homeX > width + 16 || homeY < -16 || homeY > height + 16) continue;
+
+      let level = c.base[i];
+      if (cutting) {
+        const outX = homeX < cx0 ? cx0 - homeX : homeX > cx1 ? homeX - cx1 : 0;
+        const outY = homeY < cy0 ? cy0 - homeY : homeY > cy1 ? homeY - cy1 : 0;
+        if (outX === 0 && outY === 0) continue;
+        if (Math.max(outX, outY) < feather) level -= 2;
+      }
+
+      // Near the cursor glyphs light up and lean away a little.
       let tx = 0;
       let ty = 0;
       let heat = 0;
-
-      {
-        if (pointerOn) {
-          const dx = baseX + c.ox[i] - pointer.x;
-          const dy = baseY + c.oy[i] - pointer.y;
-          const d2 = dx * dx + dy * dy;
-          if (d2 < pr * pr) {
-            const d = Math.sqrt(d2) || 1;
-            const f = (1 - d / pr) * (1 - d / pr);
-            tx += (dx / d) * f * layout.pointerPush * (0.6 + c.dens[i]);
-            ty += (dy / d) * f * layout.pointerPush * (0.6 + c.dens[i]);
-            heat = f;
+      if (pointerOn) {
+        const dx = homeX - pointer.x;
+        const dy = homeY - pointer.y;
+        const d2 = dx * dx + dy * dy;
+        if (d2 < pr * pr) {
+          const d = Math.sqrt(d2) || 1;
+          const f = (1 - d / pr) * (1 - d / pr);
+          tx = (dx / d) * f * layout.pointerPush;
+          ty = (dy / d) * f * layout.pointerPush;
+          heat = f;
+          if (f > 0.3 && c.group[i] !== EDGE_GROUP && Math.random() < 0.08) {
+            const pool = c.group[i] === STROKE_GROUP ? STROKES : GROUPS[c.group[i]];
+            c.glyph[i] = pool[(Math.random() * pool.length) | 0];
           }
-        }
-        if (reelActive) {
-          // Glyphs inside the opening reel are pushed to its nearest edge.
-          const x = baseX;
-          const y = baseY;
-          if (x > rx0 - margin && x < rx1 + margin && y > ry0 - margin && y < ry1 + margin) {
-            // Out through the nearest edge, plus a little scatter so the
-            // displaced glyphs spray rather than stack in a line.
-            const left = rx0 - margin - x;
-            const right = rx1 + margin - x;
-            const up = ry0 - margin - y;
-            const down = ry1 + margin - y;
-            const extra = (0.5 + 0.5 * Math.sin(c.phase[i] * 3.1)) * 22 * s.open;
-            if (Math.min(-left, right) < Math.min(-up, down)) tx += -left < right ? left - extra : right + extra;
-            else ty += -up < down ? up - extra : down + extra;
-          }
-        }
-        if (still) {
-          // A still frame lands straight on the target.
-          c.ox[i] = tx;
-          c.oy[i] = ty;
-          c.heat[i] = 0;
-        } else {
-          // Spring towards the target offset.
-          c.ox[i] += (tx - c.ox[i]) * 0.14;
-          c.oy[i] += (ty - c.oy[i]) * 0.14;
-          c.heat[i] += (heat - c.heat[i]) * 0.12;
         }
       }
+      if (still) {
+        c.ox[i] = 0;
+        c.oy[i] = 0;
+        c.heat[i] = 0;
+      } else {
+        c.ox[i] += (tx - c.ox[i]) * 0.16;
+        c.oy[i] += (ty - c.oy[i]) * 0.16;
+        c.heat[i] += (heat - c.heat[i]) * 0.14;
+      }
 
-      let x = baseX + c.ox[i];
-      let y = baseY + c.oy[i];
+      let x = homeX + c.ox[i];
+      let y = homeY + c.oy[i];
       let alpha = 1;
       if (introRunning) {
-        const local = easeOut(clamp((t - c.delay[i]) / 0.7));
-        alpha = local;
-        if (local <= 0) continue;
-        // Glyphs settle in from a small scatter.
-        const spread = (1 - local) * 40;
-        x += Math.cos(c.phase[i]) * spread;
-        y += Math.sin(c.phase[i]) * spread;
+        alpha = easeOut(clamp((t - c.delay[i]) / 0.6));
+        if (alpha <= 0) continue;
+        // Glyphs settle in from a short drift.
+        const drift = (1 - alpha) * 18;
+        x += Math.cos(c.phase[i]) * drift;
+        y += Math.sin(c.phase[i]) * drift;
       }
-      if (x < -20 || x > width + 20 || y < -20 || y > height + 20) continue;
 
-      // A slow travelling shimmer across the field.
-      let level = c.base[i];
-      if (!still) {
-        const wave = Math.sin(baseX * 0.012 - t * 1.4 + c.phase[i] * 0.6);
+      // A slow travelling shimmer across the interior.
+      if (!still && c.group[i] !== EDGE_GROUP) {
+        const wave = Math.sin(homeX * 0.012 - t * 1.4 + c.phase[i] * 0.6);
         if (wave > 0.82) level += 1;
         else if (wave < -0.9) level -= 1;
       }
-      // Glyphs the reel has shoved aside fade back, so the piles along its
-      // edges stay quiet instead of stacking into a bright wall.
-      if (Math.abs(c.ox[i]) + Math.abs(c.oy[i]) > 10 && c.heat[i] < 0.2) level -= 2;
       const h = c.heat[i];
-      if (h > 0.55) level = LEVEL_ALPHA.length + 1;
-      else if (h > 0.25) level = LEVEL_ALPHA.length;
-      else if (h > 0.08) level = Math.max(level, LEVEL_ALPHA.length - 1);
+      if (h > 0.5) level = LEVEL_ALPHA.length + 1;
+      else if (h > 0.22) level = LEVEL_ALPHA.length;
+      else if (h > 0.06) level = Math.max(level, LEVEL_ALPHA.length - 1);
       level = level < 0 ? 0 : level >= LEVELS ? LEVELS - 1 : level;
 
       if (introRunning) ctx!.globalAlpha = alpha;
@@ -438,16 +466,6 @@ export function initHero(opts: Options) {
       );
     }
     if (introRunning) ctx!.globalAlpha = 1;
-
-    // Phones: a thin line ties the fingertips to the reel below them.
-    if (layout.reelBelow && s.line > 0.02) {
-      const top = gapY + 6;
-      const bottom = s.cy - s.curH / 2 - 2;
-      if (bottom > top) {
-        ctx!.fillStyle = `rgba(${AMBER[0]}, ${AMBER[1]}, ${AMBER[2]}, ${(0.7 * clamp(s.line * 2)).toFixed(3)})`;
-        ctx!.fillRect(Math.round(gapX * dpr), Math.round(top * dpr), Math.max(1, Math.round(dpr)), Math.round((bottom - top) * dpr));
-      }
-    }
   }
 
   function frame(now: number) {

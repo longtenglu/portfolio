@@ -55,18 +55,18 @@ import { nav, site } from "../content/copy";
 </dialog>
 
 <style>
+  /* Solid at every scroll position, so nothing shows behind the logo and
+     links. The rule underneath appears once the page moves. */
   .header {
     position: fixed;
     inset: 0 0 auto;
     z-index: 50;
-    transition: background 0.3s, border-color 0.3s, backdrop-filter 0.3s;
+    background: var(--bg);
     border-bottom: 1px solid transparent;
+    transition: border-color 0.3s;
   }
 
   .header.is-scrolled {
-    background: rgba(11, 11, 11, 0.78);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
     border-bottom-color: var(--line);
   }
 
