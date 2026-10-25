@@ -1,0 +1,360 @@
+---
+// Hero plus strip. On motion-friendly screens the pair sits in a sticky
+// stage for an extra screen of scroll, which drives the hands together and
+// opens the reel between them.
+import { hero, site, strip, videos } from "../content/copy";
+import { getReel } from "../lib/media";
+
+const reel = getReel();
+const atp = videos.items.find((v) => v.id === "atp-promo");
+const phrases = strip.split(" • ");
+---
+
+<div class="intro" id="top" data-intro>
+  <div class="intro__stage">
+    <section class="hero" aria-labelledby="hero-title" data-hero>
+      <canvas class="hero__canvas" aria-hidden="true" data-hero-canvas></canvas>
+
+      <div class="hero__copy container">
+        <h1 id="hero-title" class="hero__title">
+          <span class="hero__name">{site.name}</span>
+          <span class="hero__claim">{hero.claim}</span>
+        </h1>
+        <p class="hero__sub">{hero.sub}</p>
+      </div>
+
+      <div class="hero__reel" data-reel>
+        <button
+          class="hero__reel-frame"
+          type="button"
+          data-reel-frame
+          data-video-open="atp-promo"
+          aria-label={`${hero.reel.action}: ${atp?.title}. ${hero.reel.label}.`}
+        >
+          <video
+            class="hero__reel-video"
+            muted
+            loop
+            playsinline
+            preload="none"
+            poster={reel.poster}
+            data-reel-video
+            data-src={reel.src}
+            aria-hidden="true"
+            tabindex="-1"></video>
+          <span class="hero__reel-play" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"></path></svg>
+          </span>
+        </button>
+      </div>
+      <p class="hero__reel-caption mono" data-reel-caption>
+        <span class="hero__reel-tag">{hero.reel.label}</span>
+        <span class="hero__reel-cta" aria-hidden="true">Click to watch with sound</span>
+      </p>
+
+      <p class="hero__meta hero__meta--left mono">{site.location}</p>
+      <p class="hero__meta hero__meta--right mono" aria-hidden="true">
+        {hero.scroll}
+        <svg viewBox="0 0 12 12" width="10" height="10"><path d="M6 1v9M2 6.5 6 10.5 10 6.5" stroke="currentColor" fill="none" stroke-width="1.3"></path></svg>
+      </p>
+    </section>
+
+    <div class="strip" data-strip>
+      <p class="visually-hidden">{strip}</p>
+      <div class="strip__track" aria-hidden="true" data-strip-track>
+        {
+          [0, 1].map(() => (
+            <span class="strip__unit" data-strip-unit>
+              {phrases.map((phrase) => (
+                <>
+                  <span class="strip__phrase">{phrase}</span>
+                  <span class="strip__dot">•</span>
+                </>
+              ))}
+            </span>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .intro {
+    position: relative;
+    /* One extra screen of scroll drives the hero. */
+    height: 200vh;
+    height: 200svh;
+  }
+
+  .intro__stage {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    height: 100svh;
+    min-height: 560px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .hero {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .hero__canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* --p is scroll progress through the stage (set by intro.ts). The copy
+     steps back as the reel opens. */
+  .hero__copy {
+    position: relative;
+    z-index: 2;
+    padding-top: clamp(100px, 14vh, 140px);
+    pointer-events: none;
+    opacity: calc(1 - clamp(0, (var(--p, 0) - 0.1) * 2.8, 1));
+    transform: translate3d(0, calc(var(--p, 0) * -48px), 0);
+  }
+
+  .hero__title {
+    display: grid;
+    gap: 16px;
+  }
+
+  .hero__name {
+    white-space: nowrap;
+    font-size: clamp(44px, 6vw, 92px);
+    font-weight: 780;
+    font-stretch: 104%;
+    letter-spacing: -0.04em;
+    line-height: 0.92;
+  }
+
+  .hero__claim {
+    font-size: clamp(19px, 1.75vw, 26px);
+    font-weight: 560;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+    color: var(--text);
+    max-width: 22ch;
+  }
+
+  .hero__sub {
+    margin-top: 14px;
+    max-width: 40ch;
+    font-size: 15px;
+    color: var(--muted);
+  }
+
+  /* The reel is placed and opened by the hero script, which knows where the
+     fingertips are. Without the script it sits open below the copy. */
+  .hero__reel {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 3;
+    width: min(84vw, 560px);
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: 4px;
+    box-shadow: 0 0 0 1px var(--accent), 0 0 60px rgba(255, 176, 0, 0.18);
+    background: #000;
+    transform: translate3d(var(--gutter), 52vh, 0);
+    will-change: transform, width, height;
+  }
+
+  .hero__reel-frame {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 100%;
+    height: 100%;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+  }
+
+  .hero__reel-frame:focus-visible {
+    outline-offset: -4px;
+  }
+
+  .hero__reel-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .hero__reel-play {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--on-accent);
+    opacity: var(--reel-open, 1);
+    transform: scale(calc(0.6 + var(--reel-open, 1) * 0.4));
+    transition: transform 0.3s var(--ease);
+  }
+
+  .hero__reel-play svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .hero__reel-frame:hover .hero__reel-play {
+    transform: scale(1.08);
+  }
+
+  .hero__reel-caption {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 3;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    transform: translate3d(var(--gutter), calc(52vh + 47vw + 12px), 0);
+    pointer-events: none;
+  }
+
+  .hero__reel-tag {
+    color: var(--accent);
+  }
+
+  .hero__meta {
+    position: absolute;
+    bottom: 22px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .hero__meta--left {
+    left: var(--gutter);
+  }
+
+  .hero__meta--right {
+    right: var(--gutter);
+  }
+
+  .strip {
+    position: relative;
+    flex: none;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+  }
+
+  .strip__track {
+    display: flex;
+    width: max-content;
+    will-change: transform;
+  }
+
+  .strip__unit {
+    display: flex;
+    align-items: center;
+    flex: none;
+  }
+
+  .strip__phrase {
+    padding-inline: 28px;
+    font-size: 17px;
+    font-weight: 720;
+    font-stretch: 118%;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--text);
+  }
+
+  .strip__dot {
+    color: var(--accent);
+    font-size: 12px;
+  }
+
+  @media (max-width: 640px) {
+    .hero__copy {
+      padding-top: 96px;
+    }
+
+    .hero__meta {
+      bottom: 16px;
+    }
+
+    .hero__reel-cta {
+      display: none;
+    }
+
+    .strip {
+      height: 52px;
+    }
+
+    .strip__phrase {
+      font-size: 14px;
+      padding-inline: 20px;
+    }
+  }
+
+  /* No pinned stage when motion is reduced: the hero is a still frame with
+     the reel already open, and the strip wraps instead of scrolling. */
+  @media (prefers-reduced-motion: reduce) {
+    .intro {
+      height: auto;
+    }
+
+    .intro__stage {
+      position: relative;
+    }
+
+    .strip {
+      height: auto;
+      padding-block: 18px;
+    }
+
+    .strip__track {
+      width: 100%;
+      flex-wrap: wrap;
+      justify-content: center;
+      transform: none !important;
+    }
+
+    .strip__unit {
+      flex: 1 1 100%;
+      flex-wrap: wrap;
+      justify-content: center;
+      row-gap: 8px;
+    }
+
+    .strip__unit + .strip__unit {
+      display: none;
+    }
+
+    .strip__unit .strip__dot:last-child {
+      display: none;
+    }
+  }
+</style>

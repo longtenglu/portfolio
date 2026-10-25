@@ -1,0 +1,42 @@
+---
+import Base from "../layouts/Base.astro";
+import { site } from "../content/copy";
+---
+
+<Base title={`Not found | ${site.name}`}>
+  <main class="nf container" id="main">
+    <p class="nf__code mono">404</p>
+    <h1 class="nf__title">Nothing here.</h1>
+    <p class="nf__text">This page doesn't exist, or it moved.</p>
+    <a class="btn" href="/">Back to the site</a>
+  </main>
+</Base>
+
+<style>
+  .nf {
+    min-height: 100svh;
+    display: grid;
+    align-content: center;
+    justify-items: start;
+    gap: 18px;
+  }
+
+  .nf__code {
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+  }
+
+  .nf__title {
+    font-size: clamp(48px, 9vw, 120px);
+    font-weight: 820;
+    font-stretch: 80%;
+    line-height: 0.95;
+    text-transform: uppercase;
+  }
+
+  .nf__text {
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+</style>

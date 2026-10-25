@@ -1,0 +1,540 @@
+---
+import { videos } from "../content/copy";
+import { formatDuration, getVideo, isoDuration } from "../lib/media";
+
+type Media = ReturnType<typeof getVideo>;
+
+const items = videos.items.map((item) => ({
+  ...item,
+  media: item.films ? null : getVideo(item.id),
+  films: item.films?.map((film) => ({ ...film, media: getVideo(film.id) })) ?? null,
+}));
+const feature = items.find((item) => item.media?.orientation === "landscape");
+const portraits = items.filter((item) => item !== feature && !item.films);
+const series = items.filter((item) => item.films);
+
+// What the modal needs to play each file, keyed by media id.
+const playable: Record<string, { title: string; src: string; poster: string; orientation: string; note: string }> = {};
+for (const item of items) {
+  const note = [videos.credit, item.aiLabel].filter(Boolean).join(" · ");
+  if (item.media) {
+    playable[item.id] = { title: item.title, src: item.media.src, poster: item.media.poster, orientation: item.media.orientation, note };
+  }
+  for (const film of item.films ?? []) {
+    playable[film.id] = {
+      title: `${item.title}: ${film.title}`,
+      src: film.media.src,
+      poster: film.media.poster,
+      orientation: film.media.orientation,
+      note,
+    };
+  }
+}
+
+const playLabel = (title: string, media: Media) => `Play ${title}, ${formatDuration(media.duration)}, with sound`;
+---
+
+<section class="section videos" id="videos" aria-labelledby="videos-title">
+  <div class="container">
+    <div class="videos__head">
+      <h2 class="label" id="videos-title"><span class="label__num">04</span>{videos.heading}</h2>
+      <p class="videos__intro">
+        {videos.intro}
+        <span class="videos__hint videos__hint--pointer">{videos.hint}</span>
+        <span class="videos__hint videos__hint--touch">{videos.hintTouch}</span>
+      </p>
+    </div>
+
+    <div class="vgrid">
+      {
+        feature && feature.media && (
+          <article class="vcard vcard--feature" data-reveal>
+            <button
+              class="vcard__media vcard__media--landscape"
+              type="button"
+              data-video-open={feature.id}
+              data-preview-host
+              aria-label={playLabel(feature.title, feature.media)}
+            >
+              <img src={feature.media.poster} alt="" width="1280" height="720" loading="lazy" decoding="async" />
+              <video class="vcard__preview" muted loop playsinline preload="none" data-src={feature.media.preview} aria-hidden="true" tabindex="-1" />
+              <span class="vcard__play" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor" /></svg>
+              </span>
+            </button>
+            <div class="vcard__info">
+              <p class="vcard__num mono">
+                <span>01</span>
+                <time datetime={isoDuration(feature.media.duration)}>{formatDuration(feature.media.duration)}</time>
+              </p>
+              <h3 class="vcard__title">{feature.title}</h3>
+              <p class="vcard__line">{feature.line}</p>
+              <ul class="vcard__skills" aria-label="Skills">
+                {feature.skills.map((skill) => <li class="chip">{skill}</li>)}
+              </ul>
+              {feature.aiLabel && <p class="vcard__ai mono">{feature.aiLabel}</p>}
+              <p class="vcard__credit mono">{videos.credit}</p>
+            </div>
+          </article>
+        )
+      }
+
+      {
+        portraits.map((item, i) =>
+          item.media ? (
+            <article class="vcard vcard--portrait" data-reveal style={`--reveal-delay: ${(i % 4) * 0.06}s`}>
+              <button
+                class="vcard__media vcard__media--portrait"
+                type="button"
+                data-video-open={item.id}
+                data-preview-host
+                aria-label={playLabel(item.title, item.media)}
+              >
+                <img src={item.media.poster} alt="" width="720" height="1280" loading="lazy" decoding="async" />
+                <video class="vcard__preview" muted loop playsinline preload="none" data-src={item.media.preview} aria-hidden="true" tabindex="-1" />
+                <span class="vcard__play" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor" /></svg>
+                </span>
+              </button>
+              <div class="vcard__info">
+                <p class="vcard__num mono">
+                  <span>0{i + 2}</span>
+                  <time datetime={isoDuration(item.media.duration)}>{formatDuration(item.media.duration)}</time>
+                </p>
+                <h3 class="vcard__title">{item.title}</h3>
+                <p class="vcard__line">{item.line}</p>
+                <ul class="vcard__skills" aria-label="Skills">
+                  {item.skills.map((skill) => <li class="chip">{skill}</li>)}
+                </ul>
+                <p class="vcard__credit mono">{videos.credit}</p>
+              </div>
+            </article>
+          ) : null,
+        )
+      }
+
+      {
+        series.map((item) => (
+          <article class="vcard vcard--series" data-reveal>
+            <ul class="vcard__films">
+              {item.films?.map((film) => (
+                <li>
+                  <button
+                    class="vcard__media vcard__media--portrait"
+                    type="button"
+                    data-video-open={film.id}
+                    data-preview-host
+                    aria-label={playLabel(`${item.title}: ${film.title}`, film.media)}
+                  >
+                    <img src={film.media.poster} alt="" width="720" height="1280" loading="lazy" decoding="async" />
+                    <video class="vcard__preview" muted loop playsinline preload="none" data-src={film.media.preview} aria-hidden="true" tabindex="-1" />
+                    <span class="vcard__play" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor" /></svg>
+                    </span>
+                  </button>
+                  <p class="vcard__film mono" aria-hidden="true">
+                    <span>{film.title}</span>
+                    <time datetime={isoDuration(film.media.duration)}>{formatDuration(film.media.duration)}</time>
+                  </p>
+                </li>
+              ))}
+            </ul>
+            <div class="vcard__info">
+              <p class="vcard__num mono">0{portraits.length + 2}</p>
+              <h3 class="vcard__title">{item.title}</h3>
+              <p class="vcard__line">{item.line}</p>
+              <ul class="vcard__skills" aria-label="Skills">
+                {item.skills.map((skill) => <li class="chip">{skill}</li>)}
+              </ul>
+              <p class="vcard__credit mono">{videos.credit}</p>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<dialog class="vmodal" aria-labelledby="vmodal-title" data-video-modal data-lenis-prevent>
+  <div class="vmodal__panel">
+    <div class="vmodal__bar">
+      <h2 class="vmodal__title" id="vmodal-title" data-video-title></h2>
+      <button class="vmodal__close mono" type="button" data-video-close>
+        {videos.close}
+        <svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2 2 12" stroke="currentColor" stroke-width="1.4"></path></svg>
+      </button>
+    </div>
+    <div class="vmodal__player" data-video-frame>
+      <video controls playsinline preload="none" data-video-player></video>
+    </div>
+    <p class="vmodal__note mono" data-video-note></p>
+  </div>
+</dialog>
+
+<script is:inline type="application/json" id="video-data" set:html={JSON.stringify(playable)} />
+
+<style>
+  .videos__head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 24px;
+    align-items: end;
+  }
+
+  .videos__intro {
+    color: var(--muted);
+    max-width: 46ch;
+    justify-self: end;
+  }
+
+  .videos__hint--touch {
+    display: none;
+  }
+
+  @media (hover: none), (pointer: coarse) {
+    .videos__hint--pointer {
+      display: none;
+    }
+
+    .videos__hint--touch {
+      display: inline;
+    }
+  }
+
+  .vgrid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: clamp(28px, 3vw, 40px) clamp(16px, 2vw, 28px);
+    margin-top: 48px;
+  }
+
+  .vcard--feature {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+    gap: clamp(20px, 3vw, 44px);
+    align-items: end;
+  }
+
+  .vcard--portrait {
+    grid-column: span 3;
+  }
+
+  .vcard--series {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    gap: clamp(20px, 3vw, 44px);
+    align-items: end;
+    padding-top: 8px;
+  }
+
+  .vcard__films {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(10px, 1.4vw, 20px);
+  }
+
+  .vcard__media {
+    position: relative;
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    border-radius: var(--radius);
+    background: var(--bg-raised);
+    box-shadow: 0 0 0 1px var(--line);
+    transition: box-shadow 0.3s;
+  }
+
+  .vcard__media--landscape {
+    aspect-ratio: 16 / 9;
+  }
+
+  .vcard__media--portrait {
+    aspect-ratio: 9 / 16;
+  }
+
+  .vcard__media:hover,
+  .vcard__media:focus-visible {
+    box-shadow: 0 0 0 1px var(--accent), 0 12px 40px rgba(255, 176, 0, 0.12);
+  }
+
+  .vcard__media img,
+  .vcard__preview {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.9s var(--ease), opacity 0.4s;
+  }
+
+  .vcard__preview {
+    opacity: 0;
+  }
+
+  .vcard__media.is-previewing .vcard__preview {
+    opacity: 1;
+  }
+
+  .vcard__media:hover img,
+  .vcard__media:hover .vcard__preview {
+    transform: scale(1.03);
+  }
+
+  .vcard__play {
+    position: absolute;
+    left: 14px;
+    bottom: 14px;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(11, 11, 11, 0.72);
+    color: var(--text);
+    backdrop-filter: blur(6px);
+    transition: background 0.25s, color 0.25s, transform 0.4s var(--ease);
+  }
+
+  .vcard__play svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .vcard__media:hover .vcard__play,
+  .vcard__media:focus-visible .vcard__play {
+    background: var(--accent);
+    color: var(--on-accent);
+    transform: scale(1.06);
+  }
+
+  .vcard__info {
+    padding-top: 18px;
+  }
+
+  .vcard--feature .vcard__info,
+  .vcard--series .vcard__info {
+    padding-top: 0;
+    padding-bottom: 4px;
+  }
+
+  .vcard__num {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+  }
+
+  .vcard__num time,
+  .vcard__film time {
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+
+  .vcard__title {
+    margin-top: 8px;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+
+  .vcard--feature .vcard__title,
+  .vcard--series .vcard__title {
+    font-size: clamp(24px, 2.4vw, 34px);
+    font-weight: 750;
+  }
+
+  .vcard__line {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.5;
+    text-wrap: pretty;
+  }
+
+  .vcard__skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 14px;
+  }
+
+  .vcard__ai {
+    margin-top: 16px;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .vcard__credit {
+    margin-top: 12px;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--dim);
+  }
+
+  .vcard__film {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.4;
+  }
+
+  @media (max-width: 1024px) {
+    .vcard--portrait {
+      grid-column: span 6;
+    }
+
+    .vcard--series {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 820px) {
+    .videos__head {
+      grid-template-columns: 1fr;
+    }
+
+    .videos__intro {
+      justify-self: start;
+    }
+
+    .vcard--feature {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .vgrid {
+      column-gap: 14px;
+    }
+
+    .vcard__title {
+      font-size: 17px;
+    }
+
+    .vcard__line {
+      font-size: 14px;
+    }
+
+    .vcard--portrait .vcard__skills {
+      display: none;
+    }
+
+    .vcard__play {
+      width: 38px;
+      height: 38px;
+      left: 10px;
+      bottom: 10px;
+    }
+
+    .vcard__films .vcard__play {
+      width: 30px;
+      height: 30px;
+      left: 6px;
+      bottom: 6px;
+    }
+
+    .vcard__films .vcard__play svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .vcard__film {
+      flex-direction: column;
+      gap: 2px;
+      font-size: 11px;
+    }
+  }
+
+  /* Modal player */
+  .vmodal {
+    width: min(100vw - 32px, 1180px);
+    max-width: none;
+    max-height: calc(100svh - 32px);
+    margin: auto;
+    padding: 0;
+    border: 1px solid var(--line-strong);
+    border-radius: 10px;
+    background: var(--bg);
+    overflow: hidden;
+  }
+
+  .vmodal[data-orientation="portrait"] {
+    width: min(100vw - 32px, calc((100svh - 150px) * 9 / 16 + 2px), 520px);
+  }
+
+  .vmodal__panel {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .vmodal__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 12px 12px 18px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .vmodal__title {
+    font-size: 15px;
+    font-weight: 650;
+    line-height: 1.3;
+  }
+
+  .vmodal__close {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding-inline: 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    box-shadow: inset 0 0 0 1px var(--line-strong);
+    flex: none;
+  }
+
+  .vmodal__close:hover {
+    box-shadow: inset 0 0 0 1px var(--accent);
+    color: var(--accent);
+  }
+
+  .vmodal__close svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .vmodal__player {
+    background: #000;
+  }
+
+  .vmodal__player video {
+    width: 100%;
+    max-height: calc(100svh - 150px);
+    aspect-ratio: 16 / 9;
+    background: #000;
+  }
+
+  .vmodal[data-orientation="portrait"] .vmodal__player video {
+    aspect-ratio: 9 / 16;
+  }
+
+  .vmodal__note {
+    padding: 12px 18px 14px;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+</style>

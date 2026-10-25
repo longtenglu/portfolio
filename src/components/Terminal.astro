@@ -1,0 +1,173 @@
+---
+// The hidden terminal: press ` (backtick) anywhere, or use the footer button.
+import { builds, site, terminal } from "../content/copy";
+
+const data = {
+  ...terminal,
+  notFound: terminal.notFound("{cmd}"),
+  projects: builds.items.map((b) => ({ title: b.title, kicker: b.kicker })),
+  contact: [
+    { label: "email", value: site.email, href: `mailto:${site.email}` },
+    { label: "github", value: site.github.replace("https://", ""), href: site.github },
+    { label: "linkedin", value: site.linkedin.replace("https://www.", ""), href: site.linkedin },
+  ],
+};
+---
+
+<dialog class="term" aria-labelledby="term-title" data-terminal data-lenis-prevent>
+  <div class="term__bar mono">
+    <span class="term__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+    <h2 class="term__title" id="term-title">{terminal.title}</h2>
+    <button class="term__close" type="button" data-terminal-close>Esc</button>
+  </div>
+  <div class="term__screen mono" data-terminal-screen>
+    <div class="term__out" role="log" aria-live="polite" data-terminal-out></div>
+    <form class="term__form" data-terminal-form>
+      <label class="term__prompt" for="term-input">{terminal.prompt}</label>
+      <input
+        class="term__input"
+        id="term-input"
+        type="text"
+        autocomplete="off"
+        autocapitalize="off"
+        spellcheck="false"
+        enterkeyhint="send"
+        data-terminal-input
+      />
+    </form>
+  </div>
+</dialog>
+
+<script is:inline type="application/json" id="terminal-data" set:html={JSON.stringify(data)} />
+
+<style>
+  .term {
+    width: min(100vw - 32px, 720px);
+    max-width: none;
+    height: min(100svh - 64px, 460px);
+    max-height: none;
+    margin: auto;
+    padding: 0;
+    border: 1px solid var(--line-strong);
+    border-radius: 10px;
+    background: #0e0e0e;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 176, 0, 0.08);
+    overflow: hidden;
+  }
+
+  .term[open] {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .term__bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px 10px 16px;
+    border-bottom: 1px solid var(--line);
+    font-size: 12px;
+  }
+
+  .term__dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .term__dots i {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1px solid var(--line-strong);
+  }
+
+  .term__dots i:first-child {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .term__title {
+    flex: 1;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .term__close {
+    min-height: 30px;
+    padding-inline: 10px;
+    border-radius: 4px;
+    box-shadow: inset 0 0 0 1px var(--line-strong);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .term__close:hover {
+    color: var(--accent);
+  }
+
+  .term__screen {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 18px 20px;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .term__out :global(p) {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    color: var(--muted);
+  }
+
+  .term__out :global(.term__cmd) {
+    color: var(--text);
+  }
+
+  .term__out :global(.term__cmd span) {
+    color: var(--accent);
+  }
+
+  .term__out :global(.term__accent) {
+    color: var(--accent);
+  }
+
+  .term__out :global(a) {
+    color: var(--text);
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-underline-offset: 3px;
+  }
+
+  .term__form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 10px;
+  }
+
+  .term__prompt {
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  .term__input {
+    flex: 1;
+    min-width: 8ch;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    caret-color: var(--accent);
+  }
+
+  .term__input:focus-visible {
+    outline: none;
+  }
+
+  .term__form:focus-within {
+    box-shadow: inset 0 -1px 0 var(--line-strong);
+  }
+</style>
