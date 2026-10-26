@@ -34,7 +34,7 @@ after(async () => {
 /**
  * Opens the home page without waiting for the hero, which starts on its own
  * font clock.
- * @param {{ reducedMotion?: "reduce" | "no-preference", width?: number, height?: number }} [opts]
+ * @param {{ reducedMotion?: "reduce" | "no-preference", width?: number, height?: number, holdFonts?: boolean }} [opts]
  */
 async function openPage(opts = {}) {
   const context = await browser.newContext({
@@ -42,9 +42,12 @@ async function openPage(opts = {}) {
     reducedMotion: opts.reducedMotion ?? "no-preference",
   });
   await context.route(/blob\.vercel-storage\.com/, (route) => route.abort());
+  /** @type {import("playwright-core").Route[]} */
+  const fonts = [];
+  if (opts.holdFonts) await context.route(/\.woff2$/, (route) => void fonts.push(route));
   const page = await context.newPage();
-  await page.goto(`http://127.0.0.1:${server.port}/`);
-  return { context, page };
+  await page.goto(`http://127.0.0.1:${server.port}/`, opts.holdFonts ? { waitUntil: "domcontentloaded" } : undefined);
+  return { context, page, fonts };
 }
 
 /**
@@ -315,6 +318,53 @@ describe("the strip", () => {
       }
     });
   }
+
+  test("stays hidden until it is ready, then fades in", async () => {
+    const { context, page, fonts } = await openPage({ holdFonts: true });
+    try {
+      const before = await page.evaluate(() => {
+        const strip = document.querySelector("[data-strip]");
+        const track = document.querySelector("[data-strip-track]");
+        if (!(strip instanceof HTMLElement) || !(track instanceof HTMLElement)) throw new Error("no strip");
+        return {
+          ready: strip.classList.contains("is-ready"),
+          opacity: Number(getComputedStyle(track).opacity),
+        };
+      });
+      assert.equal(before.ready, false, "the strip is not ready while its face is still loading");
+      assert.equal(before.opacity, 0, "the track is held hidden until it has been measured");
+      await Promise.all(fonts.map((route) => route.continue()));
+      await page.waitForSelector(".strip.is-ready");
+      await page.waitForFunction(() => {
+        const track = document.querySelector("[data-strip-track]");
+        return track instanceof HTMLElement && getComputedStyle(track).opacity === "1";
+      });
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("is simply there, unwrapped from the marquee, when motion is reduced", async () => {
+    const { context, page } = await openPage({ reducedMotion: "reduce" });
+    try {
+      const state = await page.evaluate(() => {
+        const strip = document.querySelector("[data-strip]");
+        const track = document.querySelector("[data-strip-track]");
+        if (!(strip instanceof HTMLElement) || !(track instanceof HTMLElement)) throw new Error("no strip");
+        const style = getComputedStyle(track);
+        return {
+          ready: strip.classList.contains("is-ready"),
+          opacity: Number(style.opacity),
+          transform: style.transform,
+        };
+      });
+      assert.equal(state.ready, false);
+      assert.equal(state.opacity, 1, "the reduced-motion strip is not left hidden");
+      assert.equal(state.transform, "none");
+    } finally {
+      await context.close();
+    }
+  });
 
   test("keeps its words, and says 70 videos rather than aspiring", async () => {
     const { context, page } = await openHome();

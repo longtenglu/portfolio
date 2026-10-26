@@ -341,12 +341,12 @@ if (!film) throw new Error(`The hero reel film "${hero.reel.film}" is not in the
 
   /* The marquee waits for the fonts (strip.ts), so it never shows fallback
      text. Without the script, or with motion reduced, it is simply there. */
-  .js .strip__track {
+  :global(.js) .strip__track {
     opacity: 0;
     transition: opacity 0.5s;
   }
 
-  .js .strip.is-ready .strip__track {
+  :global(.js) .strip.is-ready .strip__track {
     opacity: 1;
   }
 
@@ -426,7 +426,7 @@ if (!film) throw new Error(`The hero reel film "${hero.reel.film}" is not in the
     }
 
     .strip__track,
-    .js .strip__track {
+    :global(.js) .strip__track {
       width: 100%;
       flex-wrap: wrap;
       justify-content: center;
