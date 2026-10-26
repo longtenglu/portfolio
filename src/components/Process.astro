@@ -17,7 +17,6 @@ const steps = process.steps.map((step) => ({ ...step, still: getStill(step.id) }
       {
         steps.map((step, i) => (
           <li class="step" data-reveal style={`--reveal-delay: ${(i % 3) * 0.06}s`}>
-            <p class="step__num mono" aria-hidden="true">0{i + 1}</p>
             <img
               class="step__still"
               src={step.still.src}
@@ -27,7 +26,10 @@ const steps = process.steps.map((step) => ({ ...step, still: getStill(step.id) }
               loading="lazy"
               decoding="async"
             />
-            <h3 class="step__title">{step.title}</h3>
+            <div class="step__head">
+              <span class="step__num mono" aria-hidden="true">0{i + 1}</span>
+              <h3 class="step__title">{step.title}</h3>
+            </div>
             <p class="step__caption">{step.caption}</p>
             <p class="step__from">{process.from} {step.film}</p>
           </li>
@@ -59,36 +61,32 @@ const steps = process.steps.map((step) => ({ ...step, still: getStill(step.id) }
     margin-top: 48px;
   }
 
-  /* The step number runs into a hairline, so the stills read as one strip. */
-  .step__num {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 12px;
-    letter-spacing: 0.1em;
-    color: var(--accent);
-  }
-
-  .step__num::after {
-    content: "";
-    flex: 1;
-    height: 1px;
-    background: var(--line-strong);
-  }
-
   .step__still {
     width: 100%;
     height: auto;
     aspect-ratio: 4 / 5;
-    margin-top: 14px;
     object-fit: cover;
     border-radius: var(--radius);
     box-shadow: 0 0 0 1px var(--line);
     background: var(--bg-raised);
   }
 
-  .step__title {
+  /* A small plain number beside the title, with nothing running off it. */
+  .step__head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
     margin-top: 16px;
+  }
+
+  .step__num {
+    flex: none;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+  }
+
+  .step__title {
     font-size: 17px;
     font-weight: 650;
     letter-spacing: -0.01em;

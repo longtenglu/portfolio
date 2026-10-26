@@ -387,6 +387,19 @@ describe("page details", () => {
     }
   });
 
+  test("step numbers are plain, with no rule running off them", async () => {
+    const { context, page } = await openHome();
+    try {
+      const after = await page.evaluate(() =>
+        [...document.querySelectorAll(".step__num")].map((el) => getComputedStyle(el, "::after").content),
+      );
+      assert.equal(after.length, 6);
+      assert.ok(after.every((c) => c === "none" || c === "normal"), `a step number has an ::after of ${after}`);
+    } finally {
+      await context.close();
+    }
+  });
+
   test("the process strip shows six stills with their captions", async () => {
     const { context, page } = await openHome();
     try {
