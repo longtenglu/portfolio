@@ -1,6 +1,7 @@
 // @ts-check
 // Finds a local Chrome or Chromium for the scripts that drive a browser
-// (the resume PDF and the browser tests). Set CHROME_PATH to override.
+// (the resume PDF, the share image and the browser tests). Set CHROME_PATH to
+// override.
 
 import { existsSync } from "node:fs";
 
