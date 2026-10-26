@@ -94,6 +94,39 @@ import SectionLabel from "./SectionLabel.astro";
     background: var(--bg-raised);
   }
 
+  /* The grid's light background draws the dividers in the 1px gaps, so a card
+     must never fade out as a whole: it would show as a grey block until it
+     revealed. The card stays put with its dark background, and only what is
+     inside it comes in. */
+  :global(.js) .build[data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: background 0.3s;
+  }
+
+  :global(.js) .build[data-reveal] > * {
+    opacity: 0;
+    transform: translate3d(0, 28px, 0);
+    transition:
+      opacity 0.9s var(--ease),
+      transform 0.9s var(--ease),
+      background-size 0.4s var(--ease),
+      color 0.2s;
+    transition-delay: var(--reveal-delay, 0s), var(--reveal-delay, 0s), 0s, 0s;
+  }
+
+  :global(.js) .build[data-reveal].is-in > * {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(.js) .build[data-reveal] > * {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
   .build__top {
     display: flex;
     justify-content: space-between;

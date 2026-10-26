@@ -415,6 +415,94 @@ describe("page details", () => {
     }
   });
 
+  test("a Builds card keeps its solid dark background before it reveals, and only its content comes in", async () => {
+    const { context, page } = await openHome({ width: 390, height: 844 });
+    try {
+      // Builds is far below the fold, so on load no card has revealed yet.
+      const before = await page.evaluate(() =>
+        [...document.querySelectorAll(".build")].map((card) => ({
+          revealed: card.classList.contains("is-in"),
+          opacity: getComputedStyle(card).opacity,
+          background: getComputedStyle(card).backgroundColor,
+          content: [...card.children].map((el) => getComputedStyle(el).opacity),
+        })),
+      );
+      assert.equal(before.length, 4);
+      for (const card of before) {
+        assert.equal(card.revealed, false);
+        assert.equal(card.opacity, "1", "the card itself is never faded out");
+        assert.equal(card.background, "rgb(11, 11, 11)", "the card is solid dark, so the divider colour never shows through");
+        assert.ok(card.content.every((o) => o === "0"), "its content waits to come in");
+      }
+
+      await page.evaluate(() => document.querySelector(".builds__grid")?.scrollIntoView());
+      await page.waitForFunction(() => document.querySelector(".build")?.classList.contains("is-in"));
+      await page.waitForFunction(() =>
+        [...(document.querySelector(".build")?.children ?? [])].every((el) => getComputedStyle(el).opacity === "1"),
+      );
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("the process source lines sit level on one line per row", async () => {
+    for (const { width, height, perRow } of [{ width: 1440, height: 900, perRow: 6 }, { width: 390, height: 844, perRow: 2 }]) {
+      const { context, page } = await openHome({ width, height });
+      try {
+        await page.addStyleTag({ content: "*, *::before, *::after { transition: none !important; transform: none !important; }" });
+        const lines = await page.evaluate(() =>
+          [...document.querySelectorAll(".step__from")].map((el) => {
+            const r = el.getBoundingClientRect();
+            return { bottom: Math.round(r.bottom + window.scrollY), height: Math.round(r.height) };
+          }),
+        );
+        assert.equal(lines.length, 6);
+        // Each step in a row ends on the same line, however long its caption is.
+        for (let i = 0; i < lines.length; i += perRow) {
+          const row = lines.slice(i, i + perRow);
+          assert.ok(
+            row.every((l) => Math.abs(l.bottom - row[0].bottom) <= 1),
+            `at ${width}px a row's source lines end at ${row.map((l) => l.bottom)}`,
+          );
+        }
+      } finally {
+        await context.close();
+      }
+    }
+  });
+
+  test("the footer's text and button are centred on one line", async () => {
+    const { context, page } = await openHome();
+    try {
+      // The vertical centre of what is actually drawn, not of the stretched boxes around it.
+      const centres = await page.evaluate(() => {
+        const text = (/** @type {string} */ selector) => {
+          const range = document.createRange();
+          range.selectNodeContents(/** @type {Element} */ (document.querySelector(selector)));
+          const r = range.getBoundingClientRect();
+          return r.top + r.height / 2;
+        };
+        const box = (/** @type {string} */ selector) => {
+          const r = /** @type {Element} */ (document.querySelector(selector)).getBoundingClientRect();
+          return r.top + r.height / 2;
+        };
+        return {
+          copyright: text(".footer__inner > p:first-child"),
+          credit: text(".footer__credit"),
+          hint: box(".footer__key"),
+          button: box(".footer__terminal"),
+        };
+      });
+      const all = Object.values(centres);
+      assert.ok(
+        all.every((c) => Math.abs(c - all[0]) <= 1.5),
+        `the footer centres are ${JSON.stringify(centres)}`,
+      );
+    } finally {
+      await context.close();
+    }
+  });
+
   test("the process strip shows six stills with their captions", async () => {
     const { context, page } = await openHome();
     try {

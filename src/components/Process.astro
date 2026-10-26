@@ -53,12 +53,19 @@ const steps = process.steps.map((step) => ({ ...step, still: getStill(step.id) }
     justify-self: end;
   }
 
-  /* A strip of six stills, one per step, read left to right. */
+  /* A strip of six stills, one per step, read left to right. Each step is as
+     tall as its row, with the source line pinned to the bottom, so the lines
+     sit level whether the caption runs to two lines or three. */
   .process__steps {
     display: grid;
     grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 40px clamp(14px, 1.6vw, 24px);
     margin-top: 48px;
+  }
+
+  .step {
+    display: flex;
+    flex-direction: column;
   }
 
   .step__still {
@@ -102,7 +109,8 @@ const steps = process.steps.map((step) => ({ ...step, still: getStill(step.id) }
   }
 
   .step__from {
-    margin-top: 10px;
+    margin-top: auto;
+    padding-top: 10px;
     font-size: 13px;
     color: var(--dim);
   }
