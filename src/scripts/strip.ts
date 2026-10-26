@@ -33,18 +33,23 @@ export function initStrip(reducedMotion: boolean) {
     while (track.children.length < needed) track.appendChild(unit.cloneNode(true));
   };
 
-  // Where the first phrase's text sits at rest: on the page gutter, like the
-  // hero copy above it. The phrase has its own padding, so the track starts
-  // that much further left (a negative offset moves it right).
+  // Where the first phrase's text sits at rest: on the page's content edge,
+  // like the hero copy above it. That edge is set once on .container, so a
+  // probe with the same class lands on it at every viewport, where --gutter
+  // alone stops matching once the container is centred. The phrase has its own
+  // padding, so the track starts that much further left (a negative offset
+  // moves it right).
   const restOffset = () => {
     const probe = document.createElement("div");
-    probe.style.cssText = "position:absolute;visibility:hidden;width:var(--gutter)";
+    probe.className = "container";
+    probe.style.cssText = "position:absolute;left:0;right:0;visibility:hidden";
     strip.appendChild(probe);
-    const gutter = probe.getBoundingClientRect().width;
+    const box = probe.getBoundingClientRect();
+    const edge = box.left + parseFloat(getComputedStyle(probe).paddingLeft) - strip.getBoundingClientRect().left;
     probe.remove();
     const phrase = unit.querySelector<HTMLElement>(".strip__phrase");
     const pad = phrase ? parseFloat(getComputedStyle(phrase).paddingLeft) : 0;
-    return -Math.max(0, gutter - pad);
+    return -Math.max(0, edge - pad);
   };
 
   const frame = (now: number) => {
@@ -88,8 +93,20 @@ export function initStrip(reducedMotion: boolean) {
     kick();
   };
 
+  // Measure again if the face arrives after the race: the clone count and the
+  // loop length depend on the phrase width, and the strip's own box does not
+  // change when the font swaps. The offset is kept so the words do not jump,
+  // and wraps only when the new unit is shorter than the drift.
+  const remeasure = () => {
+    if (!started) return;
+    fill();
+    if (unitWidth) offset %= unitWidth;
+    track.style.transform = `translate3d(${-offset.toFixed(2)}px, 0, 0)`;
+  };
+
   // The strip face is the bold Archivo. Wait for it, but never for long: a
   // font that fails to load must not leave the strip empty.
   const fontReady = document.fonts?.load('720 17px "Archivo Variable"').then(() => document.fonts.ready, () => undefined);
   Promise.race([fontReady, new Promise((r) => setTimeout(r, 2000))]).then(begin);
+  fontReady?.then(remeasure);
 }

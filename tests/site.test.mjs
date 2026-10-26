@@ -32,9 +32,11 @@ after(async () => {
 });
 
 /**
+ * Opens the home page without waiting for the hero, which starts on its own
+ * font clock.
  * @param {{ reducedMotion?: "reduce" | "no-preference", width?: number, height?: number }} [opts]
  */
-async function openHome(opts = {}) {
+async function openPage(opts = {}) {
   const context = await browser.newContext({
     viewport: { width: opts.width ?? 1440, height: opts.height ?? 900 },
     reducedMotion: opts.reducedMotion ?? "no-preference",
@@ -42,9 +44,17 @@ async function openHome(opts = {}) {
   await context.route(/blob\.vercel-storage\.com/, (route) => route.abort());
   const page = await context.newPage();
   await page.goto(`http://127.0.0.1:${server.port}/`);
-  // The hero starts once the mono font is in, then reports the reel state.
-  await page.waitForFunction(() => document.querySelector("[data-reel]")?.getAttribute("data-open") !== null);
   return { context, page };
+}
+
+/**
+ * @param {{ reducedMotion?: "reduce" | "no-preference", width?: number, height?: number }} [opts]
+ */
+async function openHome(opts = {}) {
+  const opened = await openPage(opts);
+  // The hero starts once the mono font is in, then reports the reel state.
+  await opened.page.waitForFunction(() => document.querySelector("[data-reel]")?.getAttribute("data-open") !== null);
+  return opened;
 }
 
 /** @param {import("playwright-core").Page} page */
@@ -282,24 +292,29 @@ describe("hero opening", () => {
 });
 
 describe("the strip", () => {
-  test("starts at rest on the first phrase, set on the page gutter", async () => {
-    const { context, page } = await openHome();
-    try {
-      await page.waitForSelector(".strip.is-ready");
-      const edges = await page.evaluate(() => {
-        const phrase = /** @type {HTMLElement} */ (document.querySelector(".strip__phrase"));
-        const range = document.createRange();
-        range.selectNodeContents(phrase);
-        const text = range.getBoundingClientRect();
-        const name = /** @type {HTMLElement} */ (document.querySelector(".hero__name")).getBoundingClientRect();
-        return { text: text.left, gutter: name.left, words: phrase.textContent };
-      });
-      assert.equal(edges.words, "DESIGN × CODE");
-      assert.ok(Math.abs(edges.text - edges.gutter) <= 2, `the first phrase starts at ${edges.text}, the gutter is ${edges.gutter}`);
-    } finally {
-      await context.close();
-    }
-  });
+  for (const width of [390, 1440, 1920]) {
+    test(`starts at rest on the first phrase, set on the page gutter at ${width}px`, async () => {
+      const { context, page } = await openPage({ width });
+      try {
+        await page.waitForSelector(".strip.is-ready");
+        const edges = await page.evaluate(() => {
+          const phrase = /** @type {HTMLElement} */ (document.querySelector(".strip__phrase"));
+          const range = document.createRange();
+          range.selectNodeContents(phrase);
+          const text = range.getBoundingClientRect();
+          const name = /** @type {HTMLElement} */ (document.querySelector(".hero__name")).getBoundingClientRect();
+          return { text: text.left, gutter: name.left, words: phrase.textContent };
+        });
+        assert.equal(edges.words, "DESIGN × CODE");
+        assert.ok(
+          Math.abs(edges.text - edges.gutter) <= 2,
+          `the first phrase starts at ${edges.text}, the hero copy at ${edges.gutter}`,
+        );
+      } finally {
+        await context.close();
+      }
+    });
+  }
 
   test("keeps its words, and says 70 videos rather than aspiring", async () => {
     const { context, page } = await openHome();
