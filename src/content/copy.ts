@@ -301,7 +301,6 @@ export const contact = {
   heading: "Contact",
   title: "Got a role in mind? Let's talk.",
   lead: "Email is the fastest way to reach me.",
-  notice: "One month's notice. Singapore citizen.",
   copy: "Copy email",
   copied: "Copied",
   copiedStatus: "Email address copied",

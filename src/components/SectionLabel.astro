@@ -1,0 +1,17 @@
+---
+// The marker above each section. It used to be a numbered mono eyebrow with a
+// hairline rule, which is the shape every generated portfolio lands on, so the
+// number and the rule are gone and the marker is now drawn from the material
+// the site is already made of: the glyph alphabet of the hero hands and the
+// shell prompt of the hidden terminal.
+interface Props {
+  id: string;
+  heading: string;
+}
+
+const { id, heading } = Astro.props;
+---
+
+<h2 class="slabel" id={id}>
+  <span class="slabel__text">{heading}<span class="slabel__dot" aria-hidden="true">.</span></span>
+</h2>

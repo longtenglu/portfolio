@@ -1,10 +1,11 @@
 ---
 import { contact, footer, site } from "../content/copy";
+import SectionLabel from "./SectionLabel.astro";
 ---
 
 <section class="section contact" id="contact" aria-labelledby="contact-title">
   <div class="container">
-    <h2 class="label" id="contact-title"><span class="label__num">08</span>{contact.heading}</h2>
+    <SectionLabel id="contact-title" heading={contact.heading} />
     <div class="contact__top">
       <p class="contact__title" data-reveal>{contact.title}</p>
       <aside class="clock" data-reveal style="--reveal-delay: 0.1s" aria-label={contact.clockLabel}>
@@ -27,7 +28,6 @@ import { contact, footer, site } from "../content/copy";
       </button>
       <span class="visually-hidden" aria-live="polite" data-copy-status></span>
     </div>
-    <p class="contact__notice" data-reveal>{contact.notice}</p>
     <ul class="contact__links" data-reveal style="--reveal-delay: 0.14s">
       {
         contact.links.map((link) => (
@@ -119,11 +119,6 @@ import { contact, footer, site } from "../content/copy";
     margin-top: 28px;
     color: var(--muted);
     font-size: 18px;
-  }
-
-  .contact__notice {
-    margin-top: 16px;
-    color: var(--muted);
   }
 
   .contact__email {

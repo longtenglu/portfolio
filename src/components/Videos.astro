@@ -2,6 +2,7 @@
 import { videos } from "../content/copy";
 import { getVideo } from "../lib/media";
 import VideoButton from "./VideoButton.astro";
+import SectionLabel from "./SectionLabel.astro";
 
 const items = videos.items.map((item) => ({
   ...item,
@@ -35,7 +36,7 @@ for (const item of items) {
 <section class="section videos" id="videos" aria-labelledby="videos-title">
   <div class="container">
     <div class="videos__head">
-      <h2 class="label" id="videos-title"><span class="label__num">04</span>{videos.heading}</h2>
+      <SectionLabel id="videos-title" heading={videos.heading} />
       <p class="videos__intro">
         {videos.intro}{" "}
         <span class="videos__hint videos__hint--pointer">{videos.hint}</span>

@@ -1,11 +1,12 @@
 ---
 import { learning } from "../content/copy";
+import SectionLabel from "./SectionLabel.astro";
 ---
 
 <section class="section learning" id="learning" aria-labelledby="learning-title">
   <div class="container learning__grid">
     <div>
-      <h2 class="label" id="learning-title"><span class="label__num">07</span>{learning.heading}</h2>
+      <SectionLabel id="learning-title" heading={learning.heading} />
       <p class="learning__intro">{learning.intro}</p>
       <a class="link learning__link" href={learning.link.href} target="_blank" rel="noopener noreferrer">
         {learning.link.label}

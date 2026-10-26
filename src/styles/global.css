@@ -154,28 +154,24 @@ html.is-locked {
   scroll-margin-top: 24px;
 }
 
-/* Small mono label that heads every section: "02  What I do". */
-.label {
+/* Section marker. It used to be a numbered mono eyebrow with a hairline rule,
+   which is the shape a generated page lands on. Now it is the section name set
+   as a small display heading in the same face, weight and tracking as the hero
+   subtitle, closed with the full stop the copy already speaks in, in amber.
+   No numbers, no rule, nothing that repeats above every section. */
+.slabel {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--muted);
+  align-items: baseline;
+  font-family: var(--font-sans);
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.016em;
+  color: var(--text);
 }
 
-.label__num {
+.slabel__dot {
   color: var(--accent);
-}
-
-.label::after {
-  content: "";
-  flex: 0 0 48px;
-  height: 1px;
-  background: var(--line-strong);
 }
 
 .mono {

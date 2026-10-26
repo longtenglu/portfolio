@@ -1,10 +1,11 @@
 ---
 import { education, experience, statPrefix } from "../content/copy";
+import SectionLabel from "./SectionLabel.astro";
 ---
 
 <section class="section exp" id="experience" aria-labelledby="exp-title">
   <div class="container">
-    <h2 class="label" id="exp-title"><span class="label__num">03</span>{experience.heading}</h2>
+    <SectionLabel id="exp-title" heading={experience.heading} />
     <p class="exp__intro">{experience.intro}</p>
 
     <ol class="exp__list">
