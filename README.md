@@ -63,9 +63,13 @@ copies from the masters with ffmpeg, one job at a time:
 - AVIF posters
 - 4 to 6 second muted hover previews, plus the muted hero loop
 
-Which videos, which seconds, and the poster frames are in
-`scripts/media/videos.mjs`. The master file paths are not in the repo: list
-them in a JSON file outside it (copy `scripts/media/sources.example.json`).
+Which videos, which seconds, the crop each card shows, and the poster
+frames are in `scripts/media/videos.mjs`. The crop matters: the masters carry
+the workplace's logo bug on the frame and sometimes its name on screen, so
+each card shows a cropped view with the poster and preview picked from
+stretches where none of it is legible. The master file paths are not in the
+repo: list them in a JSON file outside it (copy
+`scripts/media/sources.example.json`).
 
 ```sh
 MEDIA_DIR=/path/to/media MEDIA_SOURCES=/path/to/media-sources.json npm run media:build

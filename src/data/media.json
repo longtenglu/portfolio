@@ -17,20 +17,20 @@
       },
       "preview": {
         "path": "tax-is-networking/tax-is-networking-preview.mp4",
-        "bytes": 604288,
-        "sha256": "f55296119114abe1ff505a69183d85218c9364faeaaa6c4708a1d6b85d59c2bb",
-        "width": 540,
+        "bytes": 612202,
+        "sha256": "f217df69c8ae32a509bafc702f8129f48f249f78502a1f3d9f25e20a1e51f3c7",
+        "width": 538,
         "height": 960,
         "duration": 5.5,
-        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/tax-is-networking/tax-is-networking-preview.f55296119114.mp4"
+        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/tax-is-networking/tax-is-networking-preview.f217df69c8ae.mp4"
       },
       "poster": {
         "path": "tax-is-networking/tax-is-networking-poster.avif",
-        "bytes": 35295,
-        "sha256": "564ba61c92d7759f0e3564beca43dcb4573543ce323d2a581680186a724a9905",
-        "width": 720,
+        "bytes": 12790,
+        "sha256": "5a39bc7685a6e48cfae223712d18be95b802fb6e89fe4feb480e9e33a40f8348",
+        "width": 718,
         "height": 1280,
-        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/tax-is-networking/tax-is-networking-poster.564ba61c92d7.avif"
+        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/tax-is-networking/tax-is-networking-poster.5a39bc7685a6.avif"
       }
     },
     "anniversary-dinner": {
@@ -50,20 +50,20 @@
       },
       "preview": {
         "path": "anniversary-dinner/anniversary-dinner-preview.mp4",
-        "bytes": 547753,
-        "sha256": "029b0c9318ce3f7073fc15ae279b3f9b5e9829ee071a40c3fa5fa5617b304126",
+        "bytes": 743315,
+        "sha256": "e61ab6bc1c86a755fc5f78c7d5b22c1a790717b549e3606249bc9cfa4c8838ba",
         "width": 540,
         "height": 960,
         "duration": 5.51,
-        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/anniversary-dinner/anniversary-dinner-preview.029b0c9318ce.mp4"
+        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/anniversary-dinner/anniversary-dinner-preview.e61ab6bc1c86.mp4"
       },
       "poster": {
         "path": "anniversary-dinner/anniversary-dinner-poster.avif",
-        "bytes": 36114,
-        "sha256": "49efde8926c8067dc40a5f34ae404223b2e8d9149de92eb1a74bfce941e03980",
+        "bytes": 48578,
+        "sha256": "b7104f0d01bde72af94ae1fb10b55d319110e9dab5a82ec9cab0a3ba74f45e2f",
         "width": 720,
         "height": 1280,
-        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/anniversary-dinner/anniversary-dinner-poster.49efde8926c8.avif"
+        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/anniversary-dinner/anniversary-dinner-poster.b7104f0d01bd.avif"
       }
     },
     "china-trip": {
@@ -83,20 +83,20 @@
       },
       "preview": {
         "path": "china-trip/china-trip-preview.mp4",
-        "bytes": 1171941,
-        "sha256": "7531d3003df73e8609ed844317068aa2f74b4c127c227f85faf7391caea6a89e",
+        "bytes": 775094,
+        "sha256": "3f69145bfa95cfb319ce2353969128a5eef5ac90c59469ee19fd94b5ae7db230",
         "width": 540,
         "height": 960,
-        "duration": 6,
-        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/china-trip/china-trip-preview.7531d3003df7.mp4"
+        "duration": 5.5,
+        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/china-trip/china-trip-preview.3f69145bfa95.mp4"
       },
       "poster": {
         "path": "china-trip/china-trip-poster.avif",
-        "bytes": 17204,
-        "sha256": "6f913007296eb4f8ca90f4cb1d93bd86af9111875b6205f2e34c93c96dea4f10",
+        "bytes": 26063,
+        "sha256": "9d1dfde0d998062622a7d529dfc1aa2fa671a14b51e4a6568a6161d0da86bb56",
         "width": 720,
         "height": 1280,
-        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/china-trip/china-trip-poster.6f913007296e.avif"
+        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/china-trip/china-trip-poster.9d1dfde0d998.avif"
       }
     },
     "iivt-few-words": {
@@ -116,20 +116,20 @@
       },
       "preview": {
         "path": "iivt-few-words/iivt-few-words-preview.mp4",
-        "bytes": 537747,
-        "sha256": "75b1aaf046bb70c4cc13e24302cb6b35cc1bd93f9daea37a5b7ae3f8dbfdb3ba",
+        "bytes": 485210,
+        "sha256": "63508248540d9b6ae796135b8093179f87ec603e5d12506597a4a75100f14767",
         "width": 540,
         "height": 960,
         "duration": 5.5,
-        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/iivt-few-words/iivt-few-words-preview.75b1aaf046bb.mp4"
+        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/iivt-few-words/iivt-few-words-preview.63508248540d.mp4"
       },
       "poster": {
         "path": "iivt-few-words/iivt-few-words-poster.avif",
-        "bytes": 51346,
-        "sha256": "552be32d54141c774d4b3a2681d8290fa1c4d38b23cd97e827c995459209874f",
+        "bytes": 44298,
+        "sha256": "df3f1b669ef9871bea0cd0b7b8f0484ccac8670b4282862688a3442b6ec6d5fe",
         "width": 720,
         "height": 1280,
-        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/iivt-few-words/iivt-few-words-poster.552be32d5414.avif"
+        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/iivt-few-words/iivt-few-words-poster.df3f1b669ef9.avif"
       }
     },
     "bear-amsterdam-pre": {
@@ -149,20 +149,20 @@
       },
       "preview": {
         "path": "bear-amsterdam-pre/bear-amsterdam-pre-preview.mp4",
-        "bytes": 1010310,
-        "sha256": "0bc737c4885f761da2cab06a79c4753172db15e7e917d0c6187ba89364077b8b",
-        "width": 540,
+        "bytes": 1083673,
+        "sha256": "273517af437bc4e7eaedd143c9a8b08024749c7b9bf88d11814cf223362052ea",
+        "width": 538,
         "height": 960,
         "duration": 5.5,
-        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/bear-amsterdam-pre/bear-amsterdam-pre-preview.0bc737c4885f.mp4"
+        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/bear-amsterdam-pre/bear-amsterdam-pre-preview.273517af437b.mp4"
       },
       "poster": {
         "path": "bear-amsterdam-pre/bear-amsterdam-pre-poster.avif",
-        "bytes": 55446,
-        "sha256": "36f5af531407882c157bc5aec1a05eadf917f72f479dfb966c22b63dfdc160cc",
-        "width": 720,
+        "bytes": 34328,
+        "sha256": "0f30ebd0d039cce8160ca51d21379feab839978c4add18b5be0a0923f62c367e",
+        "width": 718,
         "height": 1280,
-        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/bear-amsterdam-pre/bear-amsterdam-pre-poster.36f5af531407.avif"
+        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/bear-amsterdam-pre/bear-amsterdam-pre-poster.0f30ebd0d039.avif"
       }
     },
     "bear-amsterdam-during": {
@@ -182,20 +182,20 @@
       },
       "preview": {
         "path": "bear-amsterdam-during/bear-amsterdam-during-preview.mp4",
-        "bytes": 372778,
-        "sha256": "667a056f71956b968986a0b897861b527d45a3b28475662b2e791e3e1d1a3345",
+        "bytes": 519568,
+        "sha256": "3b72870a950efc90008cafa35199527169a23755b6bac034296d2a55ef538522",
         "width": 540,
         "height": 960,
         "duration": 5.5,
-        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/bear-amsterdam-during/bear-amsterdam-during-preview.667a056f7195.mp4"
+        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/bear-amsterdam-during/bear-amsterdam-during-preview.3b72870a950e.mp4"
       },
       "poster": {
         "path": "bear-amsterdam-during/bear-amsterdam-during-poster.avif",
-        "bytes": 39600,
-        "sha256": "9fdd23192514ba4cdfc0e3ec948006cc741afbcc6fc460253b04bc2606caaa60",
+        "bytes": 42481,
+        "sha256": "2b486fbff236a7fb9e8a58037b197c5e377eb6ef9b7d07fba36deb3624aeeb54",
         "width": 720,
         "height": 1280,
-        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/bear-amsterdam-during/bear-amsterdam-during-poster.9fdd23192514.avif"
+        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/bear-amsterdam-during/bear-amsterdam-during-poster.2b486fbff236.avif"
       }
     },
     "bear-munich": {
@@ -215,40 +215,40 @@
       },
       "preview": {
         "path": "bear-munich/bear-munich-preview.mp4",
-        "bytes": 178284,
-        "sha256": "6916c6278396e6a311afa02fbde7826b06107b271ae444c1ab81ff70cb950b1d",
+        "bytes": 322612,
+        "sha256": "c14d29c31662b31595ae73f764af0ffa8e1bbe65d8e66f4530b0f579d16d3709",
         "width": 540,
         "height": 960,
         "duration": 5.5,
-        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/bear-munich/bear-munich-preview.6916c6278396.mp4"
+        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/bear-munich/bear-munich-preview.c14d29c31662.mp4"
       },
       "poster": {
         "path": "bear-munich/bear-munich-poster.avif",
-        "bytes": 15683,
-        "sha256": "1c2940114052c1cb80cc17cd7324efbda262fe9051184dd01478eaf68ebc4a17",
+        "bytes": 22781,
+        "sha256": "1bbeeba4976d25debf28cef4c0a6702fb6bb0c5dbb4a57d3dd0671006208ccde",
         "width": 720,
         "height": 1280,
-        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/bear-munich/bear-munich-poster.1c2940114052.avif"
+        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/bear-munich/bear-munich-poster.1bbeeba4976d.avif"
       }
     }
   },
   "reel": {
     "video": {
       "path": "hero-reel/hero-reel.mp4",
-      "bytes": 2314900,
-      "sha256": "8c718ce6f7a29f7a2f15ffdf527aa61ee7b3596876754778ef457b4324e951e0",
+      "bytes": 1895605,
+      "sha256": "be959fcddcb3adf5a59ef77f93d08813fad4b41e79eb6d9ceca07bde2175f5f6",
       "width": 1080,
       "height": 608,
-      "duration": 13.01,
-      "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/hero-reel/hero-reel.8c718ce6f7a2.mp4"
+      "duration": 8.01,
+      "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/hero-reel/hero-reel.be959fcddcb3.mp4"
     },
     "poster": {
       "path": "hero-reel/hero-reel-poster.avif",
-      "bytes": 21884,
-      "sha256": "b90cfbbb790f3d4434cc6635b9a5f0482a12f2e90ac180a2eaa3bc290c424d3a",
+      "bytes": 22795,
+      "sha256": "ccd566dff9edc08f1294192c0cd010f882e1089323c1b024e711847f3b427a55",
       "width": 1080,
       "height": 608,
-      "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/hero-reel/hero-reel-poster.b90cfbbb790f.avif"
+      "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/hero-reel/hero-reel-poster.ccd566dff9ed.avif"
     }
   }
 }

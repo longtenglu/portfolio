@@ -339,12 +339,12 @@ async function main() {
       }
       if (needs(rel.poster)) {
         console.log(`${job.id}: poster`);
-        await encodePoster(src, path.join(mediaDir, rel.poster), /** @type {[number, number]} */ (size.poster), job.poster);
+        await encodePoster(src, path.join(mediaDir, rel.poster), /** @type {[number, number]} */ (size.poster), job.poster, job.crop);
       }
       if (needs(rel.preview)) {
         console.log(`${job.id}: hover preview`);
         await encodeExcerpt(src, path.join(mediaDir, rel.preview), /** @type {[number, number]} */ (size.preview),
-          job.preview.start, job.preview.duration, { crf: 27 });
+          job.preview.start, job.preview.duration, { crf: 27, crop: job.crop });
       }
     }
     if (!existsSync(path.join(mediaDir, rel.full))) continue;
@@ -370,7 +370,8 @@ async function main() {
     }
     if (needs(reelRel.poster)) {
       console.log(`${HERO_REEL.id}: poster`);
-      await encodePoster(src, path.join(mediaDir, reelRel.poster), /** @type {[number, number]} */ (size.reel), HERO_REEL.start + 4.5, HERO_REEL.crop);
+      const posterAt = HERO_REEL.poster ?? HERO_REEL.start + 4.5;
+      await encodePoster(src, path.join(mediaDir, reelRel.poster), /** @type {[number, number]} */ (size.reel), posterAt, HERO_REEL.crop);
     }
   }
   if (existsSync(path.join(mediaDir, reelRel.video))) {
