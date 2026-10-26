@@ -19,8 +19,9 @@ below).
 
 ## Local development
 
-Needs Node 22.23.4 or newer, ffmpeg for the media scripts, and Chrome or
-Chromium for the resume PDF and the browser tests.
+Needs Node 22.23.4 or newer, ffmpeg for the media pipeline and its tests,
+and Chrome or Chromium for the resume PDF, the share image and the browser
+tests.
 
 ```sh
 npm install
@@ -36,7 +37,8 @@ Checks, browser tests and a production build:
 
 ```sh
 npm run check           # astro check, plus type checks for scripts/ and tests/
-npm test                # builds, then drives local Chrome over dist/ (set CHROME_PATH if needed)
+npm test                # builds, checks the media pipeline, then drives local Chrome over dist/
+                        # (set CHROME_PATH if needed)
 npm run build           # static output in dist/
 MEDIA_DIR=/path/to/media npm run preview   # serve dist/ like Vercel, with /media
 ```

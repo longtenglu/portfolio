@@ -14,10 +14,11 @@
 //   MEDIA_DIR=/path/to/output MEDIA_SOURCES=/path/to/sources.json npm run media:build
 //   ... npm run media:build -- --only anniversary-dinner,hero-reel --force
 //
-// An output is reused only when it exists and its recorded settings still
-// match; --force rebuilds it anyway. Jobs run one at a time on purpose: one
-// ffmpeg process is enough for a 16 GB machine. Nothing is written into the
-// repo except the manifest.
+// An output is reused only when it exists, its recorded fingerprint still
+// matches the current settings, and its bytes still match the manifest;
+// --force rebuilds it anyway. Jobs run one at a time on purpose: one ffmpeg
+// process is enough for a 16 GB machine. Nothing is written into the repo
+// except the manifest.
 
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
