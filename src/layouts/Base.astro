@@ -12,6 +12,9 @@ interface Props {
 
 const { title = site.title, description = site.description, bodyClass } = Astro.props;
 const canonical = new URL(Astro.url.pathname, site.url).toString();
+const shareImage = new URL("/og.png", site.url).toString();
+const shareImageAlt =
+  "Longteng Lu's name in large type above two amber hands drawn in code, after Michelangelo's Creation of Adam.";
 
 // Only the Latin subsets are loaded; every word on the site is Latin.
 const latin =
@@ -50,9 +53,20 @@ const fontFaces = `
     <meta name="theme-color" content="#0b0b0b" />
     <meta name="color-scheme" content="dark" />
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={site.name} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={shareImage} />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={shareImageAlt} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={shareImage} />
+    <meta name="twitter:image:alt" content={shareImageAlt} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="preload" href={archivoUrl} as="font" type="font/woff2" crossorigin />
     <link rel="preload" href={monoUrl} as="font" type="font/woff2" crossorigin />

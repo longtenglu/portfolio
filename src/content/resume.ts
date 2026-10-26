@@ -23,9 +23,9 @@ export const resume = {
       text: "AI workflows for content, research and video review; Claude and Codex; local models (Ollama); Python automation; APIs; Git",
     },
   ],
-  // The approximate Tax Academy numbers, worded for a resume.
-  taStats:
-    "Since joining: helped run or managed about 10 programmes and events; made about 70 videos, about 50 of them with an AI-assisted editing workflow.",
+  // The approximate current-role numbers, worded for a resume.
+  roleStats:
+    "In my current role: helped run or managed about 10 programmes and events; made about 70 videos, about 50 of them with an AI-assisted editing workflow.",
   projectsHeading: "AI and automation projects",
   projects: [
     {

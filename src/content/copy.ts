@@ -30,11 +30,12 @@ export const hero = {
   sub: "Programme Executive in Singapore. I make videos, run programmes and build AI workflows.",
   scroll: "Scroll",
   reel: {
-    label: "AI-generated footage and voiceover",
-    action: "Play the full promo with sound",
+    title: "20th Anniversary Dinner Reception",
+    label: "Shot, directed and edited by me",
+    action: "Play the full film with sound",
     watch: "Watch with sound",
     // The visible trigger while the reel is still closed.
-    rest: "Watch the promo",
+    rest: "Watch the film",
   },
 };
 
@@ -43,7 +44,7 @@ export const strip = "DESIGN × CODE • VIDEO × AI • BUILDING WITH AGENTS �
 export const about = {
   heading: "About",
   lead:
-    "I'm Longteng. I run programmes and events at Tax Academy of Singapore, make the videos that promote them, and build AI tools that take the repetitive parts off my plate.",
+    "I'm Longteng. In my current role I run programmes and events, make the videos that promote them, and build AI tools that take the repetitive parts off my plate.",
   body: [
     "I studied psychology, and it still shapes how I write and edit: who is watching, and what makes them care enough to stay.",
     "Most of what I can do, I learned by trying a new tool on a real deadline. Right now that tool is backend development. I'm working through Boot.dev and heading towards applied AI work.",
@@ -90,7 +91,7 @@ export const experience: { heading: string; intro: string; roles: Role[] } = {
   roles: [
     {
       role: "Programme Executive",
-      org: "Tax Academy of Singapore",
+      org: "",
       dates: "Mar 2026 - Present",
       stats: [
         { value: "10", label: "programmes and events I've helped run or managed" },
@@ -100,14 +101,14 @@ export const experience: { heading: string; intro: string; roles: Role[] } = {
       points: [
         "Plan and coordinate tax programmes and events from preparation through delivery.",
         "Produce programme marketing across LinkedIn, email campaigns, short-form and horizontal video.",
-        "Shot, directed and edited a mascot travel series with branded motion graphics.",
+        "Shot, directed and edited a three-film mascot travel series with branded motion graphics.",
         "Built tools that remove manual production steps: motion graphics rendered from code, speech-to-text captions, and a converter that turns HTML designs into editable PowerPoint.",
       ],
     },
     {
       role: "Independent e-commerce and marketing project",
       org: "Personal project",
-      dates: "Dec 2025 - 2026",
+      dates: "Dec 2025 - Apr 2026",
       points: [
         "Launched a Shopify store with Meta Pixel tracking.",
         "Ran Meta Ads with CBO and ABO budget strategies and reviewed CPM and CTR.",
@@ -161,7 +162,6 @@ export type VideoCopy = {
   title: string;
   line: string;
   skills: string[];
-  aiLabel?: string;
   films?: Film[];
 };
 
@@ -170,17 +170,9 @@ export const videos = {
   intro: "Most of my day-job output is video. These are the ones I'd show first.",
   hint: "Hover for a preview, click to watch with sound.",
   hintTouch: "Tap any film to watch it with sound.",
-  credit: "Produced at Tax Academy of Singapore",
   play: "Play",
   close: "Close",
   items: [
-    {
-      id: "atp-promo",
-      title: "Advanced Tax Programme promo",
-      line: "A programme promo built from AI b-roll, motion graphics made in code and a scripted voiceover.",
-      skills: ["Direction", "AI b-roll", "Motion design", "Edit", "Script and voiceover"],
-      aiLabel: "AI-generated footage and voiceover",
-    },
     {
       id: "tax-is-networking",
       title: "Tax is Networking",
@@ -207,8 +199,8 @@ export const videos = {
     },
     {
       id: "bear-series",
-      title: "The TA Bear series",
-      line: "The Academy's bear mascot travels to conferences in Amsterdam and Munich. Character-led travel stories in three films.",
+      title: "The bear mascot travel series",
+      line: "A mascot travels to conferences in Amsterdam and Munich in three films I shot, directed and edited.",
       skills: ["Concept", "Shooting", "Character storytelling", "Edit", "Motion graphics"],
       films: [
         { id: "bear-amsterdam-pre", title: "Amsterdam, before the trip" },
@@ -309,6 +301,7 @@ export const contact = {
   heading: "Contact",
   title: "Got a role in mind? Let's talk.",
   lead: "Email is the fastest way to reach me.",
+  notice: "One month's notice. Singapore citizen.",
   copy: "Copy email",
   copied: "Copied",
   copiedStatus: "Email address copied",
@@ -341,7 +334,7 @@ export const terminal = {
   ],
   whoami: [
     "longteng lu, singapore",
-    "programme executive at tax academy of singapore",
+    "programme executive in singapore",
     "makes the videos, runs the programmes, builds the ai workflows",
     "learning backend on boot.dev, heading towards applied ai",
   ],

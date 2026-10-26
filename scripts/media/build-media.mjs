@@ -12,7 +12,7 @@
 //
 // Usage:
 //   MEDIA_DIR=/path/to/output MEDIA_SOURCES=/path/to/sources.json npm run media:build
-//   ... npm run media:build -- --only atp-promo,hero-reel --force
+//   ... npm run media:build -- --only anniversary-dinner,hero-reel --force
 //
 // Outputs that already exist are kept unless --force is passed, so a stopped
 // run can resume. Jobs run one at a time on purpose: one ffmpeg process is
@@ -228,10 +228,13 @@ async function encodeFull(src, out, size) {
  * @param {[number, number]} size
  * @param {number} start
  * @param {number} duration
- * @param {{ crf: number, fade?: boolean }} opts
+ * @param {{ crf: number, fade?: boolean, crop?: string }} opts
  */
 async function encodeExcerpt(src, out, size, start, duration, opts) {
-  const filters = [scaleFilter(size[0], size[1])];
+  /** @type {string[]} */
+  const filters = [];
+  if (opts.crop) filters.push(`crop=${opts.crop}`);
+  filters.push(scaleFilter(size[0], size[1]));
   if (opts.fade) {
     // Fade in and out of black so the loop seam reads as a cut on the dark page.
     filters.push(`fade=t=in:st=0:d=0.4,fade=t=out:st=${(duration - 0.4).toFixed(2)}:d=0.4`);
@@ -252,12 +255,14 @@ async function encodeExcerpt(src, out, size, start, duration, opts) {
  * @param {string} out
  * @param {[number, number]} size
  * @param {number} at
+ * @param {string} [crop]
  */
-async function encodePoster(src, out, size, at) {
+async function encodePoster(src, out, size, at, crop) {
+  const filters = crop ? `crop=${crop},` : "";
   await produce(out, (tmp) =>
     run("ffmpeg", [
       ...FFMPEG, "-loglevel", "error", "-ss", String(at), "-i", src, "-frames:v", "1",
-      "-vf", `${scaleFilter(size[0], size[1])},format=yuv420p`,
+      "-vf", `${filters}${scaleFilter(size[0], size[1])},format=yuv420p`,
       "-c:v", "libsvtav1", "-crf", "34", "-preset", "4", "-f", "avif", tmp,
     ]).then(() => undefined),
   );
@@ -361,11 +366,11 @@ async function main() {
     if (needs(reelRel.video)) {
       console.log(`${HERO_REEL.id}: loop`);
       await encodeExcerpt(src, path.join(mediaDir, reelRel.video), /** @type {[number, number]} */ (size.reel),
-        HERO_REEL.start, HERO_REEL.end - HERO_REEL.start, { crf: 25, fade: true });
+        HERO_REEL.start, HERO_REEL.end - HERO_REEL.start, { crf: 25, fade: true, crop: HERO_REEL.crop });
     }
     if (needs(reelRel.poster)) {
       console.log(`${HERO_REEL.id}: poster`);
-      await encodePoster(src, path.join(mediaDir, reelRel.poster), /** @type {[number, number]} */ (size.reel), HERO_REEL.start + 4.5);
+      await encodePoster(src, path.join(mediaDir, reelRel.poster), /** @type {[number, number]} */ (size.reel), HERO_REEL.start + 4.5, HERO_REEL.crop);
     }
   }
   if (existsSync(path.join(mediaDir, reelRel.video))) {

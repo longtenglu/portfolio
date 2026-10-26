@@ -2,11 +2,10 @@
 // Hero plus strip. On motion-friendly screens the pair sits in a sticky
 // stage for an extra screen of scroll, which drives the hands together and
 // opens the reel between them.
-import { hero, site, strip, videos } from "../content/copy";
+import { hero, site, strip } from "../content/copy";
 import { getReel } from "../lib/media";
 
 const reel = getReel();
-const atp = videos.items.find((v) => v.id === "atp-promo");
 const phrases = strip.split(" • ");
 ---
 
@@ -28,8 +27,8 @@ const phrases = strip.split(" • ");
           class="hero__reel-frame"
           type="button"
           data-reel-frame
-          data-video-open="atp-promo"
-          aria-label={`${hero.reel.action}: ${atp?.title}. ${hero.reel.label}.`}
+          data-video-open="anniversary-dinner"
+          aria-label={`${hero.reel.action}: ${hero.reel.title}. ${hero.reel.label}.`}
         >
           <video
             class="hero__reel-video"
@@ -45,7 +44,10 @@ const phrases = strip.split(" • ");
         </button>
       </div>
       <p class="hero__reel-caption mono" data-reel-caption>
-        <span class="hero__reel-tag">{hero.reel.label}</span>
+        <span class="hero__reel-tag">
+          {hero.reel.title}
+          <span class="hero__reel-credit">{hero.reel.label}</span>
+        </span>
         <span class="hero__reel-cta" aria-hidden="true">
           <svg viewBox="0 0 24 24" width="12" height="12"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"></path></svg>
           {hero.reel.watch}
@@ -57,9 +59,9 @@ const phrases = strip.split(" • ");
         <button
           class="hero__watch"
           type="button"
-          data-video-open="atp-promo"
+          data-video-open="anniversary-dinner"
           data-reel-rest-cta
-          aria-label={`${hero.reel.rest}: ${atp?.title}, with sound. ${hero.reel.label}.`}
+          aria-label={`${hero.reel.rest}: ${hero.reel.title}, with sound. ${hero.reel.label}.`}
         >
           <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"></path></svg>
           {hero.reel.rest}
@@ -188,7 +190,7 @@ const phrases = strip.split(" • ");
   }
 
   /* While the reel is closed it is a sliver: it takes no clicks, and the
-     script makes its button inert, so the "Watch the promo" button below is
+     script makes its button inert, so the "Watch the film" button below is
      the trigger instead. */
   .hero__reel[data-open="false"] {
     pointer-events: none;
@@ -234,6 +236,22 @@ const phrases = strip.split(" • ");
     color: var(--accent);
   }
 
+  .hero__reel-credit {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+  }
+
+  /* On a tablet the reel is too narrow for the name, the credit and the cue
+     on one row. Stack them, as on phones. */
+  @media (max-width: 820px) {
+    .hero__reel-caption {
+      flex-direction: column;
+      gap: 6px;
+    }
+  }
+
   .hero__reel-cta {
     display: inline-flex;
     align-items: center;
@@ -256,6 +274,7 @@ const phrases = strip.split(" • ");
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--dim);
+    transition: opacity 0.3s;
   }
 
   .hero__scroll {
@@ -348,6 +367,13 @@ const phrases = strip.split(" • ");
     .hero__meta {
       bottom: 12px;
       grid-template-columns: 1fr auto;
+    }
+
+    /* With the reel open, the caption needs the room the meta row would
+       take. The location is already in the hero line above. */
+    .hero__reel[data-open="true"] ~ .hero__meta {
+      opacity: 0;
+      pointer-events: none;
     }
 
     .hero__scroll {

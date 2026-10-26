@@ -1,38 +1,5 @@
 {
   "videos": {
-    "atp-promo": {
-      "orientation": "landscape",
-      "full": {
-        "path": "atp-promo/atp-promo.mp4",
-        "bytes": 26639535,
-        "sha256": "d079e46dddb9b746945e9d6d66a0cf3250685c17867dcbdca626fe5b471f9342",
-        "width": 1920,
-        "height": 1080,
-        "duration": 68.53,
-        "loudness": {
-          "integrated": -14.5,
-          "truePeak": -2.4
-        },
-        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/atp-promo/atp-promo.d079e46dddb9.mp4"
-      },
-      "preview": {
-        "path": "atp-promo/atp-promo-preview.mp4",
-        "bytes": 459784,
-        "sha256": "429fa3f1971b94d425fee82a0a060a6c8ca3b22a0742770c8496cce134c30c06",
-        "width": 960,
-        "height": 540,
-        "duration": 5.5,
-        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/atp-promo/atp-promo-preview.429fa3f1971b.mp4"
-      },
-      "poster": {
-        "path": "atp-promo/atp-promo-poster.avif",
-        "bytes": 26737,
-        "sha256": "4980951171fc647a811dcf5b86282b37185e64f1777a06cfdc4d66f38cf88f37",
-        "width": 1280,
-        "height": 720,
-        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/atp-promo/atp-promo-poster.4980951171fc.avif"
-      }
-    },
     "tax-is-networking": {
       "orientation": "portrait",
       "full": {
@@ -268,20 +235,20 @@
   "reel": {
     "video": {
       "path": "hero-reel/hero-reel.mp4",
-      "bytes": 1922557,
-      "sha256": "3a08f825c9aada4b4df7f8f0cccadaf6d31b7e971144cfdd933b9d738a3ca549",
-      "width": 1280,
-      "height": 720,
-      "duration": 14,
-      "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/hero-reel/hero-reel.3a08f825c9aa.mp4"
+      "bytes": 2314900,
+      "sha256": "8c718ce6f7a29f7a2f15ffdf527aa61ee7b3596876754778ef457b4324e951e0",
+      "width": 1080,
+      "height": 608,
+      "duration": 13.01,
+      "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/hero-reel/hero-reel.8c718ce6f7a2.mp4"
     },
     "poster": {
       "path": "hero-reel/hero-reel-poster.avif",
-      "bytes": 26737,
-      "sha256": "4980951171fc647a811dcf5b86282b37185e64f1777a06cfdc4d66f38cf88f37",
-      "width": 1280,
-      "height": 720,
-      "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/hero-reel/hero-reel-poster.4980951171fc.avif"
+      "bytes": 21884,
+      "sha256": "b90cfbbb790f3d4434cc6635b9a5f0482a12f2e90ac180a2eaa3bc290c424d3a",
+      "width": 1080,
+      "height": 608,
+      "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/hero-reel/hero-reel-poster.b90cfbbb790f.avif"
     }
   }
 }

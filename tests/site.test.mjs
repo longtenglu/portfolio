@@ -13,7 +13,7 @@ import { findChrome } from "../scripts/lib/chrome.mjs";
 import { serveDir } from "../scripts/lib/static.mjs";
 
 const DIST = fileURLToPath(new URL("../dist", import.meta.url));
-const PROMO_TITLE = "Advanced Tax Programme promo";
+const FILM_TITLE = "20th Anniversary Dinner Reception";
 
 /** @type {{ port: number, close: () => Promise<void> }} */
 let server;
@@ -103,7 +103,7 @@ describe("hero reel, keyboard and pointer access", () => {
     try {
       assert.equal(await page.getAttribute("[data-reel]", "data-open"), "false");
       const { found, stops } = await tabUntil(page, (f) => f.restCta);
-      assert.ok(found, "Tab reaches the Watch the promo button");
+      assert.ok(found, "Tab reaches the Watch the film button");
       assert.ok(!stops.some((f) => f.reelFrame), "Tab never lands on the closed reel");
       assert.ok(stops.every((f) => !f.inert), "Tab never lands inside an inert element");
       assert.ok(found.visible, "the focused button is visible");
@@ -121,12 +121,12 @@ describe("hero reel, keyboard and pointer access", () => {
     }
   });
 
-  test("Enter on the button plays the promo and Escape returns focus to it", async () => {
+  test("Enter on the button plays the film and Escape returns focus to it", async () => {
     const { context, page } = await openHome();
     try {
       await tabUntil(page, (f) => f.restCta);
       await page.keyboard.press("Enter");
-      assert.deepEqual(await videoDialog(page), { open: true, title: PROMO_TITLE });
+      assert.deepEqual(await videoDialog(page), { open: true, title: FILM_TITLE });
       await page.keyboard.press("Escape");
       assert.equal((await videoDialog(page)).open, false);
       const focus = await describeFocus(page);
@@ -151,7 +151,7 @@ describe("hero reel, keyboard and pointer access", () => {
       assert.ok(!stops.some((f) => f.restCta), "the hidden button is skipped");
 
       await page.keyboard.press("Enter");
-      assert.deepEqual(await videoDialog(page), { open: true, title: PROMO_TITLE });
+      assert.deepEqual(await videoDialog(page), { open: true, title: FILM_TITLE });
       await page.keyboard.press("Escape");
       assert.equal((await describeFocus(page))?.reelFrame, true, "focus returns to the reel");
     } finally {

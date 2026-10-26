@@ -12,12 +12,11 @@
  *   poster: number,
  *   preview: { start: number, duration: number },
  * }} VideoJob
- * @typedef {{ id: string, source: string, start: number, end: number }} ReelJob
+ * @typedef {{ id: string, source: string, start: number, end: number, crop?: string }} ReelJob
  */
 
 /** @type {VideoJob[]} */
 export const VIDEOS = [
-  { id: "atp-promo", orientation: "landscape", poster: 9.5, preview: { start: 5.2, duration: 5.5 } },
   { id: "tax-is-networking", orientation: "portrait", poster: 2.6, preview: { start: 4.0, duration: 5.5 } },
   { id: "anniversary-dinner", orientation: "portrait", poster: 33.5, preview: { start: 31.0, duration: 5.5 } },
   { id: "china-trip", orientation: "portrait", poster: 7.0, preview: { start: 15.0, duration: 6.0 } },
@@ -27,9 +26,16 @@ export const VIDEOS = [
   { id: "bear-munich", orientation: "portrait", poster: 2.0, preview: { start: 0.5, duration: 5.5 } },
 ];
 
-// The muted loop that plays in the gap between the hands.
+// The muted loop that plays in the gap between the hands. The anniversary
+// recap is a vertical film, so the reel is a 16:9 crop of its middle band.
 /** @type {ReelJob} */
-export const HERO_REEL = { id: "hero-reel", source: "atp-promo", start: 5, end: 19 };
+export const HERO_REEL = {
+  id: "hero-reel",
+  source: "anniversary-dinner",
+  start: 24,
+  end: 37,
+  crop: "1080:608:0:656",
+};
 
 // Output sizes. Landscape is capped at 1080p, portrait at 1080x1920.
 export const SIZES = {

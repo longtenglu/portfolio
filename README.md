@@ -70,7 +70,7 @@ them in a JSON file outside it (copy `scripts/media/sources.example.json`).
 ```sh
 MEDIA_DIR=/path/to/media MEDIA_SOURCES=/path/to/media-sources.json npm run media:build
 # rebuild only some outputs:
-... npm run media:build -- --only atp-promo,hero-reel --force
+... npm run media:build -- --only anniversary-dinner,hero-reel --force
 ```
 
 It writes the files to `MEDIA_DIR` and the manifest the site reads to
@@ -123,6 +123,19 @@ npm run resume:pdf      # set CHROME_PATH if Chrome is not in the usual place
 
 The resume is email-only: no phone number and no street address.
 
+## The share image
+
+`public/og.png` is the 1200x630 card shown when the site is shared in a
+message or an application email. It is rendered from the built home page so
+the name and the hands stay in step with the design:
+
+```sh
+npm run build
+npm run og:image      # writes public/og.png and dist/og.png
+```
+
+Commit the new `public/og.png` with the change that altered the hero.
+
 ## Hidden terminal
 
 Press the backtick key (`` ` ``) anywhere on the home page, or use the button
@@ -141,5 +154,5 @@ Code in this repo is the owner's. Third-party pieces:
 | The Creation of Adam, detail (Michelangelo, c. 1511) | Public domain (PD-Art, PD-old) | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Creation_of_Adam_(Michelangelo)_Detail.jpg) |
 
 Fonts are bundled from npm at build time and served from this site; no font
-or script loads from a third-party server. The videos were produced at Tax
-Academy of Singapore and are shown as work samples.
+or script loads from a third-party server. The videos are shown as work
+samples.

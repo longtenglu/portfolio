@@ -27,6 +27,7 @@ import { contact, footer, site } from "../content/copy";
       </button>
       <span class="visually-hidden" aria-live="polite" data-copy-status></span>
     </div>
+    <p class="contact__notice" data-reveal>{contact.notice}</p>
     <ul class="contact__links" data-reveal style="--reveal-delay: 0.14s">
       {
         contact.links.map((link) => (
@@ -118,6 +119,11 @@ import { contact, footer, site } from "../content/copy";
     margin-top: 28px;
     color: var(--muted);
     font-size: 18px;
+  }
+
+  .contact__notice {
+    margin-top: 16px;
+    color: var(--muted);
   }
 
   .contact__email {

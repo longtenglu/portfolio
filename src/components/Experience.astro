@@ -14,7 +14,7 @@ import { education, experience, statPrefix } from "../content/copy";
             <p class="exp__dates mono">{role.dates}</p>
             <div class="exp__body">
               <h3 class="exp__role">{role.role}</h3>
-              <p class="exp__org">{role.org}</p>
+              {role.org && <p class="exp__org">{role.org}</p>}
               {role.stats && (
                 <ul class="exp__stats">
                   {role.stats.map((stat) => (
