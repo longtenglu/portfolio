@@ -70,12 +70,12 @@ copies from the masters with ffmpeg, one job at a time:
 - the six production stills for "How a film gets made": one 4:5 AVIF each,
   cut from a frame of a film (`at`, in seconds) or from an image
 
-Which videos, which seconds, the crop each card shows, and the poster
-frames are in `scripts/media/videos.mjs`. The crop matters: the masters carry
-the workplace's logo bug on the frame and sometimes its name on screen, so
-each card shows a cropped view with the poster and preview picked from
-stretches where none of it is legible. The master file paths are not in the
-repo: list them in a JSON file outside it (copy
+Which videos, which seconds, the crop each card or still shows, and the
+poster frames are in `scripts/media/videos.mjs`. The crop matters: the
+masters carry the workplace's logo bug on the frame and sometimes its name
+on screen, so each card shows a cropped view with the poster and preview
+picked from stretches where none of it is legible. The master file paths
+are not in the repo: list them in a JSON file outside it (copy
 `scripts/media/sources.example.json`).
 
 ```sh

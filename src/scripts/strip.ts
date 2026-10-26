@@ -2,8 +2,8 @@
 // stays still when motion is reduced.
 //
 // It starts once the fonts are in, so the phrases are measured at their final
-// size and the first thing on screen is the first phrase, set on the page
-// gutter and standing still for a moment, never a word cut in half.
+// size and the first thing on screen is the first phrase, at rest and never a
+// word cut in half.
 
 export function initStrip(reducedMotion: boolean) {
   const strip = document.querySelector<HTMLElement>("[data-strip]");

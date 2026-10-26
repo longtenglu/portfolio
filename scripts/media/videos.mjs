@@ -1,8 +1,9 @@
 // @ts-check
-// What the media pipeline makes for each video. Times are in seconds of the
-// source file. Source file paths are NOT here: they live in a local JSON file
-// outside the repo (see sources.example.json), so the repo never records where
-// the masters sit on disk.
+// What the media pipeline makes: each video's web copies, the hero reel and
+// the production stills. Times are in seconds of the source file. Source file
+// paths are NOT here: they live in a local JSON file outside the repo (see
+// sources.example.json), so the repo never records where the masters sit on
+// disk.
 
 /**
  * @typedef {"landscape" | "portrait"} Orientation

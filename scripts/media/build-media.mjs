@@ -445,7 +445,6 @@ async function main() {
     };
   }
 
-
   // Stills. The fingerprint includes the source file's bytes, so editing an
   // image in place re-encodes it even though no setting changed.
   for (const job of STILLS) {
