@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "og:image": "node scripts/og/build-og.mjs",
     "preview": "node scripts/serve.mjs",
     "check": "astro check && tsc --noEmit -p tsconfig.scripts.json",
     "test": "astro build && node --test tests/",

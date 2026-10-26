@@ -2,6 +2,7 @@
 import { videos } from "../content/copy";
 import { getVideo } from "../lib/media";
 import VideoButton from "./VideoButton.astro";
+import SectionLabel from "./SectionLabel.astro";
 
 const items = videos.items.map((item) => ({
   ...item,
@@ -11,13 +12,14 @@ const items = videos.items.map((item) => ({
 const feature = items.find((item) => item.media?.orientation === "landscape");
 const portraits = items.filter((item) => item !== feature && !item.films);
 const series = items.filter((item) => item.films);
+// Without a landscape feature the cards start at 01.
+const numBase = feature ? 2 : 1;
 
 // What the modal needs to play each file, keyed by media id.
-const playable: Record<string, { title: string; src: string; poster: string; orientation: string; note: string }> = {};
+const playable: Record<string, { title: string; src: string; poster: string; orientation: string }> = {};
 for (const item of items) {
-  const note = [videos.credit, item.aiLabel].filter(Boolean).join(" · ");
   if (item.media) {
-    playable[item.id] = { title: item.title, src: item.media.src, poster: item.media.poster, orientation: item.media.orientation, note };
+    playable[item.id] = { title: item.title, src: item.media.src, poster: item.media.poster, orientation: item.media.orientation };
   }
   for (const film of item.films ?? []) {
     playable[film.id] = {
@@ -25,7 +27,6 @@ for (const item of items) {
       src: film.media.src,
       poster: film.media.poster,
       orientation: film.media.orientation,
-      note,
     };
   }
 }
@@ -34,7 +35,7 @@ for (const item of items) {
 <section class="section videos" id="videos" aria-labelledby="videos-title">
   <div class="container">
     <div class="videos__head">
-      <h2 class="label" id="videos-title"><span class="label__num">04</span>{videos.heading}</h2>
+      <SectionLabel id="videos-title" heading={videos.heading} />
       <p class="videos__intro">
         {videos.intro}{" "}
         <span class="videos__hint videos__hint--pointer">{videos.hint}</span>
@@ -54,8 +55,6 @@ for (const item of items) {
               <ul class="vcard__skills" aria-label="Skills">
                 {feature.skills.map((skill) => <li class="chip">{skill}</li>)}
               </ul>
-              {feature.aiLabel && <p class="vcard__ai mono">{feature.aiLabel}</p>}
-              <p class="vcard__credit mono">{videos.credit}</p>
             </div>
           </article>
         )
@@ -67,13 +66,12 @@ for (const item of items) {
             <article class="vcard vcard--portrait" data-reveal style={`--reveal-delay: ${(i % 4) * 0.06}s`}>
               <VideoButton id={item.id} title={item.title} media={item.media} />
               <div class="vcard__info">
-                <p class="vcard__num mono">0{i + 2}</p>
+                <p class="vcard__num mono">0{i + numBase}</p>
                 <h3 class="vcard__title">{item.title}</h3>
                 <p class="vcard__line">{item.line}</p>
                 <ul class="vcard__skills" aria-label="Skills">
                   {item.skills.map((skill) => <li class="chip">{skill}</li>)}
                 </ul>
-                <p class="vcard__credit mono">{videos.credit}</p>
               </div>
             </article>
           ) : null,
@@ -92,13 +90,12 @@ for (const item of items) {
               ))}
             </ul>
             <div class="vcard__info">
-              <p class="vcard__num mono">0{portraits.length + 2}</p>
+              <p class="vcard__num mono">0{portraits.length + numBase}</p>
               <h3 class="vcard__title">{item.title}</h3>
               <p class="vcard__line">{item.line}</p>
               <ul class="vcard__skills" aria-label="Skills">
                 {item.skills.map((skill) => <li class="chip">{skill}</li>)}
               </ul>
-              <p class="vcard__credit mono">{videos.credit}</p>
             </div>
           </article>
         ))
@@ -119,7 +116,6 @@ for (const item of items) {
     <div class="vmodal__player" data-video-frame>
       <video controls playsinline preload="none" data-video-player></video>
     </div>
-    <p class="vmodal__note mono" data-video-note></p>
   </div>
 </dialog>
 
@@ -230,21 +226,6 @@ for (const item of items) {
     flex-wrap: wrap;
     gap: 6px;
     margin-top: 14px;
-  }
-
-  .vcard__ai {
-    margin-top: 16px;
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--accent);
-  }
-
-  .vcard__credit {
-    margin-top: 12px;
-    font-size: 11px;
-    letter-spacing: 0.06em;
-    color: var(--dim);
   }
 
   .vcard__film {
@@ -374,12 +355,5 @@ for (const item of items) {
 
   .vmodal[data-orientation="portrait"] .vmodal__player video {
     aspect-ratio: 9 / 16;
-  }
-
-  .vmodal__note {
-    padding: 12px 18px 14px;
-    font-size: 11px;
-    letter-spacing: 0.06em;
-    color: var(--muted);
   }
 </style>

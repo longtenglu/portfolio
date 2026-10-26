@@ -14,8 +14,8 @@ export function initIntro(reducedMotion: boolean) {
   const restCta = document.querySelector<HTMLElement>("[data-reel-rest-cta]");
   if (!intro || !canvas || !reel || !reelFrame || !reelVideo) return;
 
-  // Exactly one visible trigger for the promo at any time: the reel itself
-  // once it is open, the "Watch the promo" button while it is not. Focus
+  // Exactly one visible trigger for the film at any time: the reel itself
+  // once it is open, the "Watch the film" button while it is not. Focus
   // moves across when the one holding it switches off.
   const setOpen = (open: boolean) => {
     const focused = document.activeElement;

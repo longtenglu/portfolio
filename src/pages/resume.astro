@@ -47,12 +47,13 @@ const contactLine = [
           <article class="cv__item">
             <div class="cv__row">
               <h3 class="cv__role">
-                {role.role}, <span>{role.org}</span>
+                {role.role}
+                {role.org && <span>, {role.org}</span>}
               </h3>
               <p class="cv__dates mono">{role.dates}</p>
             </div>
             <ul class="cv__points">
-              {role.stats && <li>{resume.taStats}</li>}
+              {role.stats && <li>{resume.roleStats}</li>}
               {role.points.map((p) => (
                 <li>{p}</li>
               ))}

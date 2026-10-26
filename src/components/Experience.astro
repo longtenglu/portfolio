@@ -1,10 +1,11 @@
 ---
 import { education, experience, statPrefix } from "../content/copy";
+import SectionLabel from "./SectionLabel.astro";
 ---
 
 <section class="section exp" id="experience" aria-labelledby="exp-title">
   <div class="container">
-    <h2 class="label" id="exp-title"><span class="label__num">03</span>{experience.heading}</h2>
+    <SectionLabel id="exp-title" heading={experience.heading} />
     <p class="exp__intro">{experience.intro}</p>
 
     <ol class="exp__list">
@@ -14,7 +15,7 @@ import { education, experience, statPrefix } from "../content/copy";
             <p class="exp__dates mono">{role.dates}</p>
             <div class="exp__body">
               <h3 class="exp__role">{role.role}</h3>
-              <p class="exp__org">{role.org}</p>
+              {role.org && <p class="exp__org">{role.org}</p>}
               {role.stats && (
                 <ul class="exp__stats">
                   {role.stats.map((stat) => (

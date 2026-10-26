@@ -19,8 +19,9 @@ below).
 
 ## Local development
 
-Needs Node 22.23.4 or newer, ffmpeg for the media scripts, and Chrome or
-Chromium for the resume PDF and the browser tests.
+Needs Node 22.23.4 or newer, ffmpeg for the media pipeline and its tests,
+and Chrome or Chromium for the resume PDF, the share image and the browser
+tests.
 
 ```sh
 npm install
@@ -36,7 +37,8 @@ Checks, browser tests and a production build:
 
 ```sh
 npm run check           # astro check, plus type checks for scripts/ and tests/
-npm test                # builds, then drives local Chrome over dist/ (set CHROME_PATH if needed)
+npm test                # builds, checks the media pipeline, then drives local Chrome over dist/
+                        # (set CHROME_PATH if needed)
 npm run build           # static output in dist/
 MEDIA_DIR=/path/to/media npm run preview   # serve dist/ like Vercel, with /media
 ```
@@ -63,19 +65,28 @@ copies from the masters with ffmpeg, one job at a time:
 - AVIF posters
 - 4 to 6 second muted hover previews, plus the muted hero loop
 
-Which videos, which seconds, and the poster frames are in
-`scripts/media/videos.mjs`. The master file paths are not in the repo: list
-them in a JSON file outside it (copy `scripts/media/sources.example.json`).
+Which videos, which seconds, the crop each card shows, and the poster
+frames are in `scripts/media/videos.mjs`. The crop matters: the masters carry
+the workplace's logo bug on the frame and sometimes its name on screen, so
+each card shows a cropped view with the poster and preview picked from
+stretches where none of it is legible. The master file paths are not in the
+repo: list them in a JSON file outside it (copy
+`scripts/media/sources.example.json`).
 
 ```sh
 MEDIA_DIR=/path/to/media MEDIA_SOURCES=/path/to/media-sources.json npm run media:build
 # rebuild only some outputs:
-... npm run media:build -- --only atp-promo,hero-reel --force
+... npm run media:build -- --only anniversary-dinner,hero-reel --force
 ```
 
 It writes the files to `MEDIA_DIR` and the manifest the site reads to
-`src/data/media.json`. A file keeps its hosted URL only while its bytes are
-unchanged.
+`src/data/media.json`. Each output records a fingerprint of the settings that
+made it: source, crop, the poster, preview and reel times, output size and
+the encode settings. A later build re-encodes any selected output whose
+fingerprint or recorded bytes do not match the manifest, so editing one of
+those settings is enough. An output whose manifest entry has no fingerprint
+rebuilds once. `--force` rebuilds every selected output. A file keeps its
+hosted URL only while its bytes are unchanged.
 
 ## Vercel Blob
 
@@ -123,6 +134,19 @@ npm run resume:pdf      # set CHROME_PATH if Chrome is not in the usual place
 
 The resume is email-only: no phone number and no street address.
 
+## The share image
+
+`public/og.png` is the 1200x630 card shown when the site is shared in a
+message or an application email. It is rendered from the built home page so
+the name and the hands stay in step with the design:
+
+```sh
+npm run build
+npm run og:image      # writes public/og.png and dist/og.png
+```
+
+Commit the new `public/og.png` with the change that altered the hero.
+
 ## Hidden terminal
 
 Press the backtick key (`` ` ``) anywhere on the home page, or use the button
@@ -141,5 +165,5 @@ Code in this repo is the owner's. Third-party pieces:
 | The Creation of Adam, detail (Michelangelo, c. 1511) | Public domain (PD-Art, PD-old) | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Creation_of_Adam_(Michelangelo)_Detail.jpg) |
 
 Fonts are bundled from npm at build time and served from this site; no font
-or script loads from a third-party server. The videos were produced at Tax
-Academy of Singapore and are shown as work samples.
+or script loads from a third-party server. The videos are shown as work
+samples.

@@ -12,12 +12,13 @@
 //
 // Usage:
 //   MEDIA_DIR=/path/to/output MEDIA_SOURCES=/path/to/sources.json npm run media:build
-//   ... npm run media:build -- --only atp-promo,hero-reel --force
+//   ... npm run media:build -- --only anniversary-dinner,hero-reel --force
 //
-// Outputs that already exist are kept unless --force is passed, so a stopped
-// run can resume. Jobs run one at a time on purpose: one ffmpeg process is
-// enough for a 16 GB machine. Nothing is written into the repo except the
-// manifest.
+// An output is reused only when it exists, its recorded fingerprint still
+// matches the current settings, and its bytes still match the manifest;
+// --force rebuilds it anyway. Jobs run one at a time on purpose: one ffmpeg
+// process is enough for a 16 GB machine. Nothing is written into the repo
+// except the manifest.
 
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -32,7 +33,7 @@ const MANIFEST_PATH = path.join(ROOT, "src/data/media.json");
 
 /** @typedef {import("./videos.mjs").VideoJob} VideoJob */
 /**
- * @typedef {{ path: string, bytes: number, sha256: string, url: string | null,
+ * @typedef {{ path: string, fingerprint: string | null, bytes: number, sha256: string, url: string | null,
  *   width?: number, height?: number, duration?: number,
  *   loudness?: { integrated: number, truePeak: number } }} MediaFile
  * @typedef {{ orientation: string, full: MediaFile, preview: MediaFile, poster: MediaFile }} VideoEntry
@@ -91,6 +92,16 @@ function run(cmd, args) {
 }
 
 const FFMPEG = ["-hide_banner", "-nostdin", "-y"];
+
+const FULL_ENCODE = { crf: 23, preset: "slow", maxrate: "5M", bufsize: "10M", profile: "high" };
+const POSTER_ENCODE = { crf: 34, preset: "4" };
+const PREVIEW_CRF = 27;
+const REEL_CRF = 25;
+
+/** @param {Record<string, unknown>} settings */
+function fingerprint(settings) {
+  return createHash("sha256").update(JSON.stringify(settings)).digest("hex").slice(0, 16);
+}
 
 /** @param {number} w @param {number} h */
 function scaleFilter(w, h) {
@@ -208,8 +219,9 @@ async function encodeFull(src, out, size) {
       ...FFMPEG, "-loglevel", "error", "-i", src,
       "-map", "0:v:0", "-map", "0:a:0",
       "-vf", scaleFilter(size[0], size[1]),
-      "-c:v", "libx264", "-preset", "slow", "-crf", "23", "-maxrate", "5M", "-bufsize", "10M",
-      "-profile:v", "high", "-pix_fmt", "yuv420p", "-force_key_frames", "expr:gte(t,n_forced*2)",
+      "-c:v", "libx264", "-preset", FULL_ENCODE.preset, "-crf", String(FULL_ENCODE.crf),
+      "-maxrate", FULL_ENCODE.maxrate, "-bufsize", FULL_ENCODE.bufsize,
+      "-profile:v", FULL_ENCODE.profile, "-pix_fmt", "yuv420p", "-force_key_frames", "expr:gte(t,n_forced*2)",
       "-af", plan.chain, ...AAC,
       "-movflags", "+faststart", tmp,
     ]).then(() => undefined),
@@ -228,10 +240,13 @@ async function encodeFull(src, out, size) {
  * @param {[number, number]} size
  * @param {number} start
  * @param {number} duration
- * @param {{ crf: number, fade?: boolean }} opts
+ * @param {{ crf: number, fade?: boolean, crop?: string }} opts
  */
 async function encodeExcerpt(src, out, size, start, duration, opts) {
-  const filters = [scaleFilter(size[0], size[1])];
+  /** @type {string[]} */
+  const filters = [];
+  if (opts.crop) filters.push(`crop=${opts.crop}`);
+  filters.push(scaleFilter(size[0], size[1]));
   if (opts.fade) {
     // Fade in and out of black so the loop seam reads as a cut on the dark page.
     filters.push(`fade=t=in:st=0:d=0.4,fade=t=out:st=${(duration - 0.4).toFixed(2)}:d=0.4`);
@@ -252,13 +267,15 @@ async function encodeExcerpt(src, out, size, start, duration, opts) {
  * @param {string} out
  * @param {[number, number]} size
  * @param {number} at
+ * @param {string} [crop]
  */
-async function encodePoster(src, out, size, at) {
+async function encodePoster(src, out, size, at, crop) {
+  const filters = crop ? `crop=${crop},` : "";
   await produce(out, (tmp) =>
     run("ffmpeg", [
       ...FFMPEG, "-loglevel", "error", "-ss", String(at), "-i", src, "-frames:v", "1",
-      "-vf", `${scaleFilter(size[0], size[1])},format=yuv420p`,
-      "-c:v", "libsvtav1", "-crf", "34", "-preset", "4", "-f", "avif", tmp,
+      "-vf", `${filters}${scaleFilter(size[0], size[1])},format=yuv420p`,
+      "-c:v", "libsvtav1", "-crf", String(POSTER_ENCODE.crf), "-preset", POSTER_ENCODE.preset, "-f", "avif", tmp,
     ]).then(() => undefined),
   );
 }
@@ -267,17 +284,23 @@ async function encodePoster(src, out, size, at) {
  * @param {string} mediaDir
  * @param {string} rel
  * @param {MediaFile | undefined} previous
- * @param {Partial<MediaFile>} extra
+ * @param {Partial<MediaFile> & { rebuilt?: boolean }} extra
  * @returns {Promise<MediaFile>}
  */
 async function describe(mediaDir, rel, previous, extra = {}) {
   const abs = path.join(mediaDir, rel);
-  const [info, hash, st] = await Promise.all([probe(abs), sha256(abs), stat(abs)]);
-  const same = previous?.sha256 === hash;
-  const loudness = extra.loudness ?? (same ? previous?.loudness : undefined);
+  const hashPromise = extra.sha256 ? Promise.resolve(extra.sha256) : sha256(abs);
+  const [info, hash, st] = await Promise.all([probe(abs), hashPromise, stat(abs)]);
+  const sameHash = previous?.sha256 === hash;
+  const sameBytes = sameHash && previous?.bytes === st.size;
+  const fingerprint = extra.rebuilt === true
+    ? (extra.fingerprint ?? null)
+    : sameBytes ? (previous?.fingerprint ?? null) : null;
+  const loudness = extra.loudness ?? (sameHash ? previous?.loudness : undefined);
   // Fixed key order keeps manifest diffs readable between runs.
   return {
     path: rel,
+    fingerprint,
     bytes: st.size,
     sha256: hash,
     width: info.width,
@@ -285,7 +308,7 @@ async function describe(mediaDir, rel, previous, extra = {}) {
     ...(rel.endsWith(".mp4") && info.duration ? { duration: info.duration } : {}),
     ...(loudness ? { loudness } : {}),
     // Keep a hosted URL only while it still points at the same bytes.
-    url: same ? (previous?.url ?? null) : null,
+    url: sameHash ? (previous?.url ?? null) : null,
   };
 }
 
@@ -310,68 +333,114 @@ async function main() {
   };
   /** @param {string} id */
   const selected = (id) => !only || only.has(id);
-  /** @param {string} rel */
-  const needs = (rel) => force || !existsSync(path.join(mediaDir, rel));
+  /** @type {Set<string>} */
+  const rebuilt = new Set();
+  /** @type {Map<string, string>} */
+  const verifiedHashes = new Map();
+  /**
+   * @param {string} rel
+   * @param {MediaFile | undefined} prevFile
+   * @param {string} fp
+   */
+  const current = async (rel, prevFile, fp) => {
+    if (!prevFile || prevFile.fingerprint !== fp) return false;
+    const abs = path.join(mediaDir, rel);
+    if (!existsSync(abs)) return false;
+    const st = await stat(abs);
+    if (st.size !== prevFile.bytes) return false;
+    const hash = await sha256(abs);
+    if (hash !== prevFile.sha256) return false;
+    verifiedHashes.set(rel, hash);
+    return true;
+  };
+  /**
+   * @param {string} rel
+   * @param {MediaFile | undefined} prevFile
+   * @param {string} fp
+   * @param {Partial<MediaFile>} [extra]
+   */
+  const describeOutput = (rel, prevFile, fp, extra = {}) =>
+    describe(mediaDir, rel, prevFile, {
+      fingerprint: fp,
+      rebuilt: rebuilt.has(rel),
+      ...(verifiedHashes.has(rel) ? { sha256: verifiedHashes.get(rel) } : {}),
+      ...extra,
+    });
 
   /** @type {Manifest} */
   const manifest = { videos: {}, reel: null };
 
   for (const job of VIDEOS) {
     const size = SIZES[job.orientation];
+    const prev = previous.videos[job.id];
     const rel = {
       full: `${job.id}/${job.id}.mp4`,
       preview: `${job.id}/${job.id}-preview.mp4`,
       poster: `${job.id}/${job.id}-poster.avif`,
     };
+    const fp = {
+      full: fingerprint({ kind: "full", source: job.id, size: size.full, ...FULL_ENCODE, loudness: LOUDNESS }),
+      preview: fingerprint({ kind: "preview", source: job.id, start: job.preview.start, duration: job.preview.duration, crop: job.crop ?? null, size: size.preview, crf: PREVIEW_CRF }),
+      poster: fingerprint({ kind: "poster", source: job.id, at: job.poster, crop: job.crop ?? null, size: size.poster, ...POSTER_ENCODE }),
+    };
     /** @type {{ integrated: number, truePeak: number } | undefined} */
     let loudness;
     if (selected(job.id)) {
       const src = sourceFor(job.id);
-      if (needs(rel.full)) {
+      if (force || !(await current(rel.full, prev?.full, fp.full))) {
         console.log(`${job.id}: full copy`);
         loudness = await encodeFull(src, path.join(mediaDir, rel.full), /** @type {[number, number]} */ (size.full));
+        rebuilt.add(rel.full);
         console.log(`  ${loudness.integrated} LUFS, ${loudness.truePeak} dBTP`);
       }
-      if (needs(rel.poster)) {
+      if (force || !(await current(rel.poster, prev?.poster, fp.poster))) {
         console.log(`${job.id}: poster`);
-        await encodePoster(src, path.join(mediaDir, rel.poster), /** @type {[number, number]} */ (size.poster), job.poster);
+        await encodePoster(src, path.join(mediaDir, rel.poster), /** @type {[number, number]} */ (size.poster), job.poster, job.crop);
+        rebuilt.add(rel.poster);
       }
-      if (needs(rel.preview)) {
+      if (force || !(await current(rel.preview, prev?.preview, fp.preview))) {
         console.log(`${job.id}: hover preview`);
         await encodeExcerpt(src, path.join(mediaDir, rel.preview), /** @type {[number, number]} */ (size.preview),
-          job.preview.start, job.preview.duration, { crf: 27 });
+          job.preview.start, job.preview.duration, { crf: PREVIEW_CRF, crop: job.crop });
+        rebuilt.add(rel.preview);
       }
     }
     if (!existsSync(path.join(mediaDir, rel.full))) continue;
-    const prev = previous.videos[job.id];
-    const full = await describe(mediaDir, rel.full, prev?.full, loudness ? { loudness } : {});
+    const full = await describeOutput(rel.full, prev?.full, fp.full, loudness ? { loudness } : {});
     if (!full.loudness) full.loudness = await verifyLoudness(path.join(mediaDir, rel.full));
     manifest.videos[job.id] = {
       orientation: job.orientation,
       full,
-      preview: await describe(mediaDir, rel.preview, prev?.preview),
-      poster: await describe(mediaDir, rel.poster, prev?.poster),
+      preview: await describeOutput(rel.preview, prev?.preview, fp.preview),
+      poster: await describeOutput(rel.poster, prev?.poster, fp.poster),
     };
   }
 
   const reelRel = { video: `${HERO_REEL.id}/${HERO_REEL.id}.mp4`, poster: `${HERO_REEL.id}/${HERO_REEL.id}-poster.avif` };
+  const reelSize = SIZES.landscape;
+  const reelPosterAt = HERO_REEL.poster ?? HERO_REEL.start + 4.5;
+  const reelFp = {
+    video: fingerprint({ kind: "reel", source: HERO_REEL.source, start: HERO_REEL.start, duration: HERO_REEL.end - HERO_REEL.start, crop: HERO_REEL.crop ?? null, size: reelSize.reel, crf: REEL_CRF, fade: true }),
+    poster: fingerprint({ kind: "poster", source: HERO_REEL.source, at: reelPosterAt, crop: HERO_REEL.crop ?? null, size: reelSize.reel, ...POSTER_ENCODE }),
+  };
   if (selected(HERO_REEL.id)) {
     const src = sourceFor(HERO_REEL.source);
-    const size = SIZES.landscape;
-    if (needs(reelRel.video)) {
+    if (force || !(await current(reelRel.video, previous.reel?.video, reelFp.video))) {
       console.log(`${HERO_REEL.id}: loop`);
-      await encodeExcerpt(src, path.join(mediaDir, reelRel.video), /** @type {[number, number]} */ (size.reel),
-        HERO_REEL.start, HERO_REEL.end - HERO_REEL.start, { crf: 25, fade: true });
+      await encodeExcerpt(src, path.join(mediaDir, reelRel.video), /** @type {[number, number]} */ (reelSize.reel),
+        HERO_REEL.start, HERO_REEL.end - HERO_REEL.start, { crf: REEL_CRF, fade: true, crop: HERO_REEL.crop });
+      rebuilt.add(reelRel.video);
     }
-    if (needs(reelRel.poster)) {
+    if (force || !(await current(reelRel.poster, previous.reel?.poster, reelFp.poster))) {
       console.log(`${HERO_REEL.id}: poster`);
-      await encodePoster(src, path.join(mediaDir, reelRel.poster), /** @type {[number, number]} */ (size.reel), HERO_REEL.start + 4.5);
+      await encodePoster(src, path.join(mediaDir, reelRel.poster), /** @type {[number, number]} */ (reelSize.reel), reelPosterAt, HERO_REEL.crop);
+      rebuilt.add(reelRel.poster);
     }
   }
   if (existsSync(path.join(mediaDir, reelRel.video))) {
     manifest.reel = {
-      video: await describe(mediaDir, reelRel.video, previous.reel?.video),
-      poster: await describe(mediaDir, reelRel.poster, previous.reel?.poster),
+      video: await describeOutput(reelRel.video, previous.reel?.video, reelFp.video),
+      poster: await describeOutput(reelRel.poster, previous.reel?.poster, reelFp.poster),
     };
   }
 

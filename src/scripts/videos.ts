@@ -3,7 +3,7 @@
 
 import { lockScroll } from "./scroll";
 
-type Playable = { title: string; src: string; poster: string; orientation: string; note: string };
+type Playable = { title: string; src: string; poster: string; orientation: string };
 
 // Can this element take focus and be seen right now?
 function usable(el: HTMLElement | null): el is HTMLElement {
@@ -26,8 +26,7 @@ export function initVideos(finePointer: boolean) {
   const modal = document.querySelector<HTMLDialogElement>("[data-video-modal]");
   const player = modal?.querySelector<HTMLVideoElement>("[data-video-player]");
   const title = modal?.querySelector<HTMLElement>("[data-video-title]");
-  const note = modal?.querySelector<HTMLElement>("[data-video-note]");
-  if (!dataEl || !modal || !player || !title || !note) return;
+  if (!dataEl || !modal || !player || !title) return;
   const data = JSON.parse(dataEl.textContent ?? "{}") as Record<string, Playable>;
   let opener: HTMLElement | null = null;
 
@@ -61,7 +60,6 @@ export function initVideos(finePointer: boolean) {
     if (!item) return;
     opener = trigger;
     title.textContent = item.title;
-    note.textContent = item.note;
     modal.dataset.orientation = item.orientation;
     player.poster = item.poster;
     player.src = item.src;

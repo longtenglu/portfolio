@@ -3,12 +3,13 @@ import { Picture } from "astro:assets";
 import headshot from "../assets/headshot.jpg";
 import { about } from "../content/copy";
 import { resume } from "../content/resume";
+import SectionLabel from "./SectionLabel.astro";
 ---
 
 <section class="section about" id="about" aria-labelledby="about-title">
   <div class="container about__grid">
     <div class="about__copy">
-      <h2 class="label" id="about-title"><span class="label__num">01</span>{about.heading}</h2>
+      <SectionLabel id="about-title" heading={about.heading} />
       <p class="lead about__lead" data-reveal>{about.lead}</p>
       <div class="prose about__body" data-reveal style="--reveal-delay: 0.08s">
         {about.body.map((p) => <p>{p}</p>)}
@@ -35,7 +36,6 @@ import { resume } from "../content/resume";
         decoding="async"
         class="about__img"
       />
-      <span class="about__tag mono" aria-hidden="true">LTL / SG</span>
     </figure>
   </div>
 </section>
@@ -98,16 +98,6 @@ import { resume } from "../content/resume";
     -webkit-mask-image: var(--fade);
     mask-image: var(--fade);
     pointer-events: none;
-  }
-
-  .about__tag {
-    position: absolute;
-    right: 4%;
-    bottom: 10%;
-    z-index: 1;
-    font-size: 11px;
-    letter-spacing: 0.16em;
-    color: var(--accent);
   }
 
   @media (max-width: 820px) {

@@ -1,8 +1,8 @@
 // @ts-check
 // Tiny static file responder with HTTP range support, shared by the Astro dev
-// server plugin (for /media), scripts/serve.mjs, the resume PDF script and the
-// browser tests. Range support matters: browsers stream and seek video with
-// range requests.
+// server plugin (for /media), scripts/serve.mjs, the resume PDF and share
+// image scripts, and the browser tests. Range support matters: browsers stream
+// and seek video with range requests.
 
 import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";

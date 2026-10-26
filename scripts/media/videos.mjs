@@ -11,25 +11,39 @@
  *   orientation: Orientation,
  *   poster: number,
  *   preview: { start: number, duration: number },
+ *   crop?: string,
  * }} VideoJob
- * @typedef {{ id: string, source: string, start: number, end: number }} ReelJob
+ * @typedef {{ id: string, source: string, start: number, end: number, poster?: number, crop?: string }} ReelJob
  */
+
+// `crop` is the w:h:x:y view of the master that the card actually shows. The
+// masters put the workplace's logo bug, and on-screen titles that name it, in
+// the top or bottom band of the frame, so every card crops that band away.
+// Poster times and preview windows are chosen from stretches where no
+// workplace name is legible, rather than by what looks best.
 
 /** @type {VideoJob[]} */
 export const VIDEOS = [
-  { id: "atp-promo", orientation: "landscape", poster: 9.5, preview: { start: 5.2, duration: 5.5 } },
-  { id: "tax-is-networking", orientation: "portrait", poster: 2.6, preview: { start: 4.0, duration: 5.5 } },
-  { id: "anniversary-dinner", orientation: "portrait", poster: 33.5, preview: { start: 31.0, duration: 5.5 } },
-  { id: "china-trip", orientation: "portrait", poster: 7.0, preview: { start: 15.0, duration: 6.0 } },
-  { id: "iivt-few-words", orientation: "portrait", poster: 9.5, preview: { start: 8.0, duration: 5.5 } },
-  { id: "bear-amsterdam-pre", orientation: "portrait", poster: 16.5, preview: { start: 8.0, duration: 5.5 } },
-  { id: "bear-amsterdam-during", orientation: "portrait", poster: 3.4, preview: { start: 40.5, duration: 5.5 } },
-  { id: "bear-munich", orientation: "portrait", poster: 2.0, preview: { start: 0.5, duration: 5.5 } },
+  { id: "tax-is-networking", orientation: "portrait", crop: "945:1680:67:0", poster: 4.0, preview: { start: 3.0, duration: 5.5 } },
+  { id: "anniversary-dinner", orientation: "portrait", crop: "918:1632:81:288", poster: 54.0, preview: { start: 50.0, duration: 5.5 } },
+  { id: "china-trip", orientation: "portrait", crop: "954:1696:30:224", poster: 12.0, preview: { start: 46.0, duration: 5.5 } },
+  { id: "iivt-few-words", orientation: "portrait", crop: "954:1696:63:224", poster: 10.0, preview: { start: 9.0, duration: 5.5 } },
+  { id: "bear-amsterdam-pre", orientation: "portrait", crop: "945:1680:67:0", poster: 5.2, preview: { start: 1.5, duration: 5.5 } },
+  { id: "bear-amsterdam-during", orientation: "portrait", crop: "918:1632:43:288", poster: 31.0, preview: { start: 29.0, duration: 5.5 } },
+  { id: "bear-munich", orientation: "portrait", crop: "918:1632:81:288", poster: 25.0, preview: { start: 45.0, duration: 5.5 } },
 ];
 
-// The muted loop that plays in the gap between the hands.
+// The muted loop that plays in the gap between the hands. The anniversary
+// recap is a vertical film, so the reel is a 16:9 crop of its middle band.
 /** @type {ReelJob} */
-export const HERO_REEL = { id: "hero-reel", source: "atp-promo", start: 5, end: 19 };
+export const HERO_REEL = {
+  id: "hero-reel",
+  source: "anniversary-dinner",
+  start: 10.5,
+  end: 18.5,
+  poster: 15.5,
+  crop: "1080:608:0:656",
+};
 
 // Output sizes. Landscape is capped at 1080p, portrait at 1080x1920.
 export const SIZES = {
