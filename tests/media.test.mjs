@@ -122,6 +122,44 @@ function addUrls(root) {
   writeFileSync(path.join(root, "src/data/media.json"), `${JSON.stringify(manifest, null, 2)}\n`);
 }
 
+/**
+ * Changes one byte inside a file without changing its length.
+ * @param {string} file
+ */
+function flipByte(file) {
+  const bytes = readFileSync(file);
+  const at = Math.floor(bytes.length / 2);
+  bytes[at] = bytes[at] ^ 0xff;
+  writeFileSync(file, bytes);
+}
+
+/** @param {string} log */
+function assertEveryOutputReencoded(log) {
+  assert.match(log, /clip: full copy/);
+  assert.match(log, /clip: poster/);
+  assert.match(log, /clip: hover preview/);
+  assert.match(log, /hero-reel: loop/);
+  assert.match(log, /hero-reel: poster/);
+}
+
+/**
+ * @param {ReturnType<typeof outputs>} actual
+ * @param {ReturnType<typeof outputs>} expected
+ * @param {string} phase
+ */
+function assertOutputsReencoded(actual, expected, phase) {
+  assert.equal(actual.full.sha256, expected.full.sha256, `${phase}: the full copy is re-encoded, not adopted from the stale file`);
+  assert.equal(actual.preview.sha256, expected.preview.sha256, `${phase}: the preview is re-encoded, not adopted from the stale file`);
+  assert.equal(actual.poster.sha256, expected.poster.sha256, `${phase}: the poster is re-encoded, not adopted from the stale file`);
+  assert.equal(actual.reel.sha256, expected.reel.sha256, `${phase}: the reel is re-encoded, not adopted from the stale file`);
+  assert.equal(actual.reelPoster.sha256, expected.reelPoster.sha256, `${phase}: the reel poster is re-encoded, not adopted from the stale file`);
+  assert.equal(actual.full.fingerprint, expected.full.fingerprint, `${phase}: the full copy keeps the current fingerprint`);
+  assert.equal(actual.preview.fingerprint, expected.preview.fingerprint, `${phase}: the preview keeps the current fingerprint`);
+  assert.equal(actual.poster.fingerprint, expected.poster.fingerprint, `${phase}: the poster keeps the current fingerprint`);
+  assert.equal(actual.reel.fingerprint, expected.reel.fingerprint, `${phase}: the reel keeps the current fingerprint`);
+  assert.equal(actual.reelPoster.fingerprint, expected.reelPoster.fingerprint, `${phase}: the reel poster keeps the current fingerprint`);
+}
+
 test("build-media re-encodes an output when its settings change", () => {
   const root = setup();
   try {
@@ -217,31 +255,36 @@ test("build-media re-encodes outputs whose bytes no longer match the manifest", 
     assert.notEqual(expected.reelPoster.sha256, stale.reelPoster.sha256, "the new settings change the reel poster bytes");
 
     // Put the old outputs back, leaving that manifest in place: every
-    // fingerprint matches and only the bytes are stale.
+    // fingerprint matches and only the bytes are stale. These files are a
+    // different length from the ones the manifest describes.
     copyFileSync(path.join(root, "stale", stale.preview.path), path.join(root, "media", expected.preview.path));
     copyFileSync(path.join(root, "stale", stale.poster.path), path.join(root, "media", expected.poster.path));
     copyFileSync(path.join(root, "stale", stale.reel.path), path.join(root, "media", expected.reel.path));
     copyFileSync(path.join(root, "stale", stale.reelPoster.path), path.join(root, "media", expected.reelPoster.path));
     appendFileSync(path.join(root, "media", expected.full.path), Buffer.from([0]));
 
-    const log = run(root);
-    assert.match(log, /clip: full copy/);
-    assert.match(log, /clip: poster/);
-    assert.match(log, /clip: hover preview/);
-    assert.match(log, /hero-reel: loop/);
-    assert.match(log, /hero-reel: poster/);
+    const lengthLog = run(root);
+    assertEveryOutputReencoded(lengthLog);
+    assertOutputsReencoded(outputs(root), expected, "a stale length");
 
-    const rebuilt = outputs(root);
-    assert.equal(rebuilt.full.sha256, expected.full.sha256, "the full copy is re-encoded, not adopted from the stale file");
-    assert.equal(rebuilt.preview.sha256, expected.preview.sha256, "the preview is re-encoded, not adopted from the stale file");
-    assert.equal(rebuilt.poster.sha256, expected.poster.sha256, "the poster is re-encoded, not adopted from the stale file");
-    assert.equal(rebuilt.reel.sha256, expected.reel.sha256, "the reel is re-encoded, not adopted from the stale file");
-    assert.equal(rebuilt.reelPoster.sha256, expected.reelPoster.sha256, "the reel poster is re-encoded, not adopted from the stale file");
-    assert.equal(rebuilt.full.fingerprint, expected.full.fingerprint, "the full copy keeps the current fingerprint");
-    assert.equal(rebuilt.preview.fingerprint, expected.preview.fingerprint, "the preview keeps the current fingerprint");
-    assert.equal(rebuilt.poster.fingerprint, expected.poster.fingerprint, "the poster keeps the current fingerprint");
-    assert.equal(rebuilt.reel.fingerprint, expected.reel.fingerprint, "the reel keeps the current fingerprint");
-    assert.equal(rebuilt.reelPoster.fingerprint, expected.reelPoster.fingerprint, "the reel poster keeps the current fingerprint");
+    // Flip one byte in every output without changing its length, so only the
+    // sha256 can tell these files are stale.
+    for (const file of [expected.full, expected.preview, expected.poster, expected.reel, expected.reelPoster]) {
+      flipByte(path.join(root, "media", file.path));
+    }
+    const hashLog = run(root);
+    assertEveryOutputReencoded(hashLog);
+    const rehashed = outputs(root);
+    assertOutputsReencoded(rehashed, expected, "stale bytes of the same length");
+
+    // A job the build skips keeps its bytes but loses its fingerprint.
+    flipByte(path.join(root, "media", rehashed.poster.path));
+    const skippedLog = run(root, ["--only", "other"]);
+    assert.doesNotMatch(skippedLog, /full copy|poster|hover preview|loop/);
+    const skipped = outputs(root);
+    assert.equal(skipped.poster.fingerprint, null, "a skipped output whose bytes differ is not stamped current");
+    assert.notEqual(skipped.poster.sha256, expected.poster.sha256, "the skipped output records the bytes it actually has");
+    assert.equal(skipped.preview.fingerprint, expected.preview.fingerprint, "an untouched skipped output keeps its fingerprint");
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
