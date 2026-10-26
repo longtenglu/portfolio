@@ -5,13 +5,16 @@ Longteng Lu's portfolio website: <https://longtenglu.vercel.app>
 A static [Astro](https://astro.build) site in TypeScript. No server code, no
 trackers, no analytics. The hero draws Michelangelo's two reaching hands in
 code characters on a canvas, and the reel between the fingertips opens as you
-scroll.
+scroll. The reel plays one of the Selected videos: `hero.reel.film` in
+`src/content/copy.ts` names it, and `HERO_REEL` in `scripts/media/videos.mjs`
+says which seconds of it, cropped to 16:9, loop in the gap.
 
 ## Edit the words
 
 The copy for the home page and resume lives in two files:
 
-- `src/content/copy.ts`: the home page, the video cards, the terminal
+- `src/content/copy.ts`: the home page, the video cards (each with one credit
+  line), the "How a film gets made" steps, the terminal
 - `src/content/resume.ts`: lines that only appear on the resume
 
 After changing anything that appears on the resume, rebuild the PDF (see
@@ -64,6 +67,8 @@ copies from the masters with ffmpeg, one job at a time:
   with the true peak at or below -1.5 dBTP
 - AVIF posters
 - 4 to 6 second muted hover previews, plus the muted hero loop
+- the six production stills for "How a film gets made": one 4:5 AVIF each,
+  cut from a frame of a film (`at`, in seconds) or from an image
 
 Which videos, which seconds, the crop each card shows, and the poster
 frames are in `scripts/media/videos.mjs`. The crop matters: the masters carry
@@ -76,7 +81,7 @@ repo: list them in a JSON file outside it (copy
 ```sh
 MEDIA_DIR=/path/to/media MEDIA_SOURCES=/path/to/media-sources.json npm run media:build
 # rebuild only some outputs:
-... npm run media:build -- --only anniversary-dinner,hero-reel --force
+... npm run media:build -- --only china-trip,hero-reel --force
 ```
 
 It writes the files to `MEDIA_DIR` and the manifest the site reads to
@@ -84,9 +89,15 @@ It writes the files to `MEDIA_DIR` and the manifest the site reads to
 made it: source, crop, the poster, preview and reel times, output size and
 the encode settings. A later build re-encodes any selected output whose
 fingerprint or recorded bytes do not match the manifest, so editing one of
-those settings is enough. An output whose manifest entry has no fingerprint
-rebuilds once. `--force` rebuilds every selected output. A file keeps its
-hosted URL only while its bytes are unchanged.
+those settings is enough. A still's fingerprint includes its source file's
+bytes, so editing an image in place re-encodes it. An output whose manifest
+entry has no fingerprint rebuilds once. `--force` rebuilds every selected
+output. A file keeps its hosted URL only while its bytes are unchanged.
+
+Outputs left out by `--only` are not rebuilt, but the manifest records the
+bytes `MEDIA_DIR` actually holds for them. Before a partial build, make sure
+`MEDIA_DIR` has the hosted files (download them from the URLs in the manifest
+and check the sha256), or their entries will lose their URLs.
 
 ## Vercel Blob
 

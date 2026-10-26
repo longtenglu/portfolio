@@ -5,6 +5,7 @@
 // offline and only exercise the page's own behaviour.
 
 import assert from "node:assert/strict";
+import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { after, before, describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -13,7 +14,7 @@ import { findChrome } from "../scripts/lib/chrome.mjs";
 import { serveDir } from "../scripts/lib/static.mjs";
 
 const DIST = fileURLToPath(new URL("../dist", import.meta.url));
-const FILM_TITLE = "20th Anniversary Dinner Reception";
+const FILM_TITLE = "China trip recap";
 
 /** @type {{ port: number, close: () => Promise<void> }} */
 let server;
@@ -31,11 +32,11 @@ after(async () => {
 });
 
 /**
- * @param {{ reducedMotion?: "reduce" | "no-preference" }} [opts]
+ * @param {{ reducedMotion?: "reduce" | "no-preference", width?: number, height?: number }} [opts]
  */
 async function openHome(opts = {}) {
   const context = await browser.newContext({
-    viewport: { width: 1440, height: 900 },
+    viewport: { width: opts.width ?? 1440, height: opts.height ?? 900 },
     reducedMotion: opts.reducedMotion ?? "no-preference",
   });
   await context.route(/blob\.vercel-storage\.com/, (route) => route.abort());
@@ -219,6 +220,255 @@ describe("reduced motion", () => {
       assert.equal(await page.evaluate(() => window.scrollY), before, "the page did not scroll");
     } finally {
       await context.close();
+    }
+  });
+});
+
+describe("hero opening", () => {
+  test("the copy stays until the reel starts to open, and the reel is open by about a quarter of a screen", async () => {
+    const { context, page } = await openHome();
+    try {
+      const copyOpacity = () =>
+        page.evaluate(() => Number(getComputedStyle(/** @type {HTMLElement} */ (document.querySelector(".hero__copy"))).opacity));
+      const scrollBy = async (/** @type {number} */ fraction) => {
+        await page.evaluate((f) => window.scrollTo(0, window.innerHeight * f), fraction);
+        await page.waitForTimeout(250);
+      };
+
+      assert.equal(await copyOpacity(), 1, "the copy is fully visible at rest");
+      // The spark has widened and the hands have parted, but the reel is still shut.
+      await scrollBy(0.06);
+      assert.equal(await page.getAttribute("[data-reel]", "data-open"), "false");
+      assert.equal(await copyOpacity(), 1, "the copy has not started to fade before the reel opens");
+
+      await scrollBy(0.28);
+      assert.equal(await page.getAttribute("[data-reel]", "data-open"), "true", "the reel is open a quarter of a screen in");
+      assert.ok((await copyOpacity()) < 0.05, "the copy has stepped back once the reel is open");
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("the pinned stage is half a screen long, so no stretch of it is empty", async () => {
+    const { context, page } = await openHome({ width: 390, height: 844 });
+    try {
+      const stage = await page.evaluate(() => {
+        const intro = /** @type {HTMLElement} */ (document.querySelector("[data-intro]"));
+        return { scroll: intro.offsetHeight - window.innerHeight, viewport: window.innerHeight };
+      });
+      assert.ok(Math.abs(stage.scroll - stage.viewport / 2) <= 2, `the stage adds ${stage.scroll}px of scroll`);
+      await page.evaluate(() => window.scrollTo(0, window.innerHeight * 0.28));
+      await page.waitForFunction(() => document.querySelector("[data-reel]")?.getAttribute("data-open") === "true");
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("the reel plays a Selected video, and its caption says so", async () => {
+    const { context, page } = await openHome({ reducedMotion: "reduce" });
+    try {
+      const caption = await page.evaluate(
+        () => /** @type {HTMLElement | null} */ (document.querySelector("[data-reel-caption]"))?.innerText.replace(/\s+/g, " ").trim() ?? "",
+      );
+      assert.match(caption, /^China trip recap Story, information design and a code-built edit/);
+      const films = await page.evaluate(() =>
+        [...document.querySelectorAll(".vcard__title")].map((el) => el.textContent?.trim()),
+      );
+      assert.ok(films.includes("China trip recap"));
+    } finally {
+      await context.close();
+    }
+  });
+});
+
+describe("the strip", () => {
+  test("starts at rest on the first phrase, set on the page gutter", async () => {
+    const { context, page } = await openHome();
+    try {
+      await page.waitForSelector(".strip.is-ready");
+      const edges = await page.evaluate(() => {
+        const phrase = /** @type {HTMLElement} */ (document.querySelector(".strip__phrase"));
+        const range = document.createRange();
+        range.selectNodeContents(phrase);
+        const text = range.getBoundingClientRect();
+        const name = /** @type {HTMLElement} */ (document.querySelector(".hero__name")).getBoundingClientRect();
+        return { text: text.left, gutter: name.left, words: phrase.textContent };
+      });
+      assert.equal(edges.words, "DESIGN × CODE");
+      assert.ok(Math.abs(edges.text - edges.gutter) <= 2, `the first phrase starts at ${edges.text}, the gutter is ${edges.gutter}`);
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("keeps its words, and says 70 videos rather than aspiring", async () => {
+    const { context, page } = await openHome();
+    try {
+      const words = await page.evaluate(() => document.querySelector("[data-strip] .visually-hidden")?.textContent ?? "");
+      assert.equal(words, "DESIGN × CODE • VIDEO × AI • BUILDING WITH AGENTS • 70 VIDEOS AND COUNTING");
+    } finally {
+      await context.close();
+    }
+  });
+});
+
+describe("page details", () => {
+  test("no small uppercase label is left except dates", async () => {
+    const { context, page } = await openHome();
+    try {
+      const found = await page.evaluate(() => {
+        const out = [];
+        for (const el of document.querySelectorAll("main *, header *, footer *")) {
+          if (!(el instanceof HTMLElement) || el.closest("dialog")) continue;
+          const own = [...el.childNodes].some((n) => n.nodeType === 3 && (n.textContent ?? "").trim());
+          if (!own) continue;
+          const style = getComputedStyle(el);
+          if (style.textTransform !== "uppercase" || parseFloat(style.fontSize) > 14) continue;
+          out.push(`${el.className || el.tagName}: ${el.textContent?.trim().slice(0, 40)}`);
+        }
+        return out;
+      });
+      assert.deepEqual(found.filter((f) => !f.startsWith("exp__dates")), []);
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("Contact has no clock", async () => {
+    const { context, page } = await openHome();
+    try {
+      assert.equal(await page.locator("[data-clock], .clock").count(), 0);
+      assert.equal(await page.locator("#contact").getByText(/local time/i).count(), 0);
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("each film has one credit line and no skill chips", async () => {
+    const { context, page } = await openHome();
+    try {
+      assert.equal(await page.locator(".chip, .vcard__skills").count(), 0);
+      const credits = await page.locator(".vcard__credit").allTextContents();
+      assert.equal(credits.length, 4);
+      assert.ok(credits.every((c) => c.trim().length > 0 && c.trim().length <= 70));
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("the Builds rules and lists line up across a row", async () => {
+    const { context, page } = await openHome();
+    try {
+      const tops = await page.evaluate(() =>
+        [...document.querySelectorAll(".build__examples")].map((el) => Math.round(el.getBoundingClientRect().top + window.scrollY)),
+      );
+      assert.equal(tops.length, 4);
+      assert.equal(tops[0], tops[1]);
+      assert.equal(tops[2], tops[3]);
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("the Toolbox groups keep their own height, with no empty cells", async () => {
+    const { context, page } = await openHome();
+    try {
+      const boxes = await page.evaluate(() =>
+        [...document.querySelectorAll(".tgroup")].map((el) => {
+          const rect = el.getBoundingClientRect();
+          return { items: el.querySelectorAll("li").length, height: Math.round(rect.height) };
+        }),
+      );
+      assert.equal(boxes.length, 4);
+      const [video, marketing] = boxes;
+      assert.ok(marketing.height > video.height, "a longer group is taller than a shorter one");
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("the process strip shows six stills with their captions", async () => {
+    const { context, page } = await openHome();
+    try {
+      const steps = await page.evaluate(() =>
+        [...document.querySelectorAll(".step")].map((el) => ({
+          title: el.querySelector(".step__title")?.textContent,
+          caption: el.querySelector(".step__caption")?.textContent?.length ?? 0,
+          alt: el.querySelector("img")?.getAttribute("alt")?.length ?? 0,
+          src: el.querySelector("img")?.getAttribute("src") ?? "",
+        })),
+      );
+      assert.deepEqual(
+        steps.map((s) => s.title),
+        ["Script", "Footage and b-roll", "Motion in code", "Captions", "Review", "Final edit in CapCut"],
+      );
+      assert.ok(steps.every((s) => s.caption > 0 && s.alt > 0 && s.src.length > 0));
+    } finally {
+      await context.close();
+    }
+  });
+});
+
+describe("phones", () => {
+  test("About shows the words before the headshot", async () => {
+    const { context, page } = await openHome({ width: 390, height: 844 });
+    try {
+      const tops = await page.evaluate(() => ({
+        copy: /** @type {HTMLElement} */ (document.querySelector(".about__copy")).getBoundingClientRect().top,
+        photo: /** @type {HTMLElement} */ (document.querySelector(".about__photo")).getBoundingClientRect().top,
+      }));
+      assert.ok(tops.copy < tops.photo);
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("Selected videos are one card to a row", async () => {
+    const { context, page } = await openHome({ width: 390, height: 844 });
+    try {
+      const rects = await page.evaluate(() =>
+        [...document.querySelectorAll(".vgrid > .vcard")].map((el) => {
+          const r = el.getBoundingClientRect();
+          return { left: Math.round(r.left), width: Math.round(r.width), top: Math.round(r.top + window.scrollY) };
+        }),
+      );
+      assert.equal(rects.length, 4);
+      assert.ok(rects.every((r) => r.left === rects[0].left && r.width === rects[0].width), "every card spans the same row width");
+      assert.ok(rects.every((r, i) => i === 0 || r.top > rects[i - 1].top), "each card sits below the one before");
+      assert.ok(rects[0].width > 300, `the card is ${rects[0].width}px wide`);
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("nothing scrolls sideways", async () => {
+    const { context, page } = await openHome({ width: 390, height: 844 });
+    try {
+      const wide = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      assert.ok(wide <= 0, `the page is ${wide}px wider than the screen`);
+    } finally {
+      await context.close();
+    }
+  });
+});
+
+describe("the built site", () => {
+  /** @param {string} dir @returns {string[]} */
+  function htmlFiles(dir) {
+    return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) return htmlFiles(full);
+      return entry.name.endsWith(".html") ? [full] : [];
+    });
+  }
+
+  test("has no em dash, no workplace name and no mention of the dropped film", () => {
+    for (const file of htmlFiles(DIST)) {
+      const html = readFileSync(file, "utf8");
+      // Only what a visitor reads: the markup between tags and the text of the page.
+      assert.ok(!html.includes("\u2014"), `${file} has an em dash`);
+      assert.ok(!/tax academy/i.test(html), `${file} names the workplace`);
+      assert.ok(!/anniversary/i.test(html), `${file} mentions the anniversary film`);
     }
   });
 });

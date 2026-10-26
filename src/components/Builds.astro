@@ -78,6 +78,18 @@ import SectionLabel from "./SectionLabel.astro";
     transition: background 0.3s;
   }
 
+  /* Each card takes five rows of the grid (top line, title, text, examples,
+     link) and shares them with its neighbour, so the dashed rules and the
+     lists start at the same height across a row. */
+  @supports (grid-template-rows: subgrid) {
+    .build {
+      display: grid;
+      grid-row: span 5;
+      grid-template-rows: subgrid;
+      row-gap: 0;
+    }
+  }
+
   .build:hover {
     background: var(--bg-raised);
   }
@@ -86,13 +98,12 @@ import SectionLabel from "./SectionLabel.astro";
     display: flex;
     justify-content: space-between;
     gap: 12px;
-    font-size: 12px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+    font-size: 13px;
   }
 
   .build__num {
     color: var(--accent);
+    letter-spacing: 0.1em;
   }
 
   .build__kicker {
@@ -118,6 +129,7 @@ import SectionLabel from "./SectionLabel.astro";
 
   .build__examples {
     display: grid;
+    align-content: start;
     gap: 10px;
     margin-top: 22px;
     padding-top: 20px;
@@ -140,6 +152,7 @@ import SectionLabel from "./SectionLabel.astro";
     margin-top: auto;
     padding-top: 28px;
     align-self: flex-start;
+    justify-self: start;
     background-position: left bottom;
   }
 

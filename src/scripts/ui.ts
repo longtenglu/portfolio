@@ -100,26 +100,6 @@ export function initCursor(finePointer: boolean, reducedMotion: boolean) {
   });
 }
 
-// The live clock in the contact section, in Singapore time.
-export function initClock() {
-  const el = document.querySelector<HTMLTimeElement>("[data-clock]");
-  if (!el) return;
-  const format = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Asia/Singapore",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-  const tick = () => {
-    const now = new Date();
-    el.textContent = format.format(now);
-    el.dateTime = now.toISOString();
-    el.classList.add("is-live");
-  };
-  tick();
-  setInterval(tick, 15_000);
-}
-
 export function initCopy() {
   document.querySelectorAll<HTMLButtonElement>("[data-copy]").forEach((btn) => {
     const label = btn.querySelector<HTMLElement>("[data-copy-label]");

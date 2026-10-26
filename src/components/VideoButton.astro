@@ -9,16 +9,15 @@ interface Props {
   id: string;
   title: string;
   media: ReturnType<typeof getVideo>;
-  compact?: boolean;
 }
 
-const { id, title, media, compact = false } = Astro.props;
+const { id, title, media } = Astro.props;
 const landscape = media.orientation === "landscape";
 const label = `${videos.play} ${title}, ${formatDuration(media.duration)}, with sound`;
 ---
 
 <button
-  class:list={["vbtn", landscape ? "vbtn--landscape" : "vbtn--portrait", { "vbtn--compact": compact }]}
+  class:list={["vbtn", landscape ? "vbtn--landscape" : "vbtn--portrait"]}
   type="button"
   data-video-open={id}
   data-preview-host
@@ -38,7 +37,7 @@ const label = `${videos.play} ${title}, ${formatDuration(media.duration)}, with 
   <span class="vbtn__bar mono" aria-hidden="true">
     <span class="vbtn__play">
       <svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"></path></svg>
-      {!compact && videos.play}
+      {videos.play}
     </span>
     <time datetime={isoDuration(media.duration)}>{formatDuration(media.duration)}</time>
   </span>
@@ -107,9 +106,7 @@ const label = `${videos.play} ${title}, ${formatDuration(media.duration)}, with 
     gap: 8px;
     padding: 10px 12px;
     border-top: 1px solid var(--line);
-    font-size: 12px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    font-size: 13px;
     color: var(--text);
   }
 
@@ -133,10 +130,5 @@ const label = `${videos.play} ${title}, ${formatDuration(media.duration)}, with 
   .vbtn:hover .vbtn__play,
   .vbtn:focus-visible .vbtn__play {
     color: var(--accent);
-  }
-
-  .vbtn--compact .vbtn__bar {
-    padding: 8px 10px;
-    font-size: 11px;
   }
 </style>

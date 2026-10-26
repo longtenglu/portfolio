@@ -8,11 +8,12 @@
 //     -14 LUFS (within half a LU) with the true peak at or below -1.5 dBTP
 //   - an AVIF poster
 //   - a short muted hover preview
-// plus the muted hero reel that plays between the hands.
+// plus the muted hero reel that plays between the hands, and the production
+// stills (one 4:5 AVIF each) for "How a film gets made".
 //
 // Usage:
 //   MEDIA_DIR=/path/to/output MEDIA_SOURCES=/path/to/sources.json npm run media:build
-//   ... npm run media:build -- --only anniversary-dinner,hero-reel --force
+//   ... npm run media:build -- --only china-trip,hero-reel --force
 //
 // An output is reused only when it exists, its recorded fingerprint still
 // matches the current settings, and its bytes still match the manifest;
@@ -26,7 +27,7 @@ import { createReadStream, existsSync } from "node:fs";
 import { mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { HERO_REEL, LOUDNESS, SIZES, VIDEOS } from "./videos.mjs";
+import { HERO_REEL, LOUDNESS, SIZES, STILLS, VIDEOS } from "./videos.mjs";
 
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const MANIFEST_PATH = path.join(ROOT, "src/data/media.json");
@@ -38,7 +39,7 @@ const MANIFEST_PATH = path.join(ROOT, "src/data/media.json");
  *   loudness?: { integrated: number, truePeak: number } }} MediaFile
  * @typedef {{ orientation: string, full: MediaFile, preview: MediaFile, poster: MediaFile }} VideoEntry
  * @typedef {{ video: MediaFile, poster: MediaFile }} ReelEntry
- * @typedef {{ videos: Record<string, VideoEntry>, reel: ReelEntry | null }} Manifest
+ * @typedef {{ videos: Record<string, VideoEntry>, reel: ReelEntry | null, stills: Record<string, MediaFile> }} Manifest
  */
 
 function parseArgs() {
@@ -266,14 +267,14 @@ async function encodeExcerpt(src, out, size, start, duration, opts) {
  * @param {string} src
  * @param {string} out
  * @param {[number, number]} size
- * @param {number} at
+ * @param {number | undefined} at seconds into a video, or undefined for an image
  * @param {string} [crop]
  */
 async function encodePoster(src, out, size, at, crop) {
   const filters = crop ? `crop=${crop},` : "";
   await produce(out, (tmp) =>
     run("ffmpeg", [
-      ...FFMPEG, "-loglevel", "error", "-ss", String(at), "-i", src, "-frames:v", "1",
+      ...FFMPEG, "-loglevel", "error", ...(at === undefined ? [] : ["-ss", String(at)]), "-i", src, "-frames:v", "1",
       "-vf", `${filters}${scaleFilter(size[0], size[1])},format=yuv420p`,
       "-c:v", "libsvtav1", "-crf", String(POSTER_ENCODE.crf), "-preset", POSTER_ENCODE.preset, "-f", "avif", tmp,
     ]).then(() => undefined),
@@ -321,8 +322,8 @@ async function main() {
 
   /** @type {Manifest} */
   const previous = existsSync(MANIFEST_PATH)
-    ? JSON.parse(await readFile(MANIFEST_PATH, "utf8"))
-    : { videos: {}, reel: null };
+    ? { stills: {}, ...JSON.parse(await readFile(MANIFEST_PATH, "utf8")) }
+    : { videos: {}, reel: null, stills: {} };
 
   /** @param {string} id */
   const sourceFor = (id) => {
@@ -368,7 +369,7 @@ async function main() {
     });
 
   /** @type {Manifest} */
-  const manifest = { videos: {}, reel: null };
+  const manifest = { videos: {}, reel: null, stills: {} };
 
   for (const job of VIDEOS) {
     const size = SIZES[job.orientation];
@@ -442,6 +443,27 @@ async function main() {
       video: await describeOutput(reelRel.video, previous.reel?.video, reelFp.video),
       poster: await describeOutput(reelRel.poster, previous.reel?.poster, reelFp.poster),
     };
+  }
+
+
+  // Stills. The fingerprint includes the source file's bytes, so editing an
+  // image in place re-encodes it even though no setting changed.
+  for (const job of STILLS) {
+    const rel = `stills/${job.id}.avif`;
+    const prev = previous.stills[job.id];
+    const sourcePath = sources[job.source];
+    const sourceHash = sourcePath && existsSync(sourcePath) ? await sha256(sourcePath) : null;
+    const fp = fingerprint({ kind: "still", source: job.source, sourceHash, at: job.at ?? null, crop: job.crop ?? null, size: SIZES.still, ...POSTER_ENCODE });
+    if (selected(job.id)) {
+      const src = sourceFor(job.source);
+      if (force || !(await current(rel, prev, fp))) {
+        console.log(`${job.id}: still`);
+        await encodePoster(src, path.join(mediaDir, rel), /** @type {[number, number]} */ (SIZES.still), job.at, job.crop);
+        rebuilt.add(rel);
+      }
+    }
+    if (!existsSync(path.join(mediaDir, rel))) continue;
+    manifest.stills[job.id] = await describeOutput(rel, prev, fp);
   }
 
   const tmp = `${MANIFEST_PATH}.tmp`;

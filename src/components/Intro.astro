@@ -1,12 +1,15 @@
 ---
 // Hero plus strip. On motion-friendly screens the pair sits in a sticky
-// stage for an extra screen of scroll, which drives the hands together and
-// opens the reel between them.
-import { hero, site, strip } from "../content/copy";
+// stage for half a screen of extra scroll, which parts the hands and opens the
+// reel between them. The reel plays one of the Selected videos; its caption
+// reads that entry's title and credit.
+import { hero, site, strip, videos } from "../content/copy";
 import { getReel } from "../lib/media";
 
 const reel = getReel();
 const phrases = strip.split(" • ");
+const film = videos.items.find((item) => item.id === hero.reel.film);
+if (!film) throw new Error(`The hero reel film "${hero.reel.film}" is not in the Selected videos.`);
 ---
 
 <div class="intro" id="top" data-intro>
@@ -27,8 +30,8 @@ const phrases = strip.split(" • ");
           class="hero__reel-frame"
           type="button"
           data-reel-frame
-          data-video-open="anniversary-dinner"
-          aria-label={`${hero.reel.action}: ${hero.reel.title}. ${hero.reel.label}.`}
+          data-video-open={film.id}
+          aria-label={`${hero.reel.action}: ${film.title}. ${film.credit}.`}
         >
           <video
             class="hero__reel-video"
@@ -43,10 +46,10 @@ const phrases = strip.split(" • ");
             tabindex="-1"></video>
         </button>
       </div>
-      <p class="hero__reel-caption mono" data-reel-caption>
+      <p class="hero__reel-caption" data-reel-caption>
         <span class="hero__reel-tag">
-          {hero.reel.title}
-          <span class="hero__reel-credit">{hero.reel.label}</span>
+          {film.title}
+          <span class="hero__reel-credit">{film.credit}</span>
         </span>
         <span class="hero__reel-cta" aria-hidden="true">
           <svg viewBox="0 0 24 24" width="12" height="12"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"></path></svg>
@@ -54,14 +57,14 @@ const phrases = strip.split(" • ");
         </span>
       </p>
 
-      <div class="hero__meta mono">
+      <div class="hero__meta">
         <p>{site.location}</p>
         <button
           class="hero__watch"
           type="button"
-          data-video-open="anniversary-dinner"
+          data-video-open={film.id}
           data-reel-rest-cta
-          aria-label={`${hero.reel.rest}: ${hero.reel.title}, with sound. ${hero.reel.label}.`}
+          aria-label={`${hero.reel.rest}: ${film.title}, with sound. ${film.credit}.`}
         >
           <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"></path></svg>
           {hero.reel.rest}
@@ -96,9 +99,10 @@ const phrases = strip.split(" • ");
 <style>
   .intro {
     position: relative;
-    /* One extra screen of scroll drives the hero. */
-    height: 200vh;
-    height: 200svh;
+    /* Half a screen of extra scroll drives the hero: the reel is open after
+       about a quarter of a screen and the rest holds it in view. */
+    height: 150vh;
+    height: 150svh;
   }
 
   .intro__stage {
@@ -126,8 +130,8 @@ const phrases = strip.split(" • ");
     height: 100%;
   }
 
-  /* --p is scroll progress through the stage (set by intro.ts). The copy
-     steps back as the reel opens. */
+  /* --open is how far the reel has opened (set by intro.ts). The copy stays
+     put until the reel starts to open, then steps back as it does. */
   .hero__copy {
     position: relative;
     z-index: 2;
@@ -137,8 +141,8 @@ const phrases = strip.split(" • ");
 
   @media (min-width: 640px) {
     .hero__copy {
-      opacity: calc(1 - clamp(0, (var(--p, 0) - 0.1) * 2.8, 1));
-      transform: translate3d(0, calc(var(--p, 0) * -48px), 0);
+      opacity: calc(1 - clamp(0, var(--open, 0) * 2.6, 1));
+      transform: translate3d(0, calc(var(--open, 0) * -40px), 0);
     }
   }
 
@@ -224,23 +228,23 @@ const phrases = strip.split(" • ");
     display: flex;
     justify-content: space-between;
     gap: 12px;
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    font-size: 14px;
+    line-height: 1.35;
     color: var(--muted);
     transform: translate3d(var(--gutter), calc(52vh + 47vw + 12px), 0);
     pointer-events: none;
   }
 
   .hero__reel-tag {
+    font-weight: 600;
     color: var(--accent);
   }
 
   .hero__reel-credit {
     display: block;
-    margin-top: 4px;
+    margin-top: 2px;
+    font-weight: 400;
     color: var(--muted);
-    letter-spacing: 0.06em;
   }
 
   /* On a tablet the reel is too narrow for the name, the credit and the cue
@@ -258,6 +262,7 @@ const phrases = strip.split(" • ");
     gap: 6px;
     flex: none;
     color: var(--text);
+    font-weight: 500;
   }
 
   .hero__meta {
@@ -270,9 +275,8 @@ const phrases = strip.split(" • ");
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
     gap: 16px;
-    font-size: 11px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
+    font-family: var(--font-mono);
+    font-size: 13px;
     color: var(--dim);
     transition: opacity 0.3s;
   }
@@ -293,9 +297,7 @@ const phrases = strip.split(" • ");
     border-radius: 999px;
     box-shadow: inset 0 0 0 1px var(--line-strong);
     font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+    font-size: 13px;
     color: var(--text);
     background: var(--bg);
     transition: box-shadow 0.2s, color 0.2s, opacity 0.35s;
@@ -335,6 +337,17 @@ const phrases = strip.split(" • ");
     display: flex;
     width: max-content;
     will-change: transform;
+  }
+
+  /* The marquee waits for the fonts (strip.ts), so it never shows fallback
+     text. Without the script, or with motion reduced, it is simply there. */
+  .js .strip__track {
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+
+  .js .strip.is-ready .strip__track {
+    opacity: 1;
   }
 
   .strip__unit {
@@ -383,8 +396,7 @@ const phrases = strip.split(" • ");
     .hero__reel-caption {
       flex-direction: column;
       gap: 6px;
-      font-size: 10px;
-      letter-spacing: 0.06em;
+      font-size: 13px;
     }
 
     .strip {
@@ -413,11 +425,13 @@ const phrases = strip.split(" • ");
       padding-block: 18px;
     }
 
-    .strip__track {
+    .strip__track,
+    .js .strip__track {
       width: 100%;
       flex-wrap: wrap;
       justify-content: center;
       transform: none !important;
+      opacity: 1;
     }
 
     .strip__unit {

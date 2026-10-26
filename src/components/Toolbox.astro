@@ -30,17 +30,20 @@ import SectionLabel from "./SectionLabel.astro";
     color: var(--muted);
   }
 
+  /* Each group is its own box and keeps its own height, so no column is
+     padded out with empty cells to match its neighbours. */
   .toolbox__grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    align-items: start;
     margin-top: 44px;
-    border-top: 1px solid var(--line);
-    border-left: 1px solid var(--line);
   }
 
   .tgroup {
-    border-right: 1px solid var(--line);
-    border-bottom: 1px solid var(--line);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
   }
 
   .tgroup__title {
@@ -48,10 +51,8 @@ import SectionLabel from "./SectionLabel.astro";
     align-items: center;
     gap: 10px;
     padding: 16px 20px;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 500;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
     color: var(--text);
     border-bottom: 1px solid var(--line);
     background: var(--bg-raised);
@@ -93,15 +94,24 @@ import SectionLabel from "./SectionLabel.astro";
     border-color: var(--accent);
   }
 
+  /* Two columns that stack their groups top to bottom, so a short group never
+     leaves a hole beside a tall one. */
   @media (max-width: 1024px) {
     .toolbox__grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      display: block;
+      column-count: 2;
+      column-gap: 16px;
+    }
+
+    .tgroup {
+      break-inside: avoid;
+      margin-bottom: 16px;
     }
   }
 
   @media (max-width: 520px) {
     .toolbox__grid {
-      grid-template-columns: 1fr;
+      column-count: 1;
     }
 
     /* Two tools per row on phones keeps the list short. */
@@ -123,13 +133,16 @@ import SectionLabel from "./SectionLabel.astro";
       border-right: 1px solid var(--line);
     }
 
+    /* The last row has no rule under it, and a lone last tool takes the whole
+       row rather than leaving an empty cell. */
+    .tgroup__list li:nth-last-child(-n + 2):nth-child(odd),
     .tgroup__list li:last-child {
-      border-bottom: 1px solid var(--line);
+      border-bottom: 0;
     }
 
-    .tgroup__list li:nth-last-child(-n + 2):nth-child(odd),
-    .tgroup__list li:last-child:nth-child(even) {
-      border-bottom: 0;
+    .tgroup__list li:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+      border-right: 0;
     }
   }
 </style>
