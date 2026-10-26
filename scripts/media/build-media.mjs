@@ -14,10 +14,10 @@
 //   MEDIA_DIR=/path/to/output MEDIA_SOURCES=/path/to/sources.json npm run media:build
 //   ... npm run media:build -- --only anniversary-dinner,hero-reel --force
 //
-// Outputs that already exist are kept unless --force is passed, so a stopped
-// run can resume. Jobs run one at a time on purpose: one ffmpeg process is
-// enough for a 16 GB machine. Nothing is written into the repo except the
-// manifest.
+// An output is reused only when it exists and its recorded settings still
+// match; --force rebuilds it anyway. Jobs run one at a time on purpose: one
+// ffmpeg process is enough for a 16 GB machine. Nothing is written into the
+// repo except the manifest.
 
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -32,7 +32,7 @@ const MANIFEST_PATH = path.join(ROOT, "src/data/media.json");
 
 /** @typedef {import("./videos.mjs").VideoJob} VideoJob */
 /**
- * @typedef {{ path: string, bytes: number, sha256: string, url: string | null,
+ * @typedef {{ path: string, fingerprint: string | null, bytes: number, sha256: string, url: string | null,
  *   width?: number, height?: number, duration?: number,
  *   loudness?: { integrated: number, truePeak: number } }} MediaFile
  * @typedef {{ orientation: string, full: MediaFile, preview: MediaFile, poster: MediaFile }} VideoEntry
@@ -91,6 +91,16 @@ function run(cmd, args) {
 }
 
 const FFMPEG = ["-hide_banner", "-nostdin", "-y"];
+
+const FULL_ENCODE = { crf: 23, preset: "slow", maxrate: "5M", bufsize: "10M", profile: "high" };
+const POSTER_ENCODE = { crf: 34, preset: "4" };
+const PREVIEW_CRF = 27;
+const REEL_CRF = 25;
+
+/** @param {Record<string, unknown>} settings */
+function fingerprint(settings) {
+  return createHash("sha256").update(JSON.stringify(settings)).digest("hex").slice(0, 16);
+}
 
 /** @param {number} w @param {number} h */
 function scaleFilter(w, h) {
@@ -208,8 +218,9 @@ async function encodeFull(src, out, size) {
       ...FFMPEG, "-loglevel", "error", "-i", src,
       "-map", "0:v:0", "-map", "0:a:0",
       "-vf", scaleFilter(size[0], size[1]),
-      "-c:v", "libx264", "-preset", "slow", "-crf", "23", "-maxrate", "5M", "-bufsize", "10M",
-      "-profile:v", "high", "-pix_fmt", "yuv420p", "-force_key_frames", "expr:gte(t,n_forced*2)",
+      "-c:v", "libx264", "-preset", FULL_ENCODE.preset, "-crf", String(FULL_ENCODE.crf),
+      "-maxrate", FULL_ENCODE.maxrate, "-bufsize", FULL_ENCODE.bufsize,
+      "-profile:v", FULL_ENCODE.profile, "-pix_fmt", "yuv420p", "-force_key_frames", "expr:gte(t,n_forced*2)",
       "-af", plan.chain, ...AAC,
       "-movflags", "+faststart", tmp,
     ]).then(() => undefined),
@@ -263,7 +274,7 @@ async function encodePoster(src, out, size, at, crop) {
     run("ffmpeg", [
       ...FFMPEG, "-loglevel", "error", "-ss", String(at), "-i", src, "-frames:v", "1",
       "-vf", `${filters}${scaleFilter(size[0], size[1])},format=yuv420p`,
-      "-c:v", "libsvtav1", "-crf", "34", "-preset", "4", "-f", "avif", tmp,
+      "-c:v", "libsvtav1", "-crf", String(POSTER_ENCODE.crf), "-preset", POSTER_ENCODE.preset, "-f", "avif", tmp,
     ]).then(() => undefined),
   );
 }
@@ -283,6 +294,7 @@ async function describe(mediaDir, rel, previous, extra = {}) {
   // Fixed key order keeps manifest diffs readable between runs.
   return {
     path: rel,
+    fingerprint: extra.fingerprint ?? null,
     bytes: st.size,
     sha256: hash,
     width: info.width,
@@ -315,69 +327,108 @@ async function main() {
   };
   /** @param {string} id */
   const selected = (id) => !only || only.has(id);
-  /** @param {string} rel */
-  const needs = (rel) => force || !existsSync(path.join(mediaDir, rel));
+  /** @type {Set<string>} */
+  const rebuilt = new Set();
+  /**
+   * @param {string} rel
+   * @param {MediaFile | undefined} prevFile
+   * @param {string} fp
+   */
+  const current = (rel, prevFile, fp) =>
+    existsSync(path.join(mediaDir, rel)) && prevFile?.fingerprint === fp;
+  /**
+   * @param {string} rel
+   * @param {MediaFile | undefined} prevFile
+   * @param {string} fp
+   */
+  const recordedFingerprint = (rel, prevFile, fp) =>
+    (rebuilt.has(rel) || current(rel, prevFile, fp)) ? fp : (prevFile?.fingerprint ?? null);
 
   /** @type {Manifest} */
   const manifest = { videos: {}, reel: null };
 
   for (const job of VIDEOS) {
     const size = SIZES[job.orientation];
+    const prev = previous.videos[job.id];
     const rel = {
       full: `${job.id}/${job.id}.mp4`,
       preview: `${job.id}/${job.id}-preview.mp4`,
       poster: `${job.id}/${job.id}-poster.avif`,
     };
+    const fp = {
+      full: fingerprint({ kind: "full", source: job.id, size: size.full, ...FULL_ENCODE, loudness: LOUDNESS }),
+      preview: fingerprint({ kind: "preview", source: job.id, start: job.preview.start, duration: job.preview.duration, crop: job.crop ?? null, size: size.preview, crf: PREVIEW_CRF }),
+      poster: fingerprint({ kind: "poster", source: job.id, at: job.poster, crop: job.crop ?? null, size: size.poster, ...POSTER_ENCODE }),
+    };
     /** @type {{ integrated: number, truePeak: number } | undefined} */
     let loudness;
     if (selected(job.id)) {
       const src = sourceFor(job.id);
-      if (needs(rel.full)) {
+      if (force || !current(rel.full, prev?.full, fp.full)) {
         console.log(`${job.id}: full copy`);
         loudness = await encodeFull(src, path.join(mediaDir, rel.full), /** @type {[number, number]} */ (size.full));
+        rebuilt.add(rel.full);
         console.log(`  ${loudness.integrated} LUFS, ${loudness.truePeak} dBTP`);
       }
-      if (needs(rel.poster)) {
+      if (force || !current(rel.poster, prev?.poster, fp.poster)) {
         console.log(`${job.id}: poster`);
         await encodePoster(src, path.join(mediaDir, rel.poster), /** @type {[number, number]} */ (size.poster), job.poster, job.crop);
+        rebuilt.add(rel.poster);
       }
-      if (needs(rel.preview)) {
+      if (force || !current(rel.preview, prev?.preview, fp.preview)) {
         console.log(`${job.id}: hover preview`);
         await encodeExcerpt(src, path.join(mediaDir, rel.preview), /** @type {[number, number]} */ (size.preview),
-          job.preview.start, job.preview.duration, { crf: 27, crop: job.crop });
+          job.preview.start, job.preview.duration, { crf: PREVIEW_CRF, crop: job.crop });
+        rebuilt.add(rel.preview);
       }
     }
     if (!existsSync(path.join(mediaDir, rel.full))) continue;
-    const prev = previous.videos[job.id];
-    const full = await describe(mediaDir, rel.full, prev?.full, loudness ? { loudness } : {});
+    const full = await describe(mediaDir, rel.full, prev?.full, {
+      fingerprint: recordedFingerprint(rel.full, prev?.full, fp.full),
+      ...(loudness ? { loudness } : {}),
+    });
     if (!full.loudness) full.loudness = await verifyLoudness(path.join(mediaDir, rel.full));
     manifest.videos[job.id] = {
       orientation: job.orientation,
       full,
-      preview: await describe(mediaDir, rel.preview, prev?.preview),
-      poster: await describe(mediaDir, rel.poster, prev?.poster),
+      preview: await describe(mediaDir, rel.preview, prev?.preview, {
+        fingerprint: recordedFingerprint(rel.preview, prev?.preview, fp.preview),
+      }),
+      poster: await describe(mediaDir, rel.poster, prev?.poster, {
+        fingerprint: recordedFingerprint(rel.poster, prev?.poster, fp.poster),
+      }),
     };
   }
 
   const reelRel = { video: `${HERO_REEL.id}/${HERO_REEL.id}.mp4`, poster: `${HERO_REEL.id}/${HERO_REEL.id}-poster.avif` };
+  const reelSize = SIZES.landscape;
+  const reelPosterAt = HERO_REEL.poster ?? HERO_REEL.start + 4.5;
+  const reelFp = {
+    video: fingerprint({ kind: "reel", source: HERO_REEL.source, start: HERO_REEL.start, duration: HERO_REEL.end - HERO_REEL.start, crop: HERO_REEL.crop ?? null, size: reelSize.reel, crf: REEL_CRF, fade: true }),
+    poster: fingerprint({ kind: "poster", source: HERO_REEL.source, at: reelPosterAt, crop: HERO_REEL.crop ?? null, size: reelSize.reel, ...POSTER_ENCODE }),
+  };
   if (selected(HERO_REEL.id)) {
     const src = sourceFor(HERO_REEL.source);
-    const size = SIZES.landscape;
-    if (needs(reelRel.video)) {
+    if (force || !current(reelRel.video, previous.reel?.video, reelFp.video)) {
       console.log(`${HERO_REEL.id}: loop`);
-      await encodeExcerpt(src, path.join(mediaDir, reelRel.video), /** @type {[number, number]} */ (size.reel),
-        HERO_REEL.start, HERO_REEL.end - HERO_REEL.start, { crf: 25, fade: true, crop: HERO_REEL.crop });
+      await encodeExcerpt(src, path.join(mediaDir, reelRel.video), /** @type {[number, number]} */ (reelSize.reel),
+        HERO_REEL.start, HERO_REEL.end - HERO_REEL.start, { crf: REEL_CRF, fade: true, crop: HERO_REEL.crop });
+      rebuilt.add(reelRel.video);
     }
-    if (needs(reelRel.poster)) {
+    if (force || !current(reelRel.poster, previous.reel?.poster, reelFp.poster)) {
       console.log(`${HERO_REEL.id}: poster`);
-      const posterAt = HERO_REEL.poster ?? HERO_REEL.start + 4.5;
-      await encodePoster(src, path.join(mediaDir, reelRel.poster), /** @type {[number, number]} */ (size.reel), posterAt, HERO_REEL.crop);
+      await encodePoster(src, path.join(mediaDir, reelRel.poster), /** @type {[number, number]} */ (reelSize.reel), reelPosterAt, HERO_REEL.crop);
+      rebuilt.add(reelRel.poster);
     }
   }
   if (existsSync(path.join(mediaDir, reelRel.video))) {
     manifest.reel = {
-      video: await describe(mediaDir, reelRel.video, previous.reel?.video),
-      poster: await describe(mediaDir, reelRel.poster, previous.reel?.poster),
+      video: await describe(mediaDir, reelRel.video, previous.reel?.video, {
+        fingerprint: recordedFingerprint(reelRel.video, previous.reel?.video, reelFp.video),
+      }),
+      poster: await describe(mediaDir, reelRel.poster, previous.reel?.poster, {
+        fingerprint: recordedFingerprint(reelRel.poster, previous.reel?.poster, reelFp.poster),
+      }),
     };
   }
 

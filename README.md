@@ -78,8 +78,12 @@ MEDIA_DIR=/path/to/media MEDIA_SOURCES=/path/to/media-sources.json npm run media
 ```
 
 It writes the files to `MEDIA_DIR` and the manifest the site reads to
-`src/data/media.json`. A file keeps its hosted URL only while its bytes are
-unchanged.
+`src/data/media.json`. Each output records a fingerprint of the settings that
+made it: its source, crop, poster time, preview window, reel window, output
+size and CRF. A later build re-encodes any output whose fingerprint does not
+match, so editing one of those settings is enough. An output whose manifest
+entry has no fingerprint rebuilds once. `--force` rebuilds every selected
+output. A file keeps its hosted URL only while its bytes are unchanged.
 
 ## Vercel Blob
 
