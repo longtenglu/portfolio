@@ -283,18 +283,23 @@ async function encodePoster(src, out, size, at, crop) {
  * @param {string} mediaDir
  * @param {string} rel
  * @param {MediaFile | undefined} previous
- * @param {Partial<MediaFile>} extra
+ * @param {Partial<MediaFile> & { rebuilt?: boolean }} extra
  * @returns {Promise<MediaFile>}
  */
 async function describe(mediaDir, rel, previous, extra = {}) {
   const abs = path.join(mediaDir, rel);
-  const [info, hash, st] = await Promise.all([probe(abs), sha256(abs), stat(abs)]);
-  const same = previous?.sha256 === hash;
-  const loudness = extra.loudness ?? (same ? previous?.loudness : undefined);
+  const hashPromise = extra.sha256 ? Promise.resolve(extra.sha256) : sha256(abs);
+  const [info, hash, st] = await Promise.all([probe(abs), hashPromise, stat(abs)]);
+  const sameHash = previous?.sha256 === hash;
+  const sameBytes = sameHash && previous?.bytes === st.size;
+  const fingerprint = extra.rebuilt === true
+    ? (extra.fingerprint ?? null)
+    : sameBytes ? (previous?.fingerprint ?? null) : null;
+  const loudness = extra.loudness ?? (sameHash ? previous?.loudness : undefined);
   // Fixed key order keeps manifest diffs readable between runs.
   return {
     path: rel,
-    fingerprint: extra.fingerprint ?? null,
+    fingerprint,
     bytes: st.size,
     sha256: hash,
     width: info.width,
@@ -302,7 +307,7 @@ async function describe(mediaDir, rel, previous, extra = {}) {
     ...(rel.endsWith(".mp4") && info.duration ? { duration: info.duration } : {}),
     ...(loudness ? { loudness } : {}),
     // Keep a hosted URL only while it still points at the same bytes.
-    url: same ? (previous?.url ?? null) : null,
+    url: sameHash ? (previous?.url ?? null) : null,
   };
 }
 
@@ -329,20 +334,37 @@ async function main() {
   const selected = (id) => !only || only.has(id);
   /** @type {Set<string>} */
   const rebuilt = new Set();
+  /** @type {Map<string, string>} */
+  const verifiedHashes = new Map();
   /**
    * @param {string} rel
    * @param {MediaFile | undefined} prevFile
    * @param {string} fp
    */
-  const current = (rel, prevFile, fp) =>
-    existsSync(path.join(mediaDir, rel)) && prevFile?.fingerprint === fp;
+  const current = async (rel, prevFile, fp) => {
+    if (!prevFile || prevFile.fingerprint !== fp) return false;
+    const abs = path.join(mediaDir, rel);
+    if (!existsSync(abs)) return false;
+    const st = await stat(abs);
+    if (st.size !== prevFile.bytes) return false;
+    const hash = await sha256(abs);
+    if (hash !== prevFile.sha256) return false;
+    verifiedHashes.set(rel, hash);
+    return true;
+  };
   /**
    * @param {string} rel
    * @param {MediaFile | undefined} prevFile
    * @param {string} fp
+   * @param {Partial<MediaFile>} [extra]
    */
-  const recordedFingerprint = (rel, prevFile, fp) =>
-    (rebuilt.has(rel) || current(rel, prevFile, fp)) ? fp : (prevFile?.fingerprint ?? null);
+  const describeOutput = (rel, prevFile, fp, extra = {}) =>
+    describe(mediaDir, rel, prevFile, {
+      fingerprint: fp,
+      rebuilt: rebuilt.has(rel),
+      ...(verifiedHashes.has(rel) ? { sha256: verifiedHashes.get(rel) } : {}),
+      ...extra,
+    });
 
   /** @type {Manifest} */
   const manifest = { videos: {}, reel: null };
@@ -364,18 +386,18 @@ async function main() {
     let loudness;
     if (selected(job.id)) {
       const src = sourceFor(job.id);
-      if (force || !current(rel.full, prev?.full, fp.full)) {
+      if (force || !(await current(rel.full, prev?.full, fp.full))) {
         console.log(`${job.id}: full copy`);
         loudness = await encodeFull(src, path.join(mediaDir, rel.full), /** @type {[number, number]} */ (size.full));
         rebuilt.add(rel.full);
         console.log(`  ${loudness.integrated} LUFS, ${loudness.truePeak} dBTP`);
       }
-      if (force || !current(rel.poster, prev?.poster, fp.poster)) {
+      if (force || !(await current(rel.poster, prev?.poster, fp.poster))) {
         console.log(`${job.id}: poster`);
         await encodePoster(src, path.join(mediaDir, rel.poster), /** @type {[number, number]} */ (size.poster), job.poster, job.crop);
         rebuilt.add(rel.poster);
       }
-      if (force || !current(rel.preview, prev?.preview, fp.preview)) {
+      if (force || !(await current(rel.preview, prev?.preview, fp.preview))) {
         console.log(`${job.id}: hover preview`);
         await encodeExcerpt(src, path.join(mediaDir, rel.preview), /** @type {[number, number]} */ (size.preview),
           job.preview.start, job.preview.duration, { crf: PREVIEW_CRF, crop: job.crop });
@@ -383,20 +405,13 @@ async function main() {
       }
     }
     if (!existsSync(path.join(mediaDir, rel.full))) continue;
-    const full = await describe(mediaDir, rel.full, prev?.full, {
-      fingerprint: recordedFingerprint(rel.full, prev?.full, fp.full),
-      ...(loudness ? { loudness } : {}),
-    });
+    const full = await describeOutput(rel.full, prev?.full, fp.full, loudness ? { loudness } : {});
     if (!full.loudness) full.loudness = await verifyLoudness(path.join(mediaDir, rel.full));
     manifest.videos[job.id] = {
       orientation: job.orientation,
       full,
-      preview: await describe(mediaDir, rel.preview, prev?.preview, {
-        fingerprint: recordedFingerprint(rel.preview, prev?.preview, fp.preview),
-      }),
-      poster: await describe(mediaDir, rel.poster, prev?.poster, {
-        fingerprint: recordedFingerprint(rel.poster, prev?.poster, fp.poster),
-      }),
+      preview: await describeOutput(rel.preview, prev?.preview, fp.preview),
+      poster: await describeOutput(rel.poster, prev?.poster, fp.poster),
     };
   }
 
@@ -409,13 +424,13 @@ async function main() {
   };
   if (selected(HERO_REEL.id)) {
     const src = sourceFor(HERO_REEL.source);
-    if (force || !current(reelRel.video, previous.reel?.video, reelFp.video)) {
+    if (force || !(await current(reelRel.video, previous.reel?.video, reelFp.video))) {
       console.log(`${HERO_REEL.id}: loop`);
       await encodeExcerpt(src, path.join(mediaDir, reelRel.video), /** @type {[number, number]} */ (reelSize.reel),
         HERO_REEL.start, HERO_REEL.end - HERO_REEL.start, { crf: REEL_CRF, fade: true, crop: HERO_REEL.crop });
       rebuilt.add(reelRel.video);
     }
-    if (force || !current(reelRel.poster, previous.reel?.poster, reelFp.poster)) {
+    if (force || !(await current(reelRel.poster, previous.reel?.poster, reelFp.poster))) {
       console.log(`${HERO_REEL.id}: poster`);
       await encodePoster(src, path.join(mediaDir, reelRel.poster), /** @type {[number, number]} */ (reelSize.reel), reelPosterAt, HERO_REEL.crop);
       rebuilt.add(reelRel.poster);
@@ -423,12 +438,8 @@ async function main() {
   }
   if (existsSync(path.join(mediaDir, reelRel.video))) {
     manifest.reel = {
-      video: await describe(mediaDir, reelRel.video, previous.reel?.video, {
-        fingerprint: recordedFingerprint(reelRel.video, previous.reel?.video, reelFp.video),
-      }),
-      poster: await describe(mediaDir, reelRel.poster, previous.reel?.poster, {
-        fingerprint: recordedFingerprint(reelRel.poster, previous.reel?.poster, reelFp.poster),
-      }),
+      video: await describeOutput(reelRel.video, previous.reel?.video, reelFp.video),
+      poster: await describeOutput(reelRel.poster, previous.reel?.poster, reelFp.poster),
     };
   }
 

@@ -19,6 +19,8 @@ const BUILD_SCRIPT = fileURLToPath(new URL("../scripts/media/build-media.mjs", i
 
 /** @type {Settings} */
 const BASE = { poster: 0.5, reelPoster: 0.7, crop: "240:135:120:67", full: [320, 180] };
+/** @type {Settings} */
+const CHANGED = { ...BASE, poster: 0.9, reelPoster: 1.0, crop: "200:112:40:20" };
 
 /** @param {Settings} settings */
 function jobsModule(settings) {
@@ -44,6 +46,24 @@ export const LOUDNESS = { integrated: -14, tolerance: 0.5, truePeakLimit: -1.5, 
 `;
 }
 
+/** @returns {string} */
+function setup() {
+  const root = mkdtempSync(path.join(tmpdir(), "media-build-"));
+  mkdirSync(path.join(root, "scripts/media"), { recursive: true });
+  mkdirSync(path.join(root, "src/data"), { recursive: true });
+  copyFileSync(BUILD_SCRIPT, path.join(root, "scripts/media/build-media.mjs"));
+  const source = path.join(root, "source.mp4");
+  execFileSync("ffmpeg", [
+    "-hide_banner", "-loglevel", "error", "-y",
+    "-f", "lavfi", "-i", "testsrc2=size=480x270:rate=24:duration=2.5",
+    "-f", "lavfi", "-i", "sine=frequency=440:sample_rate=48000:duration=2.5",
+    "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p",
+    "-c:a", "aac", "-shortest", source,
+  ]);
+  writeFileSync(path.join(root, "sources.json"), JSON.stringify({ clip: source }));
+  return root;
+}
+
 /** @param {string} root */
 function readManifest(root) {
   return /** @type {Manifest} */ (JSON.parse(readFileSync(path.join(root, "src/data/media.json"), "utf8")));
@@ -64,10 +84,11 @@ function outputs(root) {
 /**
  * @param {string} root
  * @param {string[]} [args]
+ * @param {string} [mediaDir]
  */
-function run(root, args = []) {
+function run(root, args = [], mediaDir = path.join(root, "media")) {
   return execFileSync(process.execPath, [path.join(root, "scripts/media/build-media.mjs"), ...args], {
-    env: { ...process.env, MEDIA_DIR: path.join(root, "media"), MEDIA_SOURCES: path.join(root, "sources.json") },
+    env: { ...process.env, MEDIA_DIR: mediaDir, MEDIA_SOURCES: path.join(root, "sources.json") },
     encoding: "utf8",
   });
 }
@@ -103,20 +124,8 @@ function addUrls(root) {
 }
 
 test("build-media re-encodes an output when its settings change", () => {
-  const root = mkdtempSync(path.join(tmpdir(), "media-build-"));
+  const root = setup();
   try {
-    mkdirSync(path.join(root, "scripts/media"), { recursive: true });
-    mkdirSync(path.join(root, "src/data"), { recursive: true });
-    copyFileSync(BUILD_SCRIPT, path.join(root, "scripts/media/build-media.mjs"));
-    const source = path.join(root, "source.mp4");
-    execFileSync("ffmpeg", [
-      "-hide_banner", "-loglevel", "error", "-y",
-      "-f", "lavfi", "-i", "testsrc2=size=480x270:rate=24:duration=2.5",
-      "-f", "lavfi", "-i", "sine=frequency=440:sample_rate=48000:duration=2.5",
-      "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p",
-      "-c:a", "aac", "-shortest", source,
-    ]);
-    writeFileSync(path.join(root, "sources.json"), JSON.stringify({ clip: source }));
     writeFileSync(path.join(root, "scripts/media/videos.mjs"), jobsModule(BASE));
 
     run(root);
@@ -180,6 +189,40 @@ test("build-media re-encodes an output when its settings change", () => {
     for (const name of Object.keys(beforeForce)) {
       assert.notEqual(forcedMtimes[name], beforeForce[name], `--force re-encodes ${name}`);
     }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("build-media re-encodes when the media dir does not match the manifest", () => {
+  const root = setup();
+  try {
+    writeFileSync(path.join(root, "scripts/media/videos.mjs"), jobsModule(BASE));
+    run(root);
+    const stale = outputs(root);
+
+    writeFileSync(path.join(root, "scripts/media/videos.mjs"), jobsModule(CHANGED));
+    run(root, [], path.join(root, "media-b"));
+    const expected = outputs(root);
+
+    const skippedLog = run(root, ["--only", "other"]);
+    assert.doesNotMatch(skippedLog, /full copy|poster|hover preview|loop/);
+    const skipped = outputs(root);
+    assert.equal(skipped.preview.fingerprint, null, "a stale skipped output is not stamped current");
+    assert.equal(skipped.preview.sha256, stale.preview.sha256);
+
+    const log = run(root);
+    assert.match(log, /clip: poster/);
+    assert.match(log, /clip: hover preview/);
+    assert.match(log, /hero-reel: loop/);
+    assert.match(log, /hero-reel: poster/);
+
+    const rebuilt = outputs(root);
+    assert.notEqual(rebuilt.preview.sha256, stale.preview.sha256, "stale preview bytes are not adopted");
+    assert.notEqual(rebuilt.poster.sha256, stale.poster.sha256, "stale poster bytes are not adopted");
+    assert.notEqual(rebuilt.reel.sha256, stale.reel.sha256, "stale reel bytes are not adopted");
+    assert.notEqual(rebuilt.reelPoster.sha256, stale.reelPoster.sha256, "stale reel poster bytes are not adopted");
+    assert.equal(rebuilt.preview.fingerprint, expected.preview.fingerprint);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
