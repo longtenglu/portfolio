@@ -5,7 +5,7 @@
 
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { appendFileSync, copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
@@ -84,11 +84,10 @@ function outputs(root) {
 /**
  * @param {string} root
  * @param {string[]} [args]
- * @param {string} [mediaDir]
  */
-function run(root, args = [], mediaDir = path.join(root, "media")) {
+function run(root, args = []) {
   return execFileSync(process.execPath, [path.join(root, "scripts/media/build-media.mjs"), ...args], {
-    env: { ...process.env, MEDIA_DIR: mediaDir, MEDIA_SOURCES: path.join(root, "sources.json") },
+    env: { ...process.env, MEDIA_DIR: path.join(root, "media"), MEDIA_SOURCES: path.join(root, "sources.json") },
     encoding: "utf8",
   });
 }
@@ -194,35 +193,55 @@ test("build-media re-encodes an output when its settings change", () => {
   }
 });
 
-test("build-media re-encodes when the media dir does not match the manifest", () => {
+test("build-media re-encodes outputs whose bytes no longer match the manifest", () => {
   const root = setup();
   try {
     writeFileSync(path.join(root, "scripts/media/videos.mjs"), jobsModule(BASE));
     run(root);
     const stale = outputs(root);
+    for (const file of [stale.preview, stale.poster, stale.reel, stale.reelPoster]) {
+      const copy = path.join(root, "stale", file.path);
+      mkdirSync(path.dirname(copy), { recursive: true });
+      copyFileSync(path.join(root, "media", file.path), copy);
+    }
 
+    // Building with different settings over the same directory leaves a
+    // manifest that records the new fingerprints and the new hashes, exactly
+    // as committing the branch would.
     writeFileSync(path.join(root, "scripts/media/videos.mjs"), jobsModule(CHANGED));
-    run(root, [], path.join(root, "media-b"));
+    run(root);
     const expected = outputs(root);
+    assert.notEqual(expected.preview.sha256, stale.preview.sha256, "the new settings change the preview bytes");
+    assert.notEqual(expected.poster.sha256, stale.poster.sha256, "the new settings change the poster bytes");
+    assert.notEqual(expected.reel.sha256, stale.reel.sha256, "the new settings change the reel bytes");
+    assert.notEqual(expected.reelPoster.sha256, stale.reelPoster.sha256, "the new settings change the reel poster bytes");
 
-    const skippedLog = run(root, ["--only", "other"]);
-    assert.doesNotMatch(skippedLog, /full copy|poster|hover preview|loop/);
-    const skipped = outputs(root);
-    assert.equal(skipped.preview.fingerprint, null, "a stale skipped output is not stamped current");
-    assert.equal(skipped.preview.sha256, stale.preview.sha256);
+    // Put the old outputs back, leaving that manifest in place: every
+    // fingerprint matches and only the bytes are stale.
+    copyFileSync(path.join(root, "stale", stale.preview.path), path.join(root, "media", expected.preview.path));
+    copyFileSync(path.join(root, "stale", stale.poster.path), path.join(root, "media", expected.poster.path));
+    copyFileSync(path.join(root, "stale", stale.reel.path), path.join(root, "media", expected.reel.path));
+    copyFileSync(path.join(root, "stale", stale.reelPoster.path), path.join(root, "media", expected.reelPoster.path));
+    appendFileSync(path.join(root, "media", expected.full.path), Buffer.from([0]));
 
     const log = run(root);
+    assert.match(log, /clip: full copy/);
     assert.match(log, /clip: poster/);
     assert.match(log, /clip: hover preview/);
     assert.match(log, /hero-reel: loop/);
     assert.match(log, /hero-reel: poster/);
 
     const rebuilt = outputs(root);
-    assert.notEqual(rebuilt.preview.sha256, stale.preview.sha256, "stale preview bytes are not adopted");
-    assert.notEqual(rebuilt.poster.sha256, stale.poster.sha256, "stale poster bytes are not adopted");
-    assert.notEqual(rebuilt.reel.sha256, stale.reel.sha256, "stale reel bytes are not adopted");
-    assert.notEqual(rebuilt.reelPoster.sha256, stale.reelPoster.sha256, "stale reel poster bytes are not adopted");
-    assert.equal(rebuilt.preview.fingerprint, expected.preview.fingerprint);
+    assert.equal(rebuilt.full.sha256, expected.full.sha256, "the full copy is re-encoded, not adopted from the stale file");
+    assert.equal(rebuilt.preview.sha256, expected.preview.sha256, "the preview is re-encoded, not adopted from the stale file");
+    assert.equal(rebuilt.poster.sha256, expected.poster.sha256, "the poster is re-encoded, not adopted from the stale file");
+    assert.equal(rebuilt.reel.sha256, expected.reel.sha256, "the reel is re-encoded, not adopted from the stale file");
+    assert.equal(rebuilt.reelPoster.sha256, expected.reelPoster.sha256, "the reel poster is re-encoded, not adopted from the stale file");
+    assert.equal(rebuilt.full.fingerprint, expected.full.fingerprint, "the full copy keeps the current fingerprint");
+    assert.equal(rebuilt.preview.fingerprint, expected.preview.fingerprint, "the preview keeps the current fingerprint");
+    assert.equal(rebuilt.poster.fingerprint, expected.poster.fingerprint, "the poster keeps the current fingerprint");
+    assert.equal(rebuilt.reel.fingerprint, expected.reel.fingerprint, "the reel keeps the current fingerprint");
+    assert.equal(rebuilt.reelPoster.fingerprint, expected.reelPoster.fingerprint, "the reel poster keeps the current fingerprint");
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

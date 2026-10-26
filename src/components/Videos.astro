@@ -16,10 +16,10 @@ const series = items.filter((item) => item.films);
 const numBase = feature ? 2 : 1;
 
 // What the modal needs to play each file, keyed by media id.
-const playable: Record<string, { title: string; src: string; poster: string; orientation: string; note: string }> = {};
+const playable: Record<string, { title: string; src: string; poster: string; orientation: string }> = {};
 for (const item of items) {
   if (item.media) {
-    playable[item.id] = { title: item.title, src: item.media.src, poster: item.media.poster, orientation: item.media.orientation, note: "" };
+    playable[item.id] = { title: item.title, src: item.media.src, poster: item.media.poster, orientation: item.media.orientation };
   }
   for (const film of item.films ?? []) {
     playable[film.id] = {
@@ -27,7 +27,6 @@ for (const item of items) {
       src: film.media.src,
       poster: film.media.poster,
       orientation: film.media.orientation,
-      note: "",
     };
   }
 }
@@ -117,7 +116,6 @@ for (const item of items) {
     <div class="vmodal__player" data-video-frame>
       <video controls playsinline preload="none" data-video-player></video>
     </div>
-    <p class="vmodal__note mono" data-video-note></p>
   </div>
 </dialog>
 
@@ -357,16 +355,5 @@ for (const item of items) {
 
   .vmodal[data-orientation="portrait"] .vmodal__player video {
     aspect-ratio: 9 / 16;
-  }
-
-  .vmodal__note {
-    padding: 12px 18px 14px;
-    font-size: 11px;
-    letter-spacing: 0.06em;
-    color: var(--muted);
-  }
-
-  .vmodal__note:empty {
-    display: none;
   }
 </style>
