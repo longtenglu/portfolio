@@ -48,9 +48,11 @@ import SectionLabel from "./SectionLabel.astro";
     align-items: center;
   }
 
+  /* Wide enough that the lead breaks into a few even lines. */
   .about__lead {
     margin-top: 32px;
-    max-width: 24ch;
+    max-width: 29ch;
+    text-wrap: balance;
   }
 
   .about__body {
@@ -105,8 +107,8 @@ import SectionLabel from "./SectionLabel.astro";
       grid-template-columns: 1fr;
     }
 
+    /* The words come first on a narrow screen; the photo follows them. */
     .about__photo {
-      order: -1;
       max-width: 440px;
     }
   }

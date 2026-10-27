@@ -56,8 +56,9 @@ export function initIntro(reducedMotion: boolean) {
     const distance = rect.height - window.innerHeight;
     progress = distance > 0 ? Math.min(1, Math.max(0, -rect.top / distance)) : 0;
     hero.setProgress(progress);
-    intro.style.setProperty("--p", progress.toFixed(3));
-    syncPlayback(hero.reelOpenAt(progress));
+    const open = hero.reelOpenAt(progress);
+    intro.style.setProperty("--open", open.toFixed(3));
+    syncPlayback(open);
   };
 
   window.addEventListener("scroll", update, { passive: true });

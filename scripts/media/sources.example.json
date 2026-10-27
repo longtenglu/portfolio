@@ -1,9 +1,13 @@
 {
   "tax-is-networking": "/absolute/path/to/tax-is-networking.mp4",
-  "anniversary-dinner": "/absolute/path/to/20th-anniversary-dinner-recap.mp4",
   "china-trip": "/absolute/path/to/china-trip-recap.mp4",
   "iivt-few-words": "/absolute/path/to/iivt-in-a-few-words.mp4",
   "bear-amsterdam-pre": "/absolute/path/to/bear-to-amsterdam-pre-trip.mp4",
   "bear-amsterdam-during": "/absolute/path/to/bear-to-amsterdam-during-trip.mp4",
-  "bear-munich": "/absolute/path/to/bear-to-munich.mp4"
+  "bear-munich": "/absolute/path/to/bear-to-munich.mp4",
+  "step-script": "/absolute/path/to/script-still.png",
+  "step-footage": "/absolute/path/to/footage-still.jpg",
+  "step-motion": "/absolute/path/to/motion-still.png",
+  "step-review": "/absolute/path/to/review-still.png",
+  "step-edit": "/absolute/path/to/edit-still.png"
 }

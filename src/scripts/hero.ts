@@ -39,6 +39,15 @@ const HOT_LEVELS = 2;
 const LEVELS = LEVEL_ALPHA.length + HOT_LEVELS;
 const THRESHOLD = 0.12;
 
+// The opening, as fractions of the scroll through the pinned stage (half a
+// screen of scroll). The spark widens straight away and the hands part; the
+// reel starts to open soon after and is fully open about a quarter of a screen
+// into the scroll. The rest of the stage holds the open reel in view, so no
+// stretch of the scroll shows an empty gap between the hands.
+const LINE_END = 0.28;
+const OPEN_FROM = 0.12;
+const OPEN_TO = 0.5;
+
 type Options = {
   canvas: HTMLCanvasElement;
   reel: HTMLElement;
@@ -80,6 +89,10 @@ const clamp = (v: number, lo = 0, hi = 1) => (v < lo ? lo : v > hi ? hi : v);
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+// How far the reel has opened at scroll progress p. The hands rise to the
+// middle of the stage with it, so they stay clear of the copy until it has
+// stepped back.
+const openAt = (p: number) => easeInOut(clamp((p - OPEN_FROM) / (OPEN_TO - OPEN_FROM)));
 
 // Decode the committed density map once.
 const MAP_COLS = hands.cols;
@@ -313,8 +326,8 @@ export function initHero(opts: Options) {
   function reelState(p: number) {
     const w = layout.reelW;
     const h = (w * 9) / 16;
-    const line = easeInOut(clamp(p / 0.42));
-    const open = easeInOut(clamp((p - 0.32) / 0.5));
+    const line = easeInOut(clamp(p / LINE_END));
+    const open = openAt(p);
     const sep = lerp(layout.sepRest, layout.sepEnd, line);
     const curW = lerp(Math.min(26, layout.sepRest * 0.6), w, line);
     const curH = lerp(2, h, open);
@@ -326,7 +339,7 @@ export function initHero(opts: Options) {
   const gapYAt = (p: number) =>
     reducedMotion
       ? layout.gapYRest - (layout.phone ? layout.height * 0.07 : 0)
-      : lerp(layout.gapYRest, layout.gapYEnd, easeInOut(clamp(p / 0.9)));
+      : lerp(layout.gapYRest, layout.gapYEnd, openAt(p));
 
   // Top edge of the reel: centred on the gap, or (phones) hanging from it.
   const reelTop = (s: ReturnType<typeof reelState>, gapY: number) =>

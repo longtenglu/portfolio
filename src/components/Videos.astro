@@ -2,6 +2,7 @@
 import { videos } from "../content/copy";
 import { getVideo } from "../lib/media";
 import VideoButton from "./VideoButton.astro";
+import VideoRow from "./VideoRow.astro";
 import SectionLabel from "./SectionLabel.astro";
 
 const items = videos.items.map((item) => ({
@@ -9,11 +10,8 @@ const items = videos.items.map((item) => ({
   media: item.films ? null : getVideo(item.id),
   films: item.films?.map((film) => ({ ...film, media: getVideo(film.id) })) ?? null,
 }));
-const feature = items.find((item) => item.media?.orientation === "landscape");
-const portraits = items.filter((item) => item !== feature && !item.films);
+const singles = items.filter((item) => !item.films);
 const series = items.filter((item) => item.films);
-// Without a landscape feature the cards start at 01.
-const numBase = feature ? 2 : 1;
 
 // What the modal needs to play each file, keyed by media id.
 const playable: Record<string, { title: string; src: string; poster: string; orientation: string }> = {};
@@ -45,33 +43,15 @@ for (const item of items) {
 
     <div class="vgrid">
       {
-        feature && feature.media && (
-          <article class="vcard vcard--feature" data-reveal>
-            <VideoButton id={feature.id} title={feature.title} media={feature.media} />
-            <div class="vcard__info">
-              <p class="vcard__num mono">01</p>
-              <h3 class="vcard__title">{feature.title}</h3>
-              <p class="vcard__line">{feature.line}</p>
-              <ul class="vcard__skills" aria-label="Skills">
-                {feature.skills.map((skill) => <li class="chip">{skill}</li>)}
-              </ul>
-            </div>
-          </article>
-        )
-      }
-
-      {
-        portraits.map((item, i) =>
+        singles.map((item, i) =>
           item.media ? (
-            <article class="vcard vcard--portrait" data-reveal style={`--reveal-delay: ${(i % 4) * 0.06}s`}>
+            <article class="vcard" data-reveal style={`--reveal-delay: ${(i % 4) * 0.06}s`}>
               <VideoButton id={item.id} title={item.title} media={item.media} />
               <div class="vcard__info">
-                <p class="vcard__num mono">0{i + numBase}</p>
+                <p class="vcard__num mono">0{i + 1}</p>
                 <h3 class="vcard__title">{item.title}</h3>
                 <p class="vcard__line">{item.line}</p>
-                <ul class="vcard__skills" aria-label="Skills">
-                  {item.skills.map((skill) => <li class="chip">{skill}</li>)}
-                </ul>
+                <p class="vcard__credit">{item.credit}</p>
               </div>
             </article>
           ) : null,
@@ -80,22 +60,19 @@ for (const item of items) {
 
       {
         series.map((item) => (
-          <article class="vcard vcard--series" data-reveal>
+          <article class="vcard vcard--series" data-reveal style={`--reveal-delay: ${(singles.length % 4) * 0.06}s`}>
             <ul class="vcard__films">
               {item.films?.map((film) => (
                 <li>
-                  <VideoButton id={film.id} title={`${item.title}: ${film.title}`} media={film.media} compact />
-                  <p class="vcard__film mono" aria-hidden="true">{film.title}</p>
+                  <VideoRow id={film.id} title={`${item.title}: ${film.title}`} label={film.title} media={film.media} />
                 </li>
               ))}
             </ul>
             <div class="vcard__info">
-              <p class="vcard__num mono">0{portraits.length + numBase}</p>
+              <p class="vcard__num mono">0{singles.length + 1}</p>
               <h3 class="vcard__title">{item.title}</h3>
               <p class="vcard__line">{item.line}</p>
-              <ul class="vcard__skills" aria-label="Skills">
-                {item.skills.map((skill) => <li class="chip">{skill}</li>)}
-              </ul>
+              <p class="vcard__credit">{item.credit}</p>
             </div>
           </article>
         ))
@@ -149,48 +126,33 @@ for (const item of items) {
     }
   }
 
+  /* Three single cards and the series card fill one row of four. Each card
+     is a container, so the series playlist can match the height of a poster. */
   .vgrid {
     display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: clamp(28px, 3vw, 40px) clamp(16px, 2vw, 28px);
     margin-top: 48px;
   }
 
-  .vcard--feature {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
-    gap: clamp(20px, 3vw, 44px);
-    align-items: end;
-  }
-
-  .vcard--portrait {
-    grid-column: span 3;
-  }
-
-  .vcard--series {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-    gap: clamp(20px, 3vw, 44px);
-    align-items: end;
-    padding-top: 8px;
+  .vcard {
+    container-type: inline-size;
   }
 
   .vcard__films {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: clamp(10px, 1.4vw, 20px);
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    /* A poster is 9:16 and its bar is 42px tall. */
+    height: calc(100cqw * 16 / 9 + 42px);
+  }
+
+  .vcard__films li {
+    min-height: 0;
   }
 
   .vcard__info {
     padding-top: 18px;
-  }
-
-  .vcard--feature .vcard__info,
-  .vcard--series .vcard__info {
-    padding-top: 0;
-    padding-bottom: 4px;
   }
 
   .vcard__num {
@@ -207,12 +169,6 @@ for (const item of items) {
     line-height: 1.2;
   }
 
-  .vcard--feature .vcard__title,
-  .vcard--series .vcard__title {
-    font-size: clamp(24px, 2.4vw, 34px);
-    font-weight: 750;
-  }
-
   .vcard__line {
     margin-top: 8px;
     color: var(--muted);
@@ -221,27 +177,20 @@ for (const item of items) {
     text-wrap: pretty;
   }
 
-  .vcard__skills {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
+  /* One short line of what I did on the film. */
+  .vcard__credit {
     margin-top: 14px;
-  }
-
-  .vcard__film {
-    margin-top: 10px;
-    font-size: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+    font-size: 14px;
+    line-height: 1.45;
     color: var(--text);
-    line-height: 1.4;
+    text-wrap: pretty;
   }
 
   @media (max-width: 1024px) {
-    .vcard--portrait {
-      grid-column: span 6;
-    }
-
-    .vcard--series {
-      grid-template-columns: 1fr;
+    .vgrid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
@@ -253,31 +202,21 @@ for (const item of items) {
     .videos__intro {
       justify-self: start;
     }
-
-    .vcard--feature {
-      grid-template-columns: 1fr;
-    }
   }
 
+  /* One card to a row on phones. */
   @media (max-width: 640px) {
     .vgrid {
-      column-gap: 14px;
+      grid-template-columns: 1fr;
     }
 
     .vcard__title {
-      font-size: 17px;
+      font-size: 18px;
     }
 
-    .vcard__line {
-      font-size: 14px;
-    }
-
-    .vcard--portrait .vcard__skills {
-      display: none;
-    }
-
-    .vcard__film {
-      font-size: 11px;
+    .vcard__films {
+      height: auto;
+      grid-template-rows: none;
     }
   }
 
@@ -325,9 +264,7 @@ for (const item of items) {
     min-height: 40px;
     padding-inline: 14px;
     border-radius: 999px;
-    font-size: 12px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    font-size: 13px;
     box-shadow: inset 0 0 0 1px var(--line-strong);
     flex: none;
   }

@@ -1,0 +1,144 @@
+---
+import { process } from "../content/copy";
+import { getStill } from "../lib/media";
+import SectionLabel from "./SectionLabel.astro";
+
+const steps = process.steps.map((step) => ({ ...step, still: getStill(step.id) }));
+---
+
+<section class="section process" id="process" aria-labelledby="process-title">
+  <div class="container">
+    <div class="process__head">
+      <SectionLabel id="process-title" heading={process.heading} />
+      <p class="process__intro">{process.intro}</p>
+    </div>
+
+    <ol class="process__steps">
+      {
+        steps.map((step, i) => (
+          <li class="step" data-reveal style={`--reveal-delay: ${(i % 3) * 0.06}s`}>
+            <img
+              class="step__still"
+              src={step.still.src}
+              alt={step.alt}
+              width={step.still.width}
+              height={step.still.height}
+              loading="lazy"
+              decoding="async"
+            />
+            <div class="step__head">
+              <span class="step__num mono" aria-hidden="true">0{i + 1}</span>
+              <h3 class="step__title">{step.title}</h3>
+            </div>
+            <p class="step__caption">{step.caption}</p>
+            <p class="step__from">{process.from} {step.film}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</section>
+
+<style>
+  .process__head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 24px;
+    align-items: end;
+  }
+
+  .process__intro {
+    color: var(--muted);
+    max-width: 46ch;
+    justify-self: end;
+  }
+
+  /* A strip of six stills, one per step, read left to right. Each step is as
+     tall as its row, with the source line pinned to the bottom, so the lines
+     sit level whether the caption runs to two lines or three. */
+  .process__steps {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 40px clamp(14px, 1.6vw, 24px);
+    margin-top: 48px;
+  }
+
+  .step {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .step__still {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    border-radius: var(--radius);
+    box-shadow: 0 0 0 1px var(--line);
+    background: var(--bg-raised);
+  }
+
+  /* A small plain number beside the title, with nothing running off it. */
+  .step__head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .step__num {
+    flex: none;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+  }
+
+  .step__title {
+    font-size: 17px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+  }
+
+  .step__caption {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+    text-wrap: pretty;
+  }
+
+  .step__from {
+    margin-top: auto;
+    padding-top: 10px;
+    font-size: 13px;
+    color: var(--dim);
+  }
+
+  @media (max-width: 1199px) {
+    .process__steps {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 820px) {
+    .process__head {
+      grid-template-columns: 1fr;
+    }
+
+    .process__intro {
+      justify-self: start;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .process__steps {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 32px 14px;
+    }
+
+    .step__title {
+      font-size: 16px;
+    }
+  }
+</style>

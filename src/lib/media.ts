@@ -20,6 +20,7 @@ type VideoEntry = {
 };
 
 const videos = manifest.videos as Record<string, VideoEntry>;
+const stills = manifest.stills as Record<string, MediaFile>;
 
 export function mediaUrl(file: MediaFile) {
   return file.url ?? `/media/${file.path}`;
@@ -44,6 +45,12 @@ export function getReel() {
   const reel = manifest.reel as { video: MediaFile; poster: MediaFile } | null;
   if (!reel) throw new Error("No hero reel. Run npm run media:build.");
   return { src: mediaUrl(reel.video), poster: mediaUrl(reel.poster) };
+}
+
+export function getStill(id: string) {
+  const entry = stills[id];
+  if (!entry) throw new Error(`No still for "${id}". Run npm run media:build.`);
+  return { src: mediaUrl(entry), width: entry.width ?? 720, height: entry.height ?? 900 };
 }
 
 /** 68.5 -> "1:09" */

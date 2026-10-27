@@ -29,9 +29,10 @@ export const hero = {
   claim: "I pick up new tools and put them to work.",
   sub: "Programme Executive in Singapore. I make videos, run programmes and build AI workflows.",
   scroll: "Scroll",
+  // The film in the gap between the hands is one of the Selected videos: the
+  // caption takes its title and credit from that entry.
   reel: {
-    title: "20th Anniversary Dinner Reception",
-    label: "Shot, directed and edited by me",
+    film: "china-trip",
     action: "Play the full film with sound",
     watch: "Watch with sound",
     // The visible trigger while the reel is still closed.
@@ -39,7 +40,7 @@ export const hero = {
   },
 };
 
-export const strip = "DESIGN × CODE • VIDEO × AI • BUILDING WITH AGENTS • ASPIRING AI ENGINEER";
+export const strip = "DESIGN × CODE • VIDEO × AI • BUILDING WITH AGENTS • 70 VIDEOS AND COUNTING";
 
 export const about = {
   heading: "About",
@@ -161,7 +162,8 @@ export type VideoCopy = {
   id: string;
   title: string;
   line: string;
-  skills: string[];
+  /** One short line of what I did on the film, in plain words. */
+  credit: string;
   films?: Film[];
 };
 
@@ -177,31 +179,25 @@ export const videos = {
       id: "tax-is-networking",
       title: "Tax is Networking",
       line: "A masterclass day told through the connections people made, each one numbered and linked on screen.",
-      skills: ["Concept", "Motion graphics", "HyperFrames", "Edit"],
-    },
-    {
-      id: "anniversary-dinner",
-      title: "20th Anniversary Dinner Reception",
-      line: "An anniversary dinner recap cut to music: the speeches, the ribbon cutting, the band and a thank-you card.",
-      skills: ["Event coverage", "Music-led edit", "Titles", "Sound"],
+      credit: "Concept and edit, with motion graphics built in HyperFrames",
     },
     {
       id: "china-trip",
       title: "China trip recap",
       line: "Five cities in fifteen days on a research and exchange study, assembled in code as an editorial recap.",
-      skills: ["Story structure", "Information design", "Code-built edit"],
+      credit: "Story, information design and a code-built edit",
     },
     {
       id: "iivt-few-words",
       title: "IIVT, in a few words",
       line: "Four speakers answer one question, cut vertical with branded captions and lower thirds.",
-      skills: ["Interview selection", "Social cutdown", "Captions", "CapCut"],
+      credit: "Picked the answers, cut and captioned in CapCut",
     },
     {
       id: "bear-series",
       title: "The bear mascot travel series",
       line: "A mascot travels to conferences in Amsterdam and Munich in three films I shot, directed and edited.",
-      skills: ["Concept", "Shooting", "Character storytelling", "Edit", "Motion graphics"],
+      credit: "Shot, directed and edited, with motion graphics",
       films: [
         { id: "bear-amsterdam-pre", title: "Amsterdam, before the trip" },
         { id: "bear-amsterdam-during", title: "Amsterdam, during the trip" },
@@ -209,6 +205,60 @@ export const videos = {
       ],
     },
   ] satisfies VideoCopy[] as VideoCopy[],
+};
+
+export type Step = { id: string; title: string; caption: string; film: string; alt: string };
+
+// "How a film gets made": one real production still per step. The id of each
+// step is the id of its still in src/data/media.json.
+export const process: { heading: string; intro: string; from: string; steps: Step[] } = {
+  heading: "How a film gets made",
+  intro: "The steps behind most of my films, with a still from the work for each one.",
+  from: "From",
+  steps: [
+    {
+      id: "step-script",
+      title: "Script",
+      caption: "It starts as a beat sheet: what happens, in what order, in how many seconds.",
+      film: "China trip recap",
+      alt: "The beat sheet for the China trip recap: a table of beats with their times and material, and the first line of on-screen text.",
+    },
+    {
+      id: "step-footage",
+      title: "Footage and b-roll",
+      caption: "Footage from the day, or AI b-roll when there is no shot to film.",
+      film: "Bear to Munich",
+      alt: "Looking up the spiral staircase of a conference venue, a photo from the shoot.",
+    },
+    {
+      id: "step-motion",
+      title: "Motion in code",
+      caption: "Titles, maps and cards written in HTML and rendered to video with HyperFrames.",
+      film: "Bear to Munich",
+      alt: "An airport departures board with a boarding-pass style card reading SIN to MUC, a code-built title frame.",
+    },
+    {
+      id: "step-captions",
+      title: "Captions",
+      caption: "Speech to text, timed to the cut, so the words land with the voice.",
+      film: "IIVT, in a few words",
+      alt: "A speaker holding a microphone, with the caption across IP, valuation and tax in a navy box.",
+    },
+    {
+      id: "step-review",
+      title: "Review",
+      caption: "An AI pass reads the frames and the transcript together before I finish the cut.",
+      film: "Bear to Munich",
+      alt: "A contact sheet of four frames with their times: a bear at an airport, a bear by a window, a flight path and a title card.",
+    },
+    {
+      id: "step-edit",
+      title: "Final edit in CapCut",
+      caption: "Pacing, sound and polish by hand, in CapCut.",
+      film: "IIVT, in a few words",
+      alt: "The timeline of the finished cut, with lanes for captions, name cards, speakers, speech, music and the end card.",
+    },
+  ],
 };
 
 export type Build = {
@@ -304,8 +354,6 @@ export const contact = {
   copy: "Copy email",
   copied: "Copied",
   copiedStatus: "Email address copied",
-  clockLabel: "Local time in Singapore",
-  clockZone: "SGT, UTC+8",
   links: [
     { label: "GitHub", href: "https://github.com/longtenglu" },
     { label: "LinkedIn", href: "https://www.linkedin.com/in/longteng-l-b458971bb/" },

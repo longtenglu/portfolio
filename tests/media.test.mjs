@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 const BUILD_SCRIPT = fileURLToPath(new URL("../scripts/media/build-media.mjs", import.meta.url));
 
 /** @typedef {{ path: string, fingerprint: string | null, sha256: string, width?: number, url: string | null }} OutputFile */
-/** @typedef {{ videos: Record<string, { full: OutputFile, preview: OutputFile, poster: OutputFile }>, reel: { video: OutputFile, poster: OutputFile } }} Manifest */
+/** @typedef {{ videos: Record<string, { full: OutputFile, preview: OutputFile, poster: OutputFile }>, reel: { video: OutputFile, poster: OutputFile }, stills: Record<string, OutputFile> }} Manifest */
 /** @typedef {{ poster: number, reelPoster: number, crop: string, full: [number, number] }} Settings */
 
 /** @type {Settings} */
@@ -37,9 +37,14 @@ export const HERO_REEL = {
   crop: ${JSON.stringify(settings.crop)},
 };
 
+export const STILLS = [
+  { id: "frame", source: "clip", at: ${settings.poster}, crop: ${JSON.stringify(settings.crop)} },
+];
+
 export const SIZES = {
   landscape: { full: ${JSON.stringify(settings.full)}, preview: [160, 90], poster: [160, 90], reel: [160, 90] },
   portrait: { full: [180, 320], preview: [90, 160], poster: [90, 160] },
+  still: [96, 120],
 };
 
 export const LOUDNESS = { integrated: -14, tolerance: 0.5, truePeakLimit: -1.5, ceiling: -2.5 };
@@ -78,6 +83,7 @@ function outputs(root) {
     poster: manifest.videos.clip.poster,
     reel: manifest.reel.video,
     reelPoster: manifest.reel.poster,
+    still: manifest.stills.frame,
   };
 }
 
@@ -119,6 +125,7 @@ function addUrls(root) {
   }
   add(manifest.reel.video);
   add(manifest.reel.poster);
+  add(manifest.stills.frame);
   writeFileSync(path.join(root, "src/data/media.json"), `${JSON.stringify(manifest, null, 2)}\n`);
 }
 
@@ -140,6 +147,7 @@ function assertEveryOutputReencoded(log) {
   assert.match(log, /clip: hover preview/);
   assert.match(log, /hero-reel: loop/);
   assert.match(log, /hero-reel: poster/);
+  assert.match(log, /frame: still/);
 }
 
 /**
@@ -153,11 +161,13 @@ function assertOutputsReencoded(actual, expected, phase) {
   assert.equal(actual.poster.sha256, expected.poster.sha256, `${phase}: the poster is re-encoded, not adopted from the stale file`);
   assert.equal(actual.reel.sha256, expected.reel.sha256, `${phase}: the reel is re-encoded, not adopted from the stale file`);
   assert.equal(actual.reelPoster.sha256, expected.reelPoster.sha256, `${phase}: the reel poster is re-encoded, not adopted from the stale file`);
+  assert.equal(actual.still.sha256, expected.still.sha256, `${phase}: the still is re-encoded, not adopted from the stale file`);
   assert.equal(actual.full.fingerprint, expected.full.fingerprint, `${phase}: the full copy keeps the current fingerprint`);
   assert.equal(actual.preview.fingerprint, expected.preview.fingerprint, `${phase}: the preview keeps the current fingerprint`);
   assert.equal(actual.poster.fingerprint, expected.poster.fingerprint, `${phase}: the poster keeps the current fingerprint`);
   assert.equal(actual.reel.fingerprint, expected.reel.fingerprint, `${phase}: the reel keeps the current fingerprint`);
   assert.equal(actual.reelPoster.fingerprint, expected.reelPoster.fingerprint, `${phase}: the reel poster keeps the current fingerprint`);
+  assert.equal(actual.still.fingerprint, expected.still.fingerprint, `${phase}: the still keeps the current fingerprint`);
 }
 
 test("build-media re-encodes an output when its settings change", () => {
@@ -189,8 +199,10 @@ test("build-media re-encodes an output when its settings change", () => {
     assert.equal(retimed.reel.sha256, first.reel.sha256);
     assert.notEqual(retimed.poster.sha256, first.poster.sha256, "a new poster time re-encodes the poster");
     assert.notEqual(retimed.reelPoster.sha256, first.reelPoster.sha256, "a new poster time re-encodes the reel poster");
+    assert.notEqual(retimed.still.sha256, first.still.sha256, "a new frame time re-encodes the still");
     assert.equal(retimed.poster.url, null, "changed bytes clear the hosted URL");
     assert.equal(retimed.reelPoster.url, null);
+    assert.equal(retimed.still.url, null);
     assert.equal(retimed.full.url, "https://example.test/clip/clip.mp4");
 
     const croppedSettings = { ...BASE, poster: 0.9, reelPoster: 1.0, crop: "200:112:40:20" };
@@ -207,6 +219,7 @@ test("build-media re-encodes an output when its settings change", () => {
     assert.notEqual(cropped.poster.sha256, retimed.poster.sha256, "a new crop re-encodes the poster");
     assert.notEqual(cropped.reel.sha256, retimed.reel.sha256, "a new crop re-encodes the reel");
     assert.notEqual(cropped.reelPoster.sha256, retimed.reelPoster.sha256, "a new crop re-encodes the reel poster");
+    assert.notEqual(cropped.still.sha256, retimed.still.sha256, "a new crop re-encodes the still");
     assert.equal(cropped.preview.url, null);
     assert.equal(cropped.reel.url, null);
     assert.equal(cropped.full.url, "https://example.test/clip/clip.mp4");
@@ -237,7 +250,7 @@ test("build-media re-encodes outputs whose bytes no longer match the manifest", 
     writeFileSync(path.join(root, "scripts/media/videos.mjs"), jobsModule(BASE));
     run(root);
     const stale = outputs(root);
-    for (const file of [stale.preview, stale.poster, stale.reel, stale.reelPoster]) {
+    for (const file of [stale.preview, stale.poster, stale.reel, stale.reelPoster, stale.still]) {
       const copy = path.join(root, "stale", file.path);
       mkdirSync(path.dirname(copy), { recursive: true });
       copyFileSync(path.join(root, "media", file.path), copy);
@@ -253,6 +266,7 @@ test("build-media re-encodes outputs whose bytes no longer match the manifest", 
     assert.notEqual(expected.poster.sha256, stale.poster.sha256, "the new settings change the poster bytes");
     assert.notEqual(expected.reel.sha256, stale.reel.sha256, "the new settings change the reel bytes");
     assert.notEqual(expected.reelPoster.sha256, stale.reelPoster.sha256, "the new settings change the reel poster bytes");
+    assert.notEqual(expected.still.sha256, stale.still.sha256, "the new settings change the still bytes");
 
     // Put the old outputs back, leaving that manifest in place: every
     // fingerprint matches and only the bytes are stale. These files are a
@@ -261,6 +275,7 @@ test("build-media re-encodes outputs whose bytes no longer match the manifest", 
     copyFileSync(path.join(root, "stale", stale.poster.path), path.join(root, "media", expected.poster.path));
     copyFileSync(path.join(root, "stale", stale.reel.path), path.join(root, "media", expected.reel.path));
     copyFileSync(path.join(root, "stale", stale.reelPoster.path), path.join(root, "media", expected.reelPoster.path));
+    copyFileSync(path.join(root, "stale", stale.still.path), path.join(root, "media", expected.still.path));
     appendFileSync(path.join(root, "media", expected.full.path), Buffer.from([0]));
 
     const lengthLog = run(root);
@@ -269,7 +284,7 @@ test("build-media re-encodes outputs whose bytes no longer match the manifest", 
 
     // Flip one byte in every output without changing its length, so only the
     // sha256 can tell these files are stale.
-    for (const file of [expected.full, expected.preview, expected.poster, expected.reel, expected.reelPoster]) {
+    for (const file of [expected.full, expected.preview, expected.poster, expected.reel, expected.reelPoster, expected.still]) {
       flipByte(path.join(root, "media", file.path));
     }
     const hashLog = run(root);
