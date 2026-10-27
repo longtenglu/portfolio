@@ -4,6 +4,9 @@ import { getStill } from "../lib/media";
 import SectionLabel from "./SectionLabel.astro";
 
 const steps = process.steps.map((step) => ({ ...step, still: getStill(step.id) }));
+
+// "b-roll" must not break at its hyphen, so it is wrapped in a no-wrap span.
+const keepTogether = (text: string) => text.split(/(b-roll)/i).map((part) => ({ part, keep: /^b-roll$/i.test(part) }));
 ---
 
 <section class="section process" id="process" aria-labelledby="process-title">
@@ -28,9 +31,9 @@ const steps = process.steps.map((step) => ({ ...step, still: getStill(step.id) }
             />
             <div class="step__head">
               <span class="step__num mono" aria-hidden="true">0{i + 1}</span>
-              <h3 class="step__title">{step.title}</h3>
+              <h3 class="step__title">{keepTogether(step.title).map(({ part, keep }) => (keep ? <span class="step__keep">{part}</span> : part))}</h3>
             </div>
-            <p class="step__caption">{step.caption}</p>
+            <p class="step__caption">{keepTogether(step.caption).map(({ part, keep }) => (keep ? <span class="step__keep">{part}</span> : part))}</p>
             <p class="step__from">{process.from} {step.film}</p>
           </li>
         ))
@@ -98,6 +101,10 @@ const steps = process.steps.map((step) => ({ ...step, still: getStill(step.id) }
     font-weight: 650;
     letter-spacing: -0.01em;
     line-height: 1.25;
+  }
+
+  .step__keep {
+    white-space: nowrap;
   }
 
   .step__caption {

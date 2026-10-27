@@ -427,9 +427,15 @@ describe("page details", () => {
       const tops = await page.evaluate(() =>
         [...document.querySelectorAll(".build__examples")].map((el) => Math.round(el.getBoundingClientRect().top + window.scrollY)),
       );
-      assert.equal(tops.length, 4);
+      assert.equal(tops.length, 5);
       assert.equal(tops[0], tops[1]);
       assert.equal(tops[2], tops[3]);
+      const wide = await page.evaluate(() => {
+        const grid = document.querySelector(".builds__grid")?.getBoundingClientRect();
+        const last = document.querySelector(".build:last-child")?.getBoundingClientRect();
+        return !!grid && !!last && Math.abs(grid.width - last.width) < 3;
+      });
+      assert.ok(wide, "the odd last card spans the full row");
     } finally {
       await context.close();
     }
@@ -477,7 +483,7 @@ describe("page details", () => {
           content: [...card.children].map((el) => getComputedStyle(el).opacity),
         })),
       );
-      assert.equal(before.length, 4);
+      assert.equal(before.length, 5);
       for (const card of before) {
         assert.equal(card.revealed, false);
         assert.equal(card.opacity, "1", "the card itself is never faded out");
@@ -515,6 +521,23 @@ describe("page details", () => {
             `at ${width}px a row's source lines end at ${row.map((l) => l.bottom)}`,
           );
         }
+      } finally {
+        await context.close();
+      }
+    }
+  });
+
+  test("no process title or caption breaks \"b-roll\" across lines", async () => {
+    for (const width of [1440, 1200, 1024, 390]) {
+      const { context, page } = await openHome({ width, height: 900 });
+      try {
+        const broken = await page.evaluate(() =>
+          [...document.querySelectorAll(".step__keep")]
+            .filter((el) => el.getClientRects().length > 1)
+            .map((el) => el.textContent),
+        );
+        assert.equal(await page.locator(".step__keep").count(), 2);
+        assert.deepEqual(broken, [], `at ${width}px "b-roll" wraps`);
       } finally {
         await context.close();
       }

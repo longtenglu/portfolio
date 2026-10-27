@@ -298,6 +298,18 @@ export const builds: { heading: string; intro: string; items: Build[] } = {
       link: { label: "Firstmate on GitHub", href: "https://github.com/kunchenguid/firstmate" },
     },
     {
+      title: "RoleCall",
+      kicker: "Built for my job search",
+      text:
+        "A local-first app I built for my own job hunt. It ranks the roles I save against my real experience and pay floor, drafts tailored resume bullets and cover letters, and tracks every application to the follow-up.",
+      examples: [
+        "Every drafted line points to the evidence it came from, and a line without one is flagged",
+        "A six-stage pipeline with follow-up reminders",
+        "Built with the same agent crew, on Firstmate",
+        "Next up: wider job discovery and interview practice",
+      ],
+    },
+    {
       title: "HyperFrames video work",
       kicker: "Video in code",
       text:
