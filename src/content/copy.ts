@@ -305,7 +305,7 @@ export const builds: { heading: string; intro: string; items: Build[] } = {
       examples: [
         "Every drafted line points to the evidence it came from, and a line without one is flagged",
         "A six-stage pipeline with follow-up reminders",
-        "Built with the same agent crew, on Firstmate",
+        "Its current rebuild was done with the same agent crew, on Firstmate",
         "Next up: wider job discovery and interview practice",
       ],
     },
