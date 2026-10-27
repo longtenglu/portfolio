@@ -290,7 +290,7 @@ export const builds: { heading: string; intro: string; items: Build[] } = {
       title: "A multi-agent setup",
       kicker: "Runs on Firstmate",
       text:
-        "I work with a crew of coding agents through Firstmate, an open-source tool I didn't build. One supervisor takes my brief and hands tasks to workers, each in its own copy of the code, and nothing lands without a review. I set it up for my own work, decide what gets built and check what comes back.",
+        "I run a crew of coding agents on Firstmate, an open-source agent supervisor I set up for my own work. One supervisor takes my brief and hands tasks to workers, each in its own copy of the code. Nothing lands without a review: I decide what gets built and check what comes back.",
       examples: [
         "This site was built that way: I picked the look and approved the copy, the agents did the build",
         "Each task gets a written brief, an isolated workspace and a review step before it counts as done",
