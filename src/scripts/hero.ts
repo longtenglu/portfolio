@@ -38,6 +38,8 @@ const LEVEL_ALPHA = [0.22, 0.34, 0.48, 0.64, 0.82, 1];
 const HOT_LEVELS = 2;
 const LEVELS = LEVEL_ALPHA.length + HOT_LEVELS;
 const THRESHOLD = 0.12;
+// Cells further than this past the canvas edge are not drawn.
+const CULL = 16;
 
 // The opening, as fractions of the scroll through the pinned stage (half a
 // screen of scroll). The spark widens straight away and the hands part; the
@@ -308,14 +310,36 @@ export function initHero(opts: Options) {
   const copy = canvas.parentElement?.querySelector<HTMLElement>(".hero__copy");
   const copyBottom = () => (copy ? copy.offsetTop + copy.offsetHeight : 0);
 
-  // At rest the hands sit below the copy, however many lines it wraps to:
-  // drop them if the top of the highest finger would reach into the words.
+  // The still frame (reduced motion) shows the reel already open; on phones
+  // it sits a little higher so the caption clears the labels below.
+  function stillLift() {
+    return reducedMotion && layout.phone ? layout.height * 0.07 : 0;
+  }
+
+  // How far the open reel and its caption reach below the gap.
+  function reelDepth() {
+    const s = reelState(1);
+    if (reelCaption) reelCaption.style.width = `${s.w.toFixed(1)}px`;
+    return reelTop(s, 0) + s.h + 12 + (reelCaption?.offsetHeight ?? 0);
+  }
+
+  // The hands sit below the copy, however many lines it wraps to: drop them if
+  // the top of the highest finger that is drawn would reach into the words.
+  // Under reduced motion the open reel and its caption must stay inside the
+  // hero too, so there the hands only drop as far as they allow.
   // (The side-by-side landscape layout keeps them clear horizontally.)
   function clearCopy() {
     if (layout.short || !cells.count) return;
+    const shift = (layout.sepRest - TIP_GAP * layout.scale) / 2;
     let rise = 0;
-    for (let i = 0; i < cells.count; i++) rise = Math.max(rise, -cells.ry[i]);
-    layout.gapYRest = Math.max(layout.gapYRest, copyBottom() + rise + 16);
+    for (let i = 0; i < cells.count; i++) {
+      const x = layout.gapX + cells.rx[i] + (cells.side[i] === 0 ? -shift : shift);
+      if (x >= -CULL && x <= layout.width + CULL) rise = Math.max(rise, -cells.ry[i]);
+    }
+    const lift = stillLift();
+    let y = copyBottom() + rise + 16 + lift;
+    if (reducedMotion) y = Math.min(y, layout.height - reelDepth() + lift);
+    layout.gapYRest = Math.max(layout.gapYRest, y);
   }
 
   let layout = computeLayout(canvas.clientWidth, canvas.clientHeight);
@@ -356,16 +380,13 @@ export function initHero(opts: Options) {
     return { w, h, curW, curH, open, line, sep };
   }
 
-  // The still frame (reduced motion) shows the reel already open; on phones
-  // it sits a little higher so the caption clears the labels below.
   const gapYAt = (p: number) =>
-    reducedMotion
-      ? layout.gapYRest - (layout.phone ? layout.height * 0.07 : 0)
-      : lerp(layout.gapYRest, layout.gapYEnd, openAt(p));
+    reducedMotion ? layout.gapYRest - stillLift() : lerp(layout.gapYRest, layout.gapYEnd, openAt(p));
 
   // Top edge of the reel: centred on the gap, or (phones) hanging from it.
-  const reelTop = (s: ReturnType<typeof reelState>, gapY: number) =>
-    layout.phone ? gapY + layout.cellH : gapY - s.curH / 2;
+  function reelTop(s: ReturnType<typeof reelState>, gapY: number) {
+    return layout.phone ? gapY + layout.cellH : gapY - s.curH / 2;
+  }
 
   function placeReel(p: number, gapY: number) {
     const s = reelState(p);
@@ -431,7 +452,7 @@ export function initHero(opts: Options) {
     for (let i = 0; i < c.count; i++) {
       const homeX = gapX + c.rx[i] + (c.side[i] === 0 ? -shift : shift);
       const homeY = gapY + c.ry[i];
-      if (homeX < -16 || homeX > width + 16 || homeY < -16 || homeY > height + 16) continue;
+      if (homeX < -CULL || homeX > width + CULL || homeY < -CULL || homeY > height + CULL) continue;
 
       let level = c.base[i];
       if (cutting) {

@@ -109,7 +109,7 @@ export const experience: { heading: string; intro: string; roles: Role[] } = {
     },
     {
       role: "Independent e-commerce and marketing project",
-      org: "Personal project, part-time",
+      org: "Personal project",
       dates: "Dec 2025 - Apr 2026",
       points: [
         "Launched a Shopify store with Meta Pixel tracking.",
