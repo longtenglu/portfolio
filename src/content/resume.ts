@@ -25,7 +25,7 @@ export const resume = {
       text: "AI workflows for content, research and video review; Claude and Codex; local models (Ollama); Python automation; APIs; Git",
     },
   ],
-  // The approximate current-role numbers, worded for a resume.
+  // The current-role numbers (the first two approximate), worded for a resume.
   roleStats:
     "In my current role: helped run or managed about 10 programmes and events; made about 70 videos; 100,000+ impressions across our channels.",
   projectsHeading: "AI and automation projects",

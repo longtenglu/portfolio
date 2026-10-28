@@ -325,8 +325,9 @@ export function initHero(opts: Options) {
 
   // The hands sit below the copy, however many lines it wraps to: drop them if
   // the top of the highest finger that is drawn would reach into the words.
-  // Under reduced motion the open reel and its caption must stay inside the
-  // hero too, so there the hands only drop as far as they allow.
+  // Under reduced motion the drop is capped so the open reel and its caption
+  // stay inside the hero, but the hands never rise above their default rest,
+  // so on the shortest phones the cap can leave the caption clipped.
   // (The side-by-side landscape layout keeps them clear horizontally.)
   function clearCopy() {
     if (layout.short || !cells.count) return;

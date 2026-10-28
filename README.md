@@ -23,8 +23,8 @@ below).
 ## Local development
 
 Needs Node 22.23.4 or newer, ffmpeg for the media pipeline and its tests,
-and Chrome or Chromium for the resume PDF, the share image and the browser
-tests.
+and Chrome or Chromium for the resume PDF, the share image, the icons and the
+browser tests.
 
 ```sh
 npm install
@@ -131,7 +131,9 @@ URLs and unchanged files are skipped on later uploads.
 
 `vercel.json` adds an `X-Robots-Tag: noindex, nofollow` header to every
 response. Each page also carries a `noindex, nofollow` meta tag, and
-`robots.txt` disallows everything: the site is shared by link only.
+`robots.txt` disallows every crawler except the link-preview bots (LinkedIn,
+Facebook, Twitter, Slack), so a shared link still gets its title and image:
+the site is shared by link only.
 
 ## The resume
 
@@ -157,6 +159,15 @@ npm run og:image      # writes public/og.png and dist/og.png
 ```
 
 Commit the new `public/og.png` with the change that altered the hero.
+
+## The icons
+
+`public/favicon.svg` is the source. The Apple touch icon and the `.ico` are
+rendered from it with headless Chrome:
+
+```sh
+npm run icons         # writes public/apple-touch-icon.png and public/favicon.ico
+```
 
 ## Hidden terminal
 
