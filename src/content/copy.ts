@@ -194,7 +194,7 @@ export const videos = {
     {
       id: "bear-series",
       title: "The bear mascot travel series",
-      line: "A mascot travels to conferences in Amsterdam and Munich in three films I shot, directed and edited.",
+      line: "A mascot travels to conferences in Amsterdam and Munich in three films I directed and edited.",
       credit: "Directed and edited, using conference photos and motion graphics built in code",
       films: [
         { id: "bear-amsterdam-pre", title: "Amsterdam, before the trip" },

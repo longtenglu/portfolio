@@ -10,7 +10,7 @@ export const resume = {
   location: "Singapore",
   pdfName: "Longteng-Lu-Resume.pdf",
   summary:
-    "Psychology graduate who runs programmes and events, markets them, and shoots and edits the video. Builds AI tools that cut manual steps out of the work: captions and motion graphics rendered from code, a design-to-PowerPoint converter, and a research pipeline that checks its own sources. Builds with AI coding agents (Claude Code, Codex) and owns the design, testing and day-to-day use.",
+    "Psychology graduate who runs programmes and events, markets them, and directs and edits the video. Builds AI tools that cut manual steps out of the work: captions and motion graphics rendered from code, a design-to-PowerPoint converter, and a research pipeline that checks its own sources. Builds with AI coding agents (Claude Code, Codex) and owns the design, testing and day-to-day use.",
   skills: [
     {
       title: "Marketing",
