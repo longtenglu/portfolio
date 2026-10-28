@@ -171,7 +171,7 @@ if (!film) throw new Error(`The hero reel film "${hero.reel.film}" is not in the
 
   .hero__sub {
     margin-top: 14px;
-    max-width: 40ch;
+    max-width: 52ch;
     font-size: 15px;
     color: var(--muted);
   }
@@ -267,8 +267,9 @@ if (!film) throw new Error(`The hero reel film "${hero.reel.film}" is not in the
 
   .hero__meta {
     position: absolute;
-    left: var(--gutter);
-    right: var(--gutter);
+    /* On the container's edges, as the header and the copy are. */
+    left: max(var(--gutter), calc((100% - var(--max)) / 2));
+    right: max(var(--gutter), calc((100% - var(--max)) / 2));
     bottom: 18px;
     z-index: 4;
     display: grid;
@@ -296,11 +297,18 @@ if (!film) throw new Error(`The hero reel film "${hero.reel.film}" is not in the
     padding: 8px 16px;
     border-radius: 999px;
     box-shadow: inset 0 0 0 1px var(--line-strong);
-    font-family: var(--font-mono);
-    font-size: 13px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
     color: var(--text);
     background: var(--bg);
     transition: box-shadow 0.2s, color 0.2s, opacity 0.35s;
+  }
+
+  @media (pointer: coarse) {
+    .hero__watch {
+      min-height: 44px;
+    }
   }
 
   .hero__watch svg {
@@ -405,6 +413,58 @@ if (!film) throw new Error(`The hero reel film "${hero.reel.film}" is not in the
 
     .strip__phrase {
       font-size: 14px;
+      padding-inline: 20px;
+    }
+  }
+
+  /* Landscape phones: about 390px tall. The copy takes the left half, the
+     hands and the reel the right, and the strip is slimmer, so the first
+     screen shows the whole hero and nothing is drawn over the words. */
+  @media (max-height: 520px) and (orientation: landscape) and (min-width: 640px) {
+    .intro__stage {
+      min-height: 0;
+    }
+
+    .hero__copy {
+      padding-top: 76px;
+    }
+
+    .hero__title {
+      gap: 8px;
+    }
+
+    .hero__name {
+      font-size: 40px;
+    }
+
+    .hero__claim {
+      max-width: none;
+      font-size: 19px;
+    }
+
+    .hero__sub {
+      max-width: 46vw;
+      margin-top: 10px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .hero__reel-caption {
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13px;
+    }
+
+    .hero__meta {
+      bottom: 8px;
+    }
+
+    .strip {
+      height: 44px;
+    }
+
+    .strip__phrase {
+      font-size: 13px;
       padding-inline: 20px;
     }
   }

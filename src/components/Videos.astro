@@ -85,7 +85,7 @@ for (const item of items) {
   <div class="vmodal__panel">
     <div class="vmodal__bar">
       <h2 class="vmodal__title" id="vmodal-title" data-video-title></h2>
-      <button class="vmodal__close mono" type="button" data-video-close>
+      <button class="vmodal__close" type="button" data-video-close>
         {videos.close}
         <svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2 2 12" stroke="currentColor" stroke-width="1.4"></path></svg>
       </button>
@@ -264,9 +264,16 @@ for (const item of items) {
     min-height: 40px;
     padding-inline: 14px;
     border-radius: 999px;
-    font-size: 13px;
+    font-size: 14px;
+    font-weight: 600;
     box-shadow: inset 0 0 0 1px var(--line-strong);
     flex: none;
+  }
+
+  @media (pointer: coarse) {
+    .vmodal__close {
+      min-height: 44px;
+    }
   }
 
   .vmodal__close:hover {

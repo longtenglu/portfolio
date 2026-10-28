@@ -1,5 +1,5 @@
 ---
-import { education, experience, statPrefix } from "../content/copy";
+import { education, experience } from "../content/copy";
 import SectionLabel from "./SectionLabel.astro";
 ---
 
@@ -20,7 +20,7 @@ import SectionLabel from "./SectionLabel.astro";
                 <ul class="exp__stats">
                   {role.stats.map((stat) => (
                     <li class="stat">
-                      <span class="stat__prefix mono">{statPrefix}</span>
+                      <span class="stat__prefix mono">{stat.prefix}</span>
                       <span class="stat__value">{stat.value}</span>
                       <span class="stat__label">{stat.label}</span>
                     </li>
@@ -120,12 +120,13 @@ import SectionLabel from "./SectionLabel.astro";
   }
 
   .stat__prefix {
+    min-height: calc(13px * 1.6);
     font-size: 13px;
     color: var(--muted);
   }
 
   .stat__value {
-    font-size: clamp(44px, 5vw, 72px);
+    font-size: clamp(32px, 4.4vw, 64px);
     font-weight: 800;
     font-stretch: 90%;
     line-height: 1;
@@ -220,12 +221,29 @@ import SectionLabel from "./SectionLabel.astro";
       padding: 16px 18px;
     }
 
+    /* Every row keeps the prefix column, so the figures line up. */
+    .stat__prefix {
+      min-width: 5ch;
+    }
+
     .stat__value {
-      font-size: 40px;
+      font-size: clamp(30px, 10vw, 40px);
     }
 
     .stat__label {
       margin-top: 0;
+    }
+  }
+
+  /* On the narrowest phones a row with no prefix gives its column back to
+     the figure and the label. */
+  @media (max-width: 400px) {
+    .stat:has(.stat__prefix:empty) {
+      grid-template-columns: auto 1fr;
+    }
+
+    .stat__prefix:empty {
+      display: none;
     }
   }
 </style>

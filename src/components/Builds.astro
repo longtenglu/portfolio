@@ -90,11 +90,6 @@ import SectionLabel from "./SectionLabel.astro";
     }
   }
 
-  /* An odd last card takes the whole row, so no half-empty cell is left. */
-  .build:last-child:nth-child(odd) {
-    grid-column: 1 / -1;
-  }
-
   .build:hover {
     background: var(--bg-raised);
   }
@@ -154,6 +149,7 @@ import SectionLabel from "./SectionLabel.astro";
     font-weight: 800;
     font-stretch: 84%;
     letter-spacing: -0.01em;
+    word-spacing: 0.08em;
     line-height: 1.05;
     text-transform: uppercase;
   }

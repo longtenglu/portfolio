@@ -34,24 +34,27 @@ after(async () => {
 /**
  * Opens the home page without waiting for the hero, which starts on its own
  * font clock.
- * @param {{ reducedMotion?: "reduce" | "no-preference", width?: number, height?: number, holdFonts?: boolean }} [opts]
+ * @param {{ reducedMotion?: "reduce" | "no-preference", width?: number, height?: number, holdFonts?: boolean, touch?: boolean, path?: string }} [opts]
  */
 async function openPage(opts = {}) {
   const context = await browser.newContext({
     viewport: { width: opts.width ?? 1440, height: opts.height ?? 900 },
     reducedMotion: opts.reducedMotion ?? "no-preference",
+    // A touch screen matches (pointer: coarse), which the 44px targets key on.
+    hasTouch: opts.touch ?? false,
+    isMobile: opts.touch ?? false,
   });
   await context.route(/blob\.vercel-storage\.com/, (route) => route.abort());
   /** @type {import("playwright-core").Route[]} */
   const fonts = [];
   if (opts.holdFonts) await context.route(/\.woff2$/, (route) => void fonts.push(route));
   const page = await context.newPage();
-  await page.goto(`http://127.0.0.1:${server.port}/`, opts.holdFonts ? { waitUntil: "domcontentloaded" } : undefined);
+  await page.goto(`http://127.0.0.1:${server.port}${opts.path ?? "/"}`, opts.holdFonts ? { waitUntil: "domcontentloaded" } : undefined);
   return { context, page, fonts };
 }
 
 /**
- * @param {{ reducedMotion?: "reduce" | "no-preference", width?: number, height?: number }} [opts]
+ * @param {{ reducedMotion?: "reduce" | "no-preference", width?: number, height?: number, touch?: boolean }} [opts]
  */
 async function openHome(opts = {}) {
   const opened = await openPage(opts);
@@ -415,7 +418,7 @@ describe("page details", () => {
       assert.equal(await page.locator(".chip, .vcard__skills").count(), 0);
       const credits = await page.locator(".vcard__credit").allTextContents();
       assert.equal(credits.length, 4);
-      assert.ok(credits.every((c) => c.trim().length > 0 && c.trim().length <= 70));
+      assert.ok(credits.every((c) => c.trim().length > 0 && c.trim().length <= 80));
     } finally {
       await context.close();
     }
@@ -427,15 +430,15 @@ describe("page details", () => {
       const tops = await page.evaluate(() =>
         [...document.querySelectorAll(".build__examples")].map((el) => Math.round(el.getBoundingClientRect().top + window.scrollY)),
       );
-      assert.equal(tops.length, 5);
+      assert.equal(tops.length, 4);
       assert.equal(tops[0], tops[1]);
       assert.equal(tops[2], tops[3]);
-      const wide = await page.evaluate(() => {
+      const halves = await page.evaluate(() => {
         const grid = document.querySelector(".builds__grid")?.getBoundingClientRect();
-        const last = document.querySelector(".build:last-child")?.getBoundingClientRect();
-        return !!grid && !!last && Math.abs(grid.width - last.width) < 3;
+        const cards = [...document.querySelectorAll(".build")].map((el) => el.getBoundingClientRect());
+        return !!grid && cards.length === 4 && cards.every((c) => Math.abs(c.width - grid.width / 2) < 3);
       });
-      assert.ok(wide, "the odd last card spans the full row");
+      assert.ok(halves, "the four cards sit two to a row, each half the grid");
     } finally {
       await context.close();
     }
@@ -483,7 +486,7 @@ describe("page details", () => {
           content: [...card.children].map((el) => getComputedStyle(el).opacity),
         })),
       );
-      assert.equal(before.length, 5);
+      assert.equal(before.length, 4);
       for (const card of before) {
         assert.equal(card.revealed, false);
         assert.equal(card.opacity, "1", "the card itself is never faded out");
@@ -658,6 +661,495 @@ describe("the built site", () => {
       assert.ok(!html.includes("\u2014"), `${file} has an em dash`);
       assert.ok(!/tax academy/i.test(html), `${file} names the workplace`);
       assert.ok(!/anniversary/i.test(html), `${file} mentions the anniversary film`);
+    }
+  });
+});
+
+describe("the words", () => {
+  test("the hero says what the role is, once", async () => {
+    const { context, page } = await openHome();
+    try {
+      const sub = await page.locator(".hero__sub").innerText();
+      assert.match(sub, /Looking for marketing, communications or programme roles at tech companies\.$/);
+      const all = await page.evaluate(() => document.body.innerText);
+      assert.equal(all.split("Looking for marketing").length, 2);
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("the current role shows three figures, the last an honest total of impressions", async () => {
+    const { context, page } = await openHome();
+    try {
+      const stats = await page.$$eval(".stat", (els) =>
+        els.map((el) => ({
+          prefix: el.querySelector(".stat__prefix")?.textContent?.trim() ?? "",
+          value: el.querySelector(".stat__value")?.textContent?.trim() ?? "",
+          label: el.querySelector(".stat__label")?.textContent?.trim() ?? "",
+        })),
+      );
+      assert.equal(stats.length, 3);
+      assert.deepEqual(
+        stats.map((st) => [st.prefix, st.value]),
+        [
+          ["about", "10"],
+          ["about", "70"],
+          ["", "100,000+"],
+        ],
+      );
+      assert.equal(stats[2].label, "impressions across our channels");
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("Selected videos lead with the China trip recap, then Tax is Networking", async () => {
+    const { context, page } = await openHome();
+    try {
+      const titles = await page.$$eval(".vcard__title", (els) => els.map((el) => el.textContent?.trim()));
+      assert.deepEqual(titles.slice(0, 2), ["China trip recap", "Tax is Networking"]);
+      assert.equal(titles.length, 4);
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("Builds has four cards, none of them Boot.dev, and RoleCall names no pay floor", async () => {
+    const { context, page } = await openHome();
+    try {
+      const titles = await page.$$eval(".build__title", (els) => els.map((el) => el.textContent?.trim()));
+      assert.deepEqual(titles, ["My AI OS", "A multi-agent setup", "RoleCall", "HyperFrames video work"]);
+      const text = await page.locator("#builds").innerText();
+      assert.ok(!/pay floor/i.test(text));
+      assert.ok(!/bookbot/i.test(await page.locator("body").innerText()));
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("the resume has the same figures, no Longteng Studio, no Bookbot, and an e-commerce project that ends in April", async () => {
+    const { context, page } = await openPage({ path: "/resume" });
+    try {
+      const text = await page.locator("main").innerText();
+      assert.match(text, /100,000\+ impressions across our channels/);
+      assert.ok(!/longteng studio/i.test(text));
+      assert.ok(!/bookbot/i.test(text));
+      assert.match(text, /Independent e-commerce and marketing project, Personal project\s+Dec 2025 - Apr 2026/i);
+      assert.match(text, /Directed and edited a three-film mascot travel series, using conference photos and motion graphics built in code/);
+    } finally {
+      await context.close();
+    }
+  });
+});
+
+describe("type", () => {
+  for (const [name, route, width] of /** @type {const} */ ([
+    ["home at 1440", "/", 1440],
+    ["home at 390", "/", 390],
+    ["resume at 1440", "/resume", 1440],
+  ])) {
+    test(`no readable text is under 12px: ${name}`, async () => {
+      const { context, page } = await openPage({ path: route, width, height: 900 });
+      try {
+        await page.waitForTimeout(300);
+        const small = await page.evaluate(() => {
+          const out = [];
+          for (const el of document.querySelectorAll("body *")) {
+            if (!(el instanceof HTMLElement)) continue;
+            const own = [...el.childNodes].some((n) => n.nodeType === 3 && (n.textContent ?? "").trim());
+            if (!own) continue;
+            const rect = el.getBoundingClientRect();
+            if (!rect.width || !rect.height || el.closest(".visually-hidden, script, style, [aria-hidden='true']")) continue;
+            const size = parseFloat(getComputedStyle(el).fontSize);
+            if (size < 12) out.push(`${el.className || el.tagName} ${size}px: ${el.textContent?.trim().slice(0, 30)}`);
+          }
+          return out;
+        });
+        assert.deepEqual(small, []);
+      } finally {
+        await context.close();
+      }
+    });
+  }
+
+  test("buttons and the nav are Archivo, labels and dates stay mono", async () => {
+    const { context, page } = await openHome();
+    try {
+      const fonts = await page.evaluate(() => {
+        const face = (/** @type {string} */ sel) => {
+          const el = document.querySelector(sel);
+          return el ? getComputedStyle(el).fontFamily.split(",")[0].replace(/"/g, "") : "missing";
+        };
+        return /** @type {Record<string, string>} */ ({
+          nav: face(".header__nav a"),
+          resume: face(".header__resume"),
+          watch: face(".hero__watch"),
+          link: face(".about__links .link"),
+          copy: face(".contact__copy"),
+          terminal: face(".footer__terminal"),
+          dates: face(".exp__dates"),
+          num: face(".vcard__num"),
+        });
+      });
+      for (const key of ["nav", "resume", "watch", "link", "copy", "terminal"]) {
+        assert.equal(fonts[key], "Archivo Variable", `${key} is ${fonts[key]}`);
+      }
+      assert.equal(fonts.dates, "JetBrains Mono Variable");
+      assert.equal(fonts.num, "JetBrains Mono Variable");
+      const weight = await page.evaluate(() => getComputedStyle(/** @type {Element} */ (document.querySelector(".hero__watch"))).fontWeight);
+      assert.equal(weight, "600");
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("the large uppercase headings carry a little word spacing", async () => {
+    const { context, page } = await openHome();
+    try {
+      for (const sel of [".build__title", ".contact__title"]) {
+        const spacing = await page.$eval(sel, (el) => {
+          const style = getComputedStyle(el);
+          return parseFloat(style.wordSpacing) / parseFloat(style.fontSize);
+        });
+        assert.ok(Math.abs(spacing - 0.08) < 0.005, `${sel} word spacing is ${spacing}em`);
+      }
+    } finally {
+      await context.close();
+    }
+  });
+});
+
+describe("touch targets", () => {
+  test("every control is at least 44px tall on a touch screen", async () => {
+    const { context, page } = await openHome({ width: 390, height: 844, touch: true });
+    try {
+      const small = await page.evaluate(() => {
+        const sels = [
+          ".brand",
+          ".hero__watch",
+          ".about__links .link",
+          ".learning__link",
+          ".contact__address",
+          ".footer__terminal",
+          ".menu-button",
+        ];
+        return sels.flatMap((sel) =>
+          [...document.querySelectorAll(sel)].flatMap((el) => {
+            const r = el.getBoundingClientRect();
+            return r.height < 43.5 ? [`${sel}: ${Math.round(r.height)}px`] : [];
+          }),
+        );
+      });
+      assert.deepEqual(small, []);
+      await page.click("[data-menu-open]");
+      const menu = await page.evaluate(() => {
+        const close = /** @type {HTMLElement} */ (document.querySelector("[data-menu-close]")).getBoundingClientRect();
+        const mail = document.querySelector(".menu__foot a");
+        const rect = mail?.getBoundingClientRect();
+        return { closeW: close.width, closeH: close.height, mail: mail?.getAttribute("href") ?? "", mailH: rect?.height ?? 0 };
+      });
+      assert.ok(menu.closeW >= 43.5 && menu.closeH >= 43.5, `Close is ${menu.closeW}x${menu.closeH}`);
+      assert.match(menu.mail, /^mailto:/);
+      assert.ok(menu.mailH >= 43.5, `the menu email is ${menu.mailH}px tall`);
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("the resume contact links are tall enough to hit", async () => {
+    const { context, page } = await openPage({ path: "/resume", width: 390, height: 844, touch: true });
+    try {
+      const heights = await page.$$eval(".cv__contact a", (els) => els.map((el) => el.getBoundingClientRect().height));
+      assert.equal(heights.length, 4);
+      assert.ok(heights.every((h) => h >= 43.5), `the links are ${heights.map(Math.round)}px tall`);
+    } finally {
+      await context.close();
+    }
+  });
+});
+
+describe("a landscape phone", () => {
+  test("the whole hero fits the first screen and the open reel sits under the header", async () => {
+    const { context, page } = await openHome({ width: 844, height: 390, touch: true });
+    try {
+      const rest = await page.evaluate(() => {
+        const rect = (/** @type {string} */ sel) => /** @type {HTMLElement} */ (document.querySelector(sel)).getBoundingClientRect();
+        return {
+          sub: rect(".hero__sub").bottom,
+          watch: rect(".hero__watch").bottom,
+          strip: rect(".strip").bottom,
+          view: window.innerHeight,
+          wide: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        };
+      });
+      assert.ok(rest.strip <= rest.view + 1, `the strip ends at ${rest.strip} in a ${rest.view}px screen`);
+      assert.ok(rest.watch <= rest.view, "the Watch the film button is on the first screen");
+      assert.ok(rest.wide <= 0);
+
+      await page.evaluate(() => window.scrollTo(0, window.innerHeight * 0.3));
+      await page.waitForFunction(() => document.querySelector("[data-reel]")?.getAttribute("data-open") === "true");
+      const open = await page.evaluate(() => {
+        const rect = (/** @type {string} */ sel) => /** @type {HTMLElement} */ (document.querySelector(sel)).getBoundingClientRect();
+        return { reelTop: rect("[data-reel]").top, header: rect(".header").bottom, caption: rect("[data-reel-caption]").bottom, strip: rect(".strip").top };
+      });
+      assert.ok(open.reelTop >= open.header, `the reel starts at ${open.reelTop}, under a header ending at ${open.header}`);
+      assert.ok(open.caption <= open.strip + 1, "the caption stays above the strip");
+    } finally {
+      await context.close();
+    }
+  });
+});
+
+describe("the hero layout", () => {
+  /**
+   * The first and last rows of the hero canvas that carry any ink (the
+   * hands), in CSS pixels from the top of the hero.
+   * @param {import("playwright-core").Page} page
+   */
+  function drawnHands(page) {
+    return page.evaluate(() => {
+      const canvas = /** @type {HTMLCanvasElement} */ (document.querySelector("[data-hero-canvas]"));
+      const ctx = /** @type {CanvasRenderingContext2D} */ (canvas.getContext("2d"));
+      const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      let top = -1;
+      let bottom = -1;
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          if (data[(y * width + x) * 4 + 3] > 20) {
+            if (top < 0) top = y;
+            bottom = y;
+            break;
+          }
+        }
+      }
+      const scale = height / canvas.clientHeight;
+      return { top: top / scale, bottom: (bottom + 1) / scale };
+    });
+  }
+
+  for (const [width, height] of /** @type {const} */ ([
+    [375, 667],
+    [390, 844],
+  ])) {
+    test(`at rest the hands sit between the copy and the Watch row at ${width}x${height}`, async () => {
+      const { context, page } = await openHome({ width, height, touch: true });
+      try {
+        // The glyphs settle in over the first two seconds.
+        await page.waitForTimeout(2200);
+        const hands = await drawnHands(page);
+        const edges = await page.evaluate(() => {
+          const hero = /** @type {HTMLElement} */ (document.querySelector("[data-hero]")).getBoundingClientRect();
+          const rect = (/** @type {string} */ sel) => /** @type {HTMLElement} */ (document.querySelector(sel)).getBoundingClientRect();
+          return { copy: rect(".hero__copy").bottom - hero.top, watch: rect(".hero__meta").top - hero.top };
+        });
+        assert.ok(hands.top >= edges.copy + 8, `the hands start at ${hands.top}, in copy that ends at ${edges.copy}`);
+        assert.ok(hands.bottom <= edges.watch, `the hands reach ${hands.bottom}, behind the row that starts at ${edges.watch}`);
+      } finally {
+        await context.close();
+      }
+    });
+  }
+
+  for (const [width, height, touch] of /** @type {const} */ ([
+    [375, 667, true],
+    [320, 568, true],
+    [1280, 720, false],
+  ])) {
+    test(`under reduced motion the open reel stays inside the hero at ${width}x${height}`, async () => {
+      const { context, page } = await openHome({ reducedMotion: "reduce", width, height, touch });
+      try {
+        await page.waitForTimeout(300);
+        const box = await page.evaluate(() => {
+          const hero = /** @type {HTMLElement} */ (document.querySelector("[data-hero]")).getBoundingClientRect();
+          const reel = /** @type {HTMLElement} */ (document.querySelector("[data-reel]")).getBoundingClientRect();
+          return { top: reel.top - hero.top, bottom: reel.bottom - hero.top, hero: hero.height };
+        });
+        assert.ok(box.top >= 0, `the reel starts at ${box.top}`);
+        assert.ok(box.bottom <= box.hero + 0.5, `the reel ends at ${box.bottom} in a hero ${box.hero}px tall`);
+      } finally {
+        await context.close();
+      }
+    });
+  }
+});
+
+/**
+ * Reads robots.txt into its groups: the agents a group names and the rules it
+ * gives them.
+ * @param {string} text
+ */
+function parseRobots(text) {
+  /** @type {{ agents: string[], rules: { allow: boolean, path: string }[] }[]} */
+  const groups = [];
+  /** @type {(typeof groups)[number] | null} */
+  let group = null;
+  let naming = false;
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.replace(/#.*/, "").trim();
+    const colon = line.indexOf(":");
+    if (colon < 0) continue;
+    const field = line.slice(0, colon).trim().toLowerCase();
+    const value = line.slice(colon + 1).trim();
+    if (field === "user-agent") {
+      if (!group || !naming) groups.push((group = { agents: [], rules: [] }));
+      group.agents.push(value.toLowerCase());
+      naming = true;
+    } else if (field === "allow" || field === "disallow") {
+      naming = false;
+      group?.rules.push({ allow: field === "allow", path: value });
+    }
+  }
+  return groups;
+}
+
+/**
+ * Whether a crawler with this name may fetch the path: the group that names it
+ * (else the "*" group), the longest matching rule, and Allow on a tie.
+ * @param {ReturnType<typeof parseRobots>} groups
+ * @param {string} agent
+ * @param {string} urlPath
+ */
+function mayFetch(groups, agent, urlPath) {
+  const name = agent.toLowerCase();
+  const group = groups.find((g) => g.agents.includes(name)) ?? groups.find((g) => g.agents.includes("*"));
+  const hits = (group?.rules ?? []).filter((r) => r.path && urlPath.startsWith(r.path));
+  if (!hits.length) return true;
+  const longest = Math.max(...hits.map((r) => r.path.length));
+  return hits.some((r) => r.allow && r.path.length === longest);
+}
+
+/**
+ * What a crawler or a browser reads from a page's head.
+ * @param {string} route
+ */
+async function readHead(route) {
+  const { context, page } = await openPage({ path: route });
+  try {
+    return await page.evaluate(() => {
+      /** @param {string} selector @param {string} name */
+      const attr = (selector, name) => document.head.querySelector(selector)?.getAttribute(name) ?? null;
+      return {
+        robots: attr('meta[name="robots"]', "content"),
+        googlebot: attr('meta[name="googlebot"]', "content"),
+        description: attr('meta[name="description"]', "content"),
+        canonical: attr('link[rel="canonical"]', "href"),
+        ogUrl: attr('meta[property="og:url"]', "content"),
+        preconnects: [...document.head.querySelectorAll('link[rel="preconnect"]')].map((el) => /** @type {HTMLLinkElement} */ (el).href),
+        imagePreloads: [...document.head.querySelectorAll('link[rel="preload"][as="image"]')].map((el) => /** @type {HTMLLinkElement} */ (el).href),
+        fontPreloads: [...document.head.querySelectorAll('link[rel="preload"][as="font"]')].map((el) => /** @type {HTMLLinkElement} */ (el).href),
+        poster: /** @type {HTMLVideoElement | null} */ (document.querySelector("[data-reel-video]"))?.poster ?? null,
+      };
+    });
+  } finally {
+    await context.close();
+  }
+}
+
+describe("sharing and metadata", () => {
+  test("only the link-preview crawlers may fetch the pages", async () => {
+    const res = await fetch(`http://127.0.0.1:${server.port}/robots.txt`);
+    assert.equal(res.status, 200);
+    const groups = parseRobots(await res.text());
+    for (const bot of ["LinkedInBot", "facebookexternalhit", "Twitterbot", "Slackbot"]) {
+      for (const route of ["/", "/resume", "/og.png"]) {
+        assert.ok(mayFetch(groups, bot, route), `${bot} is kept out of ${route}`);
+      }
+    }
+    for (const bot of ["Googlebot", "bingbot", "GPTBot", "SomeOtherBot"]) {
+      assert.ok(!mayFetch(groups, bot, "/"), `${bot} may fetch the home page`);
+      assert.ok(!mayFetch(groups, bot, "/resume"), `${bot} may fetch the resume`);
+    }
+  });
+
+  test("every page stays noindex", async () => {
+    for (const route of ["/", "/resume", "/404.html"]) {
+      const head = await readHead(route);
+      for (const value of [head.robots, head.googlebot]) {
+        const tokens = (value ?? "").split(",").map((t) => t.trim());
+        assert.ok(tokens.includes("noindex") && tokens.includes("nofollow"), `${route} says "${value}"`);
+      }
+    }
+  });
+
+  test("the resume has its own description and one canonical form", async () => {
+    const home = await readHead("/");
+    const resume = await readHead("/resume");
+    assert.ok(resume.description && home.description);
+    assert.notEqual(resume.description, home.description);
+    assert.equal(resume.canonical, "https://longtenglu.vercel.app/resume");
+    assert.equal(resume.ogUrl, resume.canonical);
+    assert.equal(home.canonical, "https://longtenglu.vercel.app/");
+    assert.equal(home.ogUrl, home.canonical);
+  });
+
+  test("the home page warms the media host, preloads the poster and only the Archivo font", async () => {
+    const home = await readHead("/");
+    assert.ok(home.poster, "the hero reel has a poster");
+    assert.deepEqual(home.imagePreloads, [home.poster]);
+    assert.deepEqual(home.preconnects, [`${new URL(home.poster).origin}/`]);
+    assert.equal(home.fontPreloads.length, 1);
+    assert.match(home.fontPreloads[0], /archivo/);
+  });
+
+  test("the declared icons load, and the favicon draws {L} in amber without relying on a font", async () => {
+    const { context, page } = await openPage();
+    try {
+      const icons = await page.$$eval('link[rel~="icon"], link[rel="apple-touch-icon"]', (els) =>
+        els.map((el) => ({ rel: /** @type {HTMLLinkElement} */ (el).rel, href: /** @type {HTMLLinkElement} */ (el).href })),
+      );
+      const byType = (/** @type {string} */ ext) => icons.find((icon) => new URL(icon.href).pathname.endsWith(ext));
+      const svg = byType(".svg");
+      const ico = byType(".ico");
+      const touch = icons.find((icon) => icon.rel === "apple-touch-icon");
+      assert.ok(svg && ico && touch, "the page declares an svg, an ico and an apple touch icon");
+
+      const bytes = async (/** @type {string} */ href) => {
+        const res = await page.request.get(href);
+        assert.equal(res.status(), 200, `${href} did not load`);
+        return res.body();
+      };
+      const png = await bytes(touch.href);
+      assert.equal(png.readUInt32BE(16), 180, "the touch icon is 180px wide");
+      assert.equal(png.readUInt32BE(20), 180, "the touch icon is 180px tall");
+      const icon = await bytes(ico.href);
+      assert.equal(icon.readUInt16LE(2), 1, "the ico is an icon file");
+      assert.equal(icon[6] || 256, 32, "the ico holds a 32px image");
+
+      const drawn = await page.evaluate(async (href) => {
+        const doc = new DOMParser().parseFromString(await (await fetch(href)).text(), "image/svg+xml");
+        const img = new Image();
+        img.src = href;
+        await img.decode();
+        const canvas = document.createElement("canvas");
+        canvas.width = canvas.height = 64;
+        const ctx = /** @type {CanvasRenderingContext2D} */ (canvas.getContext("2d"));
+        ctx.drawImage(img, 0, 0, 64, 64);
+        const data = ctx.getImageData(0, 0, 64, 64).data;
+        let amber = 0;
+        for (let i = 0; i < data.length; i += 4) if (data[i] > 200 && data[i + 1] > 140 && data[i + 2] < 60 && data[i + 3] > 200) amber++;
+        return { text: doc.querySelectorAll("text").length, paths: doc.querySelectorAll("path").length, amber };
+      }, svg.href);
+      assert.equal(drawn.text, 0, "the favicon has live text");
+      assert.ok(drawn.paths > 0, "the favicon is drawn as paths");
+      assert.ok(drawn.amber > 150, `the favicon shows ${drawn.amber} amber pixels`);
+    } finally {
+      await context.close();
+    }
+  });
+});
+
+describe("the terminal", () => {
+  test("closing it returns focus to the button that opened it", async () => {
+    const { context, page } = await openHome();
+    try {
+      await page.focus(".footer__terminal");
+      await page.keyboard.press("Enter");
+      await page.waitForFunction(() => /** @type {HTMLDialogElement} */ (document.querySelector("[data-terminal]")).open);
+      await page.keyboard.press("Escape");
+      await page.waitForFunction(() => !(/** @type {HTMLDialogElement} */ (document.querySelector("[data-terminal]")).open));
+      assert.equal(await page.evaluate(() => document.activeElement?.className), "footer__terminal");
+    } finally {
+      await context.close();
     }
   });
 });

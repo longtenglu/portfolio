@@ -201,14 +201,21 @@ html.is-locked {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-family: var(--font-mono);
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
   color: var(--text);
   padding-block: 6px;
   background: linear-gradient(var(--accent), var(--accent)) left bottom / 0% 1px no-repeat,
     linear-gradient(var(--line-strong), var(--line-strong)) left bottom / 100% 1px no-repeat;
   transition: background-size 0.4s var(--ease), color 0.2s;
+}
+
+/* Touch screens: a text link is a 44px target, the underline stays at its
+   text. */
+@media (pointer: coarse) {
+  .link {
+    min-height: 44px;
+  }
 }
 
 .link:hover {
@@ -231,7 +238,7 @@ html.is-locked {
   border-radius: 999px;
   background: var(--accent);
   color: var(--on-accent);
-  font-weight: 700;
+  font-weight: 600;
   font-size: 15px;
   letter-spacing: 0.01em;
   transition: transform 0.25s var(--ease), background 0.2s;

@@ -13,7 +13,7 @@ const contactLine = [
 ];
 ---
 
-<Base title={resume.title} bodyClass="resume-page">
+<Base title={resume.title} description={resume.description} bodyClass="resume-page">
   <div class="toolbar">
     <a class="link" href="/">{resume.back}</a>
     <a class="btn" href={`/resume/${resume.pdfName}`} download>{resume.download}</a>
@@ -162,10 +162,22 @@ const contactLine = [
   .cv__contact {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px 18px;
-    margin-top: 16px;
+    gap: 0 18px;
+    margin-top: 11px;
     font-size: 12px;
     color: var(--muted);
+  }
+
+  /* A taller hit area for each link; wrapped rows touch but never overlap. */
+  .cv__contact a {
+    display: inline-block;
+    padding-block: 5px;
+  }
+
+  @media (pointer: coarse) {
+    .cv__contact a {
+      padding-block: 13px;
+    }
   }
 
   .cv__contact a:hover {
@@ -179,7 +191,7 @@ const contactLine = [
   }
 
   .cv__h2 {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.18em;
     text-transform: uppercase;
@@ -188,7 +200,7 @@ const contactLine = [
 
   .cv__h3 {
     margin-top: 16px;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.14em;
     text-transform: uppercase;
@@ -346,8 +358,12 @@ const contactLine = [
 
     .cv__contact {
       margin-top: 8px;
-      font-size: 9px;
+      font-size: 9.6px;
       color: #4a4a4a;
+    }
+
+    .cv__contact a {
+      padding-block: 1px;
     }
 
     .cv__section {
@@ -357,14 +373,18 @@ const contactLine = [
       break-inside: auto;
     }
 
+    /* No letter-spacing in print: Chrome writes a spaced heading as one text
+       run per letter group, and a text extractor then reads "SUMM ARY". */
     .cv__h2 {
-      font-size: 8.5px;
+      font-size: 9.6px;
+      letter-spacing: 0;
       color: #8a5200;
     }
 
     .cv__h3 {
       margin-top: 7px;
-      font-size: 8px;
+      font-size: 9px;
+      letter-spacing: 0;
       color: #4a4a4a;
     }
 
@@ -397,7 +417,7 @@ const contactLine = [
     }
 
     .cv__dates {
-      font-size: 8.5px;
+      font-size: 9.6px;
       color: #4a4a4a;
     }
 

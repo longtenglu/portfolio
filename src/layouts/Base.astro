@@ -11,7 +11,8 @@ interface Props {
 }
 
 const { title = site.title, description = site.description, bodyClass } = Astro.props;
-const canonical = new URL(Astro.url.pathname, site.url).toString();
+// One URL form per page: no trailing slash (vercel.json redirects the other).
+const canonical = new URL(Astro.url.pathname.replace(/(.)\/$/, "$1"), site.url).toString();
 const shareImage = new URL("/og.png", site.url).toString();
 const shareImageAlt =
   "Longteng Lu's name in large type above two amber hands drawn in code, after Michelangelo's Creation of Adam.";
@@ -68,8 +69,10 @@ const fontFaces = `
     <meta name="twitter:image" content={shareImage} />
     <meta name="twitter:image:alt" content={shareImageAlt} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- Only Archivo is preloaded: it sets the first paint. The mono face loads when it is used. -->
     <link rel="preload" href={archivoUrl} as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href={monoUrl} as="font" type="font/woff2" crossorigin />
     <style is:inline set:html={fontFaces}></style>
     <script is:inline>
       document.documentElement.classList.add("js");
