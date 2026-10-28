@@ -267,8 +267,9 @@ if (!film) throw new Error(`The hero reel film "${hero.reel.film}" is not in the
 
   .hero__meta {
     position: absolute;
-    left: var(--gutter);
-    right: var(--gutter);
+    /* On the container's edges, as the header and the copy are. */
+    left: max(var(--gutter), calc((100% - var(--max)) / 2));
+    right: max(var(--gutter), calc((100% - var(--max)) / 2));
     bottom: 18px;
     z-index: 4;
     display: grid;
