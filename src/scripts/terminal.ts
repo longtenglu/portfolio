@@ -27,6 +27,7 @@ export function initTerminal() {
   const history: string[] = [];
   let cursor = 0;
   let greeted = false;
+  let opener: HTMLElement | null = null;
 
   const line = (text: string, className?: string) => {
     const p = document.createElement("p");
@@ -92,6 +93,7 @@ export function initTerminal() {
 
   const open = () => {
     if (dialog.open) return;
+    opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     lockScroll(true);
     dialog.showModal();
     if (!greeted) {
@@ -101,7 +103,13 @@ export function initTerminal() {
     input.focus();
   };
 
-  dialog.addEventListener("close", () => lockScroll(false));
+  // The native dialog restores focus itself in most browsers; do it here too
+  // so it never lands on <body> when the opener was a button or the backtick.
+  dialog.addEventListener("close", () => {
+    lockScroll(false);
+    if (opener?.isConnected && opener !== document.body) opener.focus();
+    opener = null;
+  });
   dialog.querySelector("[data-terminal-close]")?.addEventListener("click", () => dialog.close());
   dialog.addEventListener("click", (e) => {
     if (e.target === dialog) dialog.close();

@@ -1,5 +1,5 @@
 ---
-import { education, experience, statPrefix } from "../content/copy";
+import { education, experience } from "../content/copy";
 import SectionLabel from "./SectionLabel.astro";
 ---
 
@@ -19,8 +19,8 @@ import SectionLabel from "./SectionLabel.astro";
               {role.stats && (
                 <ul class="exp__stats">
                   {role.stats.map((stat) => (
-                    <li class="stat">
-                      <span class="stat__prefix mono">{statPrefix}</span>
+                    <li class={stat.prefix ? "stat" : "stat stat--exact"}>
+                      <span class="stat__prefix mono">{stat.prefix}</span>
                       <span class="stat__value">{stat.value}</span>
                       <span class="stat__label">{stat.label}</span>
                     </li>
@@ -120,6 +120,7 @@ import SectionLabel from "./SectionLabel.astro";
   }
 
   .stat__prefix {
+    min-height: calc(13px * 1.6);
     font-size: 13px;
     color: var(--muted);
   }
@@ -218,6 +219,14 @@ import SectionLabel from "./SectionLabel.astro";
       align-items: baseline;
       column-gap: 10px;
       padding: 16px 18px;
+    }
+
+    .stat--exact {
+      grid-template-columns: auto 1fr;
+    }
+
+    .stat--exact .stat__prefix {
+      display: none;
     }
 
     .stat__value {

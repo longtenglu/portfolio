@@ -13,7 +13,7 @@ const contactLine = [
 ];
 ---
 
-<Base title={resume.title} bodyClass="resume-page">
+<Base title={resume.title} description={resume.description} bodyClass="resume-page">
   <div class="toolbar">
     <a class="link" href="/">{resume.back}</a>
     <a class="btn" href={`/resume/${resume.pdfName}`} download>{resume.download}</a>
@@ -168,6 +168,21 @@ const contactLine = [
     color: var(--muted);
   }
 
+  /* A taller hit area for each link, paid back with a negative margin so the
+     line spacing stays as it was. */
+  .cv__contact a {
+    display: inline-block;
+    padding-block: 6px;
+    margin-block: -6px;
+  }
+
+  @media (pointer: coarse) {
+    .cv__contact a {
+      padding-block: 13px;
+      margin-block: -13px;
+    }
+  }
+
   .cv__contact a:hover {
     color: var(--accent);
   }
@@ -179,7 +194,7 @@ const contactLine = [
   }
 
   .cv__h2 {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.18em;
     text-transform: uppercase;
@@ -188,7 +203,7 @@ const contactLine = [
 
   .cv__h3 {
     margin-top: 16px;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.14em;
     text-transform: uppercase;
@@ -346,7 +361,7 @@ const contactLine = [
 
     .cv__contact {
       margin-top: 8px;
-      font-size: 9px;
+      font-size: 9.6px;
       color: #4a4a4a;
     }
 
@@ -357,14 +372,18 @@ const contactLine = [
       break-inside: auto;
     }
 
+    /* No letter-spacing in print: Chrome writes a spaced heading as one text
+       run per letter group, and a text extractor then reads "SUMM ARY". */
     .cv__h2 {
-      font-size: 8.5px;
+      font-size: 9.6px;
+      letter-spacing: 0;
       color: #8a5200;
     }
 
     .cv__h3 {
       margin-top: 7px;
-      font-size: 8px;
+      font-size: 9px;
+      letter-spacing: 0;
       color: #4a4a4a;
     }
 
@@ -397,7 +416,7 @@ const contactLine = [
     }
 
     .cv__dates {
-      font-size: 8.5px;
+      font-size: 9.6px;
       color: #4a4a4a;
     }
 

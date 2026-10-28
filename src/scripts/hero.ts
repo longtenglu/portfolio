@@ -61,6 +61,8 @@ type Options = {
 
 type Layout = {
   phone: boolean;
+  /** A landscape phone: wide, but too short for the hands under the copy. */
+  short: boolean;
   width: number;
   height: number;
   dpr: number;
@@ -111,15 +113,19 @@ const TIP_GAP = (hands.tips.right[0] - hands.tips.left[0]) * SAMPLE;
 
 function computeLayout(width: number, height: number): Layout {
   const phone = width < 640;
-  const tablet = !phone && width < 1024;
+  const short = !phone && width > height && height < 480;
+  const tablet = !phone && !short && width < 1024;
   const dpr = Math.min(window.devicePixelRatio || 1, phone ? 1.75 : 2);
-  const scale = (width * (phone ? 2.6 : tablet ? 1.35 : 1.06)) / hands.crop.w;
+  // A landscape phone has the copy on the left, so the hands shrink into
+  // the right half and the reel opens there.
+  const scale = (width * (short ? 0.56 : phone ? 2.6 : tablet ? 1.35 : 1.06)) / hands.crop.w;
   const fontSize = clamp(width / 150, 7, 10.5);
   // Phones are too narrow for a reel between the hands, so there the reel
   // unfurls downward from the spark under the fingertips instead.
-  const reelW = phone ? width * 0.84 : tablet ? width * 0.46 : Math.min(width * 0.34, 620);
+  const reelW = phone ? width * 0.84 : short ? width * 0.26 : tablet ? width * 0.46 : Math.min(width * 0.34, 620);
   return {
     phone,
+    short,
     width,
     height,
     dpr,
@@ -127,11 +133,11 @@ function computeLayout(width: number, height: number): Layout {
     fontSize,
     cellW: fontSize * 0.62,
     cellH: fontSize * 1.12,
-    gapX: width * 0.5,
+    gapX: width * (short ? 0.77 : 0.5),
     // Desktop: the hands sit under the name and rise to the middle as the
     // reel opens. Phones keep the name in view and the hands below it.
-    gapYRest: height * (phone ? 0.62 : 0.64),
-    gapYEnd: height * (phone ? 0.53 : 0.5),
+    gapYRest: height * (phone ? 0.62 : short ? 0.6 : 0.64),
+    gapYEnd: height * (phone ? 0.53 : short ? 0.47 : 0.5),
     // At rest the fingertips nearly touch, as in the fresco. Opening the reel
     // parts them until they meet its edges.
     sepRest: TIP_GAP * scale + width * (phone ? 0.014 : 0.012),
@@ -298,8 +304,23 @@ export function initHero(opts: Options) {
   const ctx = canvas.getContext("2d", { alpha: true });
   if (!ctx) return null;
 
+  // The copy's own layout position (not its transform), within the hero.
+  const copy = canvas.parentElement?.querySelector<HTMLElement>(".hero__copy");
+  const copyBottom = () => (copy ? copy.offsetTop + copy.offsetHeight : 0);
+
+  // At rest the hands sit below the copy, however many lines it wraps to:
+  // drop them if the top of the highest finger would reach into the words.
+  // (The side-by-side landscape layout keeps them clear horizontally.)
+  function clearCopy() {
+    if (layout.short || !cells.count) return;
+    let rise = 0;
+    for (let i = 0; i < cells.count; i++) rise = Math.max(rise, -cells.ry[i]);
+    layout.gapYRest = Math.max(layout.gapYRest, copyBottom() + rise + 16);
+  }
+
   let layout = computeLayout(canvas.clientWidth, canvas.clientHeight);
   let cells = buildCells(layout);
+  clearCopy();
   let { atlas, aw, ah } = buildAtlas(layout);
   let progress = reducedMotion ? 1 : 0;
   let running = false;
@@ -317,6 +338,7 @@ export function initHero(opts: Options) {
     canvas.width = Math.round(width * layout.dpr);
     canvas.height = Math.round(height * layout.dpr);
     cells = buildCells(layout);
+    clearCopy();
     ({ atlas, aw, ah } = buildAtlas(layout));
     if (reducedMotion || !running) draw(performance.now(), true);
   }

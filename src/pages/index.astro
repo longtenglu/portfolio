@@ -13,9 +13,19 @@ import Toolbox from "../components/Toolbox.astro";
 import Videos from "../components/Videos.astro";
 import WhatIDo from "../components/WhatIDo.astro";
 import Base from "../layouts/Base.astro";
+import { getReel } from "../lib/media";
+
+// The hero poster is the first image to paint and lives on the media host, so
+// warm that connection and fetch the poster early.
+const { poster } = getReel();
+const mediaOrigin = poster.startsWith("http") ? new URL(poster).origin : null;
 ---
 
 <Base>
+  <Fragment slot="head">
+    {mediaOrigin && <link rel="preconnect" href={mediaOrigin} crossorigin />}
+    <link rel="preload" as="image" href={poster} fetchpriority="high" />
+  </Fragment>
   <a class="skip-link" href="#main">Skip to content</a>
   <Header />
   <main id="main">

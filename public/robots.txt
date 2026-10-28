@@ -1,3 +1,17 @@
-# This site is shared by link only. Please do not index it.
+# This site is shared by link only: every page carries noindex, so search
+# engines keep it out. The link-preview crawlers below may fetch pages so a
+# shared link still gets its title, description and image.
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: Slackbot
+Allow: /
+
 User-agent: *
 Disallow: /

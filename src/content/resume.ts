@@ -4,6 +4,8 @@
 
 export const resume = {
   title: "Longteng Lu: resume",
+  description:
+    "Resume of Longteng Lu, a Programme Executive in Singapore: programmes and events, video, marketing and AI workflows.",
   headline: "Programmes, video and AI workflows",
   location: "Singapore",
   pdfName: "Longteng-Lu-Resume.pdf",
@@ -25,7 +27,7 @@ export const resume = {
   ],
   // The approximate current-role numbers, worded for a resume.
   roleStats:
-    "In my current role: helped run or managed about 10 programmes and events; made about 70 videos, about 50 of them with an AI-assisted editing workflow.",
+    "In my current role: helped run or managed about 10 programmes and events; made about 70 videos; 100,000+ impressions across our channels.",
   projectsHeading: "AI and automation projects",
   projects: [
     {
@@ -45,18 +47,10 @@ export const resume = {
         "Pulls live listings from MyCareersFuture and Adzuna, removes reposts, scores fit, checks resume keywords against each listing and drafts research and cover letters; 96 automated tests.",
       ],
     },
-    {
-      title: "Longteng Studio, AI workspace",
-      stack: "TypeScript, React",
-      dates: "2026",
-      points: [
-        "Routes tasks between AI agents with a review step before results are accepted; its video review room turns timestamped comments into revision tasks.",
-      ],
-    },
   ],
   learningHeading: "Learning",
   learning:
-    "Boot.dev: completed Learn Python for beginners, Learn Linux and Build a Bookbot; now on the back-end developer path in TypeScript.",
+    "Boot.dev: completed Learn Python for beginners and Learn Linux; now on the back-end developer path in TypeScript.",
   experienceHeading: "Experience",
   educationHeading: "Education",
   certificationsHeading: "Certifications",

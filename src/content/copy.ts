@@ -27,7 +27,7 @@ export const nav = [
 
 export const hero = {
   claim: "I pick up new tools and put them to work.",
-  sub: "Programme Executive in Singapore. I make videos, run programmes and build AI workflows.",
+  sub: "Programme Executive in Singapore. I make videos, run programmes and build AI workflows. Looking for marketing, communications or programme roles at tech companies.",
   scroll: "Scroll",
   // The film in the gap between the hands is one of the Selected videos: the
   // caption takes its title and credit from that entry.
@@ -77,7 +77,8 @@ export const whatIDo = {
   ],
 };
 
-export type Stat = { value: string; label: string };
+// A stat with a prefix is approximate ("about 10"); one without is a counted floor.
+export type Stat = { value: string; label: string; prefix?: string };
 export type Role = {
   role: string;
   org: string;
@@ -95,20 +96,20 @@ export const experience: { heading: string; intro: string; roles: Role[] } = {
       org: "",
       dates: "Mar 2026 - Present",
       stats: [
-        { value: "10", label: "programmes and events I've helped run or managed" },
-        { value: "70", label: "videos made since I joined" },
-        { value: "50", label: "of those made with my AI editing workflow" },
+        { value: "10", prefix: "about", label: "programmes and events I've helped run or managed" },
+        { value: "70", prefix: "about", label: "videos made since I joined" },
+        { value: "100,000+", label: "impressions across our channels" },
       ],
       points: [
         "Plan and coordinate tax programmes and events from preparation through delivery.",
         "Produce programme marketing across LinkedIn, email campaigns, short-form and horizontal video.",
-        "Shot, directed and edited a three-film mascot travel series with branded motion graphics.",
+        "Directed and edited a three-film mascot travel series, using conference photos and motion graphics built in code.",
         "Built tools that remove manual production steps: motion graphics rendered from code, speech-to-text captions, and a converter that turns HTML designs into editable PowerPoint.",
       ],
     },
     {
       role: "Independent e-commerce and marketing project",
-      org: "Personal project",
+      org: "Personal project, part-time",
       dates: "Dec 2025 - Apr 2026",
       points: [
         "Launched a Shopify store with Meta Pixel tracking.",
@@ -154,9 +155,6 @@ export const education = {
     "Google certifications, earned 2025: Digital Marketing and E-commerce Specialization; Google Ads Search, Display, AI-Powered Performance and Shopping; Google Analytics.",
 };
 
-// The about-the-numbers wording: every figure on the site is approximate.
-export const statPrefix = "about";
-
 export type Film = { id: string; title: string };
 export type VideoCopy = {
   id: string;
@@ -176,16 +174,16 @@ export const videos = {
   close: "Close",
   items: [
     {
-      id: "tax-is-networking",
-      title: "Tax is Networking",
-      line: "A masterclass day told through the connections people made, each one numbered and linked on screen.",
-      credit: "Concept and edit, with motion graphics built in HyperFrames",
-    },
-    {
       id: "china-trip",
       title: "China trip recap",
       line: "Five cities in fifteen days on a research and exchange study, assembled in code as an editorial recap.",
       credit: "Story, information design and a code-built edit",
+    },
+    {
+      id: "tax-is-networking",
+      title: "Tax is Networking",
+      line: "A masterclass day told through the connections people made, each one numbered and linked on screen.",
+      credit: "Concept and edit, with motion graphics built in HyperFrames",
     },
     {
       id: "iivt-few-words",
@@ -197,7 +195,7 @@ export const videos = {
       id: "bear-series",
       title: "The bear mascot travel series",
       line: "A mascot travels to conferences in Amsterdam and Munich in three films I shot, directed and edited.",
-      credit: "Shot, directed and edited, with motion graphics",
+      credit: "Directed and edited, using conference photos and motion graphics built in code",
       films: [
         { id: "bear-amsterdam-pre", title: "Amsterdam, before the trip" },
         { id: "bear-amsterdam-during", title: "Amsterdam, during the trip" },
@@ -301,7 +299,7 @@ export const builds: { heading: string; intro: string; items: Build[] } = {
       title: "RoleCall",
       kicker: "Built for my job search",
       text:
-        "A local-first app I built for my own job hunt. It ranks the roles I save against my real experience and pay floor, drafts tailored resume bullets and cover letters, and tracks every application to the follow-up.",
+        "A local-first app I built for my own job hunt. It ranks the roles I save against my real experience, drafts tailored resume bullets and cover letters, and tracks every application to the follow-up.",
       examples: [
         "Every drafted line points to the evidence it came from, and a line without one is flagged",
         "A six-stage pipeline with follow-up reminders",
@@ -319,14 +317,7 @@ export const builds: { heading: string; intro: string; items: Build[] } = {
         "Titles and motion graphics rendered from code instead of keyframed by hand",
         "An AI review pass that looks at frames and the transcript together before I finish in CapCut",
       ],
-      link: { label: "HyperFrames", href: "https://hyperframes.dev" },
-    },
-    {
-      title: "Boot.dev projects",
-      kicker: "Learning in public",
-      text:
-        "Small projects from the backend course. The first is Bookbot, a Python program that reads a book and reports its word and character counts. More will land here as the course goes on.",
-      examples: ["Bookbot, in Python", "Next up: projects from the TypeScript backend path"],
+      link: { label: "HyperFrames", href: "https://hyperframes.studio" },
     },
   ],
 };
@@ -354,7 +345,6 @@ export const learning = {
   items: [
     { title: "Learn Python for beginners", status: "done" },
     { title: "Learn Linux", status: "done" },
-    { title: "Build a Bookbot", status: "done" },
     { title: "Back-end developer path, in TypeScript", status: "now" },
   ] as { title: string; status: "done" | "now" }[],
 };
