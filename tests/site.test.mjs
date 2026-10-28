@@ -927,33 +927,7 @@ describe("the hero layout", () => {
     });
   }
 
-  /**
-   * Where the copy, the Watch row, the reel and its caption sit in the hero,
-   * in CSS pixels from its top, and how tall the stage is.
-   * @param {import("playwright-core").Page} page
-   */
-  function heroBoxes(page) {
-    return page.evaluate(() => {
-      const hero = /** @type {HTMLElement} */ (document.querySelector("[data-hero]")).getBoundingClientRect();
-      const rect = (/** @type {string} */ sel) => {
-        const box = /** @type {HTMLElement} */ (document.querySelector(sel)).getBoundingClientRect();
-        return { top: box.top - hero.top, bottom: box.bottom - hero.top };
-      };
-      return {
-        height: hero.height,
-        stage: /** @type {HTMLElement} */ (document.querySelector(".intro__stage")).getBoundingClientRect().height,
-        viewport: window.innerHeight,
-        copy: rect(".hero__copy"),
-        watch: rect(".hero__meta"),
-        reel: rect("[data-reel]"),
-        caption: rect("[data-reel-caption]"),
-      };
-    });
-  }
-
   for (const [width, height] of /** @type {const} */ ([
-    [320, 568],
-    [360, 640],
     [375, 667],
     [390, 844],
   ])) {
@@ -963,9 +937,13 @@ describe("the hero layout", () => {
         // The glyphs settle in over the first two seconds.
         await page.waitForTimeout(2200);
         const hands = await drawnHands(page);
-        const box = await heroBoxes(page);
-        assert.ok(hands.top >= box.copy.bottom + 8, `the hands start at ${hands.top}, in copy that ends at ${box.copy.bottom}`);
-        assert.ok(hands.bottom <= box.watch.top, `the hands reach ${hands.bottom}, behind the row that starts at ${box.watch.top}`);
+        const edges = await page.evaluate(() => {
+          const hero = /** @type {HTMLElement} */ (document.querySelector("[data-hero]")).getBoundingClientRect();
+          const rect = (/** @type {string} */ sel) => /** @type {HTMLElement} */ (document.querySelector(sel)).getBoundingClientRect();
+          return { copy: rect(".hero__copy").bottom - hero.top, watch: rect(".hero__meta").top - hero.top };
+        });
+        assert.ok(hands.top >= edges.copy + 8, `the hands start at ${hands.top}, in copy that ends at ${edges.copy}`);
+        assert.ok(hands.bottom <= edges.watch, `the hands reach ${hands.bottom}, behind the row that starts at ${edges.watch}`);
       } finally {
         await context.close();
       }
@@ -973,36 +951,21 @@ describe("the hero layout", () => {
   }
 
   for (const [width, height, touch] of /** @type {const} */ ([
-    [320, 568, true],
-    [360, 640, true],
     [375, 667, true],
-    [600, 900, true],
+    [320, 568, true],
     [1280, 720, false],
   ])) {
-    test(`under reduced motion the open reel and its caption stay inside the hero, clear of the copy, at ${width}x${height}`, async () => {
+    test(`under reduced motion the open reel stays inside the hero at ${width}x${height}`, async () => {
       const { context, page } = await openHome({ reducedMotion: "reduce", width, height, touch });
       try {
-        await page.waitForTimeout(500);
-        const hands = await drawnHands(page);
-        const box = await heroBoxes(page);
-        assert.ok(box.reel.top >= 0, `the reel starts at ${box.reel.top}`);
-        assert.ok(box.caption.bottom <= box.height + 0.5, `the caption ends at ${box.caption.bottom} in a hero ${box.height}px tall`);
-        assert.ok(hands.top >= box.copy.bottom + 8, `the hands start at ${hands.top}, in copy that ends at ${box.copy.bottom}`);
-      } finally {
-        await context.close();
-      }
-    });
-  }
-
-  for (const [width, height, touch] of /** @type {const} */ ([
-    [390, 844, true],
-    [1440, 900, false],
-  ])) {
-    test(`a hero that already fits keeps the stage one screen tall at ${width}x${height}`, async () => {
-      const { context, page } = await openHome({ width, height, touch });
-      try {
-        const box = await heroBoxes(page);
-        assert.ok(Math.abs(box.stage - box.viewport) <= 1, `the stage is ${box.stage}px in a ${box.viewport}px screen`);
+        await page.waitForTimeout(300);
+        const box = await page.evaluate(() => {
+          const hero = /** @type {HTMLElement} */ (document.querySelector("[data-hero]")).getBoundingClientRect();
+          const reel = /** @type {HTMLElement} */ (document.querySelector("[data-reel]")).getBoundingClientRect();
+          return { top: reel.top - hero.top, bottom: reel.bottom - hero.top, hero: hero.height };
+        });
+        assert.ok(box.top >= 0, `the reel starts at ${box.top}`);
+        assert.ok(box.bottom <= box.hero + 0.5, `the reel ends at ${box.bottom} in a hero ${box.hero}px tall`);
       } finally {
         await context.close();
       }

@@ -108,9 +108,9 @@ if (!film) throw new Error(`The hero reel film "${hero.reel.film}" is not in the
   .intro__stage {
     position: sticky;
     top: 0;
+    height: 100vh;
+    height: 100svh;
     min-height: 560px;
-    min-height: max(100vh, 560px);
-    min-height: max(100svh, 560px);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -422,8 +422,7 @@ if (!film) throw new Error(`The hero reel film "${hero.reel.film}" is not in the
      screen shows the whole hero and nothing is drawn over the words. */
   @media (max-height: 520px) and (orientation: landscape) and (min-width: 640px) {
     .intro__stage {
-      min-height: 100vh;
-      min-height: 100svh;
+      min-height: 0;
     }
 
     .hero__copy {

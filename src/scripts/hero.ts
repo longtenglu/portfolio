@@ -40,8 +40,6 @@ const LEVELS = LEVEL_ALPHA.length + HOT_LEVELS;
 const THRESHOLD = 0.12;
 // Cells further than this past the canvas edge are not drawn.
 const CULL = 16;
-// How far the hands keep from the words above them and the labels below.
-const CLEAR = 16;
 
 // The opening, as fractions of the scroll through the pinned stage (half a
 // screen of scroll). The spark widens straight away and the hands part; the
@@ -308,13 +306,9 @@ export function initHero(opts: Options) {
   const ctx = canvas.getContext("2d", { alpha: true });
   if (!ctx) return null;
 
-  const section = canvas.parentElement;
   // The copy's own layout position (not its transform), within the hero.
-  const copy = section?.querySelector<HTMLElement>(".hero__copy");
+  const copy = canvas.parentElement?.querySelector<HTMLElement>(".hero__copy");
   const copyBottom = () => (copy ? copy.offsetTop + copy.offsetHeight : 0);
-  // How much of the hero the Watch row takes from the bottom.
-  const row = section?.querySelector<HTMLElement>(".hero__meta");
-  const rowDepth = () => (section && row ? section.clientHeight - row.offsetTop : 0);
 
   // The still frame (reduced motion) shows the reel already open; on phones
   // it sits a little higher so the caption clears the labels below.
@@ -329,32 +323,23 @@ export function initHero(opts: Options) {
     return reelTop(s, 0) + s.h + 12 + (reelCaption?.offsetHeight ?? 0);
   }
 
-  // The hands sit below the copy, however many lines it wraps to, and clear of
-  // what is below them: on a phone the Watch row, under reduced motion the
-  // open reel and its caption. The hero is as tall as the stage leaves it, or
-  // taller when that is what it takes; the gap then goes where the default
-  // would be, held between the two.
+  // The hands sit below the copy, however many lines it wraps to: drop them if
+  // the top of the highest finger that is drawn would reach into the words.
+  // Under reduced motion the open reel and its caption must stay inside the
+  // hero too, so there the hands only drop as far as they allow.
   // (The side-by-side landscape layout keeps them clear horizontally.)
   function clearCopy() {
-    if (!section) return;
-    if (layout.short || !cells.count) {
-      section.style.minHeight = "";
-      return;
-    }
-    const shift = (reelState(reducedMotion ? 1 : 0).sep - TIP_GAP * layout.scale) / 2;
+    if (layout.short || !cells.count) return;
+    const shift = (layout.sepRest - TIP_GAP * layout.scale) / 2;
     let rise = 0;
-    let fall = 0;
     for (let i = 0; i < cells.count; i++) {
       const x = layout.gapX + cells.rx[i] + (cells.side[i] === 0 ? -shift : shift);
-      if (x < -CULL || x > layout.width + CULL) continue;
-      rise = Math.max(rise, -cells.ry[i]);
-      fall = Math.max(fall, cells.ry[i]);
+      if (x >= -CULL && x <= layout.width + CULL) rise = Math.max(rise, -cells.ry[i]);
     }
-    const above = copyBottom() + rise + CLEAR;
-    const below = reducedMotion ? reelDepth() : layout.phone ? fall + CLEAR + rowDepth() : 0;
     const lift = stillLift();
-    section.style.minHeight = `${Math.ceil(above + below)}px`;
-    layout.gapYRest = Math.max(above + lift, Math.min(layout.gapYRest, layout.height - below + lift));
+    let y = copyBottom() + rise + 16 + lift;
+    if (reducedMotion) y = Math.min(y, layout.height - reelDepth() + lift);
+    layout.gapYRest = Math.max(layout.gapYRest, y);
   }
 
   let layout = computeLayout(canvas.clientWidth, canvas.clientHeight);
