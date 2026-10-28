@@ -162,24 +162,21 @@ const contactLine = [
   .cv__contact {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px 18px;
-    margin-top: 16px;
+    gap: 0 18px;
+    margin-top: 11px;
     font-size: 12px;
     color: var(--muted);
   }
 
-  /* A taller hit area for each link, paid back with a negative margin so the
-     line spacing stays as it was. */
+  /* A taller hit area for each link; wrapped rows touch but never overlap. */
   .cv__contact a {
     display: inline-block;
-    padding-block: 6px;
-    margin-block: -6px;
+    padding-block: 5px;
   }
 
   @media (pointer: coarse) {
     .cv__contact a {
       padding-block: 13px;
-      margin-block: -13px;
     }
   }
 
@@ -363,6 +360,10 @@ const contactLine = [
       margin-top: 8px;
       font-size: 9.6px;
       color: #4a4a4a;
+    }
+
+    .cv__contact a {
+      padding-block: 1px;
     }
 
     .cv__section {
