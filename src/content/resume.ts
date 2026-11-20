@@ -39,14 +39,6 @@ export const resume = {
         "Research pipeline runs five expert perspectives in parallel, maps where they disagree, then has a separate reviewer check key citations against primary sources.",
       ],
     },
-    {
-      title: "RoleCall, a job-search app I built for myself",
-      stack: "Node.js, LLM APIs",
-      dates: "2026",
-      points: [
-        "Pulls live listings from MyCareersFuture and Adzuna, removes reposts, scores fit, checks resume keywords against each listing and drafts research and cover letters; 96 automated tests.",
-      ],
-    },
   ],
   learningHeading: "Learning",
   learning:

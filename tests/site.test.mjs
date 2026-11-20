@@ -417,7 +417,7 @@ describe("page details", () => {
     try {
       assert.equal(await page.locator(".chip, .vcard__skills").count(), 0);
       const credits = await page.locator(".vcard__credit").allTextContents();
-      assert.equal(credits.length, 4);
+      assert.equal(credits.length, 5);
       assert.ok(credits.every((c) => c.trim().length > 0 && c.trim().length <= 80));
     } finally {
       await context.close();
@@ -624,7 +624,7 @@ describe("phones", () => {
           return { left: Math.round(r.left), width: Math.round(r.width), top: Math.round(r.top + window.scrollY) };
         }),
       );
-      assert.equal(rects.length, 4);
+      assert.equal(rects.length, 5);
       assert.ok(rects.every((r) => r.left === rects[0].left && r.width === rects[0].width), "every card spans the same row width");
       assert.ok(rects.every((r, i) => i === 0 || r.top > rects[i - 1].top), "each card sits below the one before");
       assert.ok(rects[0].width > 300, `the card is ${rects[0].width}px wide`);
@@ -708,20 +708,21 @@ describe("the words", () => {
     try {
       const titles = await page.$$eval(".vcard__title", (els) => els.map((el) => el.textContent?.trim()));
       assert.deepEqual(titles.slice(0, 2), ["China trip recap", "Tax is Networking"]);
-      assert.equal(titles.length, 4);
+      assert.equal(titles.length, 5);
     } finally {
       await context.close();
     }
   });
 
-  test("Builds has four cards, none of them Boot.dev, and RoleCall names no pay floor", async () => {
+  test("Builds has four cards, none of them Boot.dev, and Luxel is in progress", async () => {
     const { context, page } = await openHome();
     try {
       const titles = await page.$$eval(".build__title", (els) => els.map((el) => el.textContent?.trim()));
-      assert.deepEqual(titles, ["My AI OS", "A multi-agent setup", "RoleCall", "HyperFrames video work"]);
+      assert.deepEqual(titles, ["My AI OS", "A multi-agent setup", "Luxel", "HyperFrames video work"]);
       const text = await page.locator("#builds").innerText();
-      assert.ok(!/pay floor/i.test(text));
+      assert.ok(!/rolecall/i.test(await page.locator("body").innerText()));
       assert.ok(!/bookbot/i.test(await page.locator("body").innerText()));
+      assert.match(text, /in progress/i);
     } finally {
       await context.close();
     }

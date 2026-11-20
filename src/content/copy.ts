@@ -186,6 +186,12 @@ export const videos = {
       credit: "Concept and edit, with motion graphics built in HyperFrames",
     },
     {
+      id: "claude-for-tax-professionals",
+      title: "Claude for Tax Professionals",
+      line: "A hands-on AI workshop recap for tax professionals building skills in Claude, cut vertical with motion graphics and live demos.",
+      credit: "Edit and motion graphics built in HyperFrames",
+    },
+    {
       id: "iivt-few-words",
       title: "IIVT, in a few words",
       line: "Four speakers answer one question, cut vertical with branded captions and lower thirds.",
@@ -296,15 +302,15 @@ export const builds: { heading: string; intro: string; items: Build[] } = {
       link: { label: "Firstmate on GitHub", href: "https://github.com/kunchenguid/firstmate" },
     },
     {
-      title: "RoleCall",
-      kicker: "Built for my job search",
+      title: "Luxel",
+      kicker: "Local AI PC, in progress",
       text:
-        "A local-first app I built for my own job hunt. It ranks the roles I save against my real experience, drafts tailored resume bullets and cover letters, and tracks every application to the follow-up.",
+        "My own local AI PC, currently being set up as an ongoing project. I am setting it up for video generation workflows, administrative workflows and open-weight model fine-tuning, using Qwen models as my daily driver.",
       examples: [
-        "Every drafted line points to the evidence it came from, and a line without one is flagged",
-        "A six-stage pipeline with follow-up reminders",
-        "Its current rebuild was done with the same agent crew, on Firstmate",
-        "Next up: wider job discovery and interview practice",
+        "An ongoing setup for my own local AI workstation",
+        "Video generation workflows and administrative workflows",
+        "Fine-tuning open-weight models locally",
+        "Daily driver models: Qwen3.8-27B and Qwen3.8-Flash-Next",
       ],
     },
     {

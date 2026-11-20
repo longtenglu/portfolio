@@ -28,6 +28,7 @@
 export const VIDEOS = [
   { id: "tax-is-networking", orientation: "portrait", crop: "945:1680:67:0", poster: 19.4, preview: { start: 3.0, duration: 5.5 } },
   { id: "china-trip", orientation: "portrait", crop: "954:1696:30:224", poster: 12.0, preview: { start: 46.0, duration: 5.5 } },
+  { id: "claude-for-tax-professionals", orientation: "portrait", poster: 39.5, preview: { start: 38.0, duration: 5.5 } },
   { id: "iivt-few-words", orientation: "portrait", crop: "954:1696:63:224", poster: 10.0, preview: { start: 9.0, duration: 5.5 } },
   { id: "bear-amsterdam-pre", orientation: "portrait", crop: "945:1680:67:0", poster: 5.2, preview: { start: 1.5, duration: 5.5 } },
   { id: "bear-amsterdam-during", orientation: "portrait", crop: "918:1632:43:288", poster: 31.0, preview: { start: 29.0, duration: 5.5 } },
