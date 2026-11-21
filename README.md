@@ -77,9 +77,8 @@ on screen, so each card shows a cropped view with the poster and preview
 picked from stretches where none of it is legible. The one exception is
 `claude-for-tax-professionals`, which has no crop because its source is the
 portfolio cut with the logos and name already removed from the graphics:
-never point it at the master. The master file paths
-are not in the repo: list them in a JSON file outside it (copy
-`scripts/media/sources.example.json`).
+never point it at the master. The master file paths are not in the repo:
+list them in a JSON file outside it (copy `scripts/media/sources.example.json`).
 
 ```sh
 MEDIA_DIR=/path/to/media MEDIA_SOURCES=/path/to/media-sources.json npm run media:build
