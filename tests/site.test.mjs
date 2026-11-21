@@ -417,7 +417,7 @@ describe("page details", () => {
     try {
       assert.equal(await page.locator(".chip, .vcard__skills").count(), 0);
       const credits = await page.locator(".vcard__credit").allTextContents();
-      assert.equal(credits.length, 4);
+      assert.equal(credits.length, 5);
       assert.ok(credits.every((c) => c.trim().length > 0 && c.trim().length <= 80));
     } finally {
       await context.close();
@@ -428,11 +428,15 @@ describe("page details", () => {
     const { context, page } = await openHome();
     try {
       const tops = await page.evaluate(() =>
-        [...document.querySelectorAll(".build__examples")].map((el) => Math.round(el.getBoundingClientRect().top + window.scrollY)),
+        [...document.querySelectorAll(".build")].map((card) => {
+          const list = card.querySelector(".build__examples");
+          return list ? Math.round(list.getBoundingClientRect().top + window.scrollY) : null;
+        }),
       );
       assert.equal(tops.length, 4);
       assert.equal(tops[0], tops[1]);
-      assert.equal(tops[2], tops[3]);
+      assert.equal(tops[2], null, "Luxel has no list of examples");
+      assert.ok(tops[3] !== null && tops[3] > 0);
       const halves = await page.evaluate(() => {
         const grid = document.querySelector(".builds__grid")?.getBoundingClientRect();
         const cards = [...document.querySelectorAll(".build")].map((el) => el.getBoundingClientRect());
@@ -601,6 +605,59 @@ describe("page details", () => {
   });
 });
 
+describe("the Selected videos grid", () => {
+  /** @param {number} width */
+  async function measure(width) {
+    const { context, page } = await openHome({ width, height: 900 });
+    try {
+      return await page.evaluate(() => {
+        const grid = /** @type {HTMLElement} */ (document.querySelector(".vgrid")).getBoundingClientRect();
+        // offsetTop ignores the reveal's translate, so a card that has not come in yet still sits in its own row.
+        const cards = [...document.querySelectorAll(".vgrid > .vcard")].map((el) => {
+          const r = el.getBoundingClientRect();
+          return { left: r.left, right: r.right, top: /** @type {HTMLElement} */ (el).offsetTop };
+        });
+        const heightOf = (/** @type {string} */ sel) => /** @type {HTMLElement} */ (document.querySelector(sel)).getBoundingClientRect().height;
+        return {
+          grid: { left: grid.left, right: grid.right },
+          cards,
+          playlist: heightOf(".vcard__films"),
+          poster: heightOf(".vgrid > .vcard .vbtn"),
+        };
+      });
+    } finally {
+      await context.close();
+    }
+  }
+
+  test("no row has an empty column, at any width", async () => {
+    for (const width of [1440, 1200, 1025, 1024, 820, 641, 640, 390]) {
+      const { grid, cards } = await measure(width);
+      assert.equal(cards.length, 5);
+      const rows = Map.groupBy(cards, (c) => c.top);
+      for (const row of rows.values()) {
+        const left = Math.min(...row.map((c) => c.left));
+        const right = Math.max(...row.map((c) => c.right));
+        assert.ok(Math.abs(left - grid.left) <= 1 && Math.abs(right - grid.right) <= 1, `at ${width}px a row of ${row.length} does not span the grid`);
+      }
+    }
+  });
+
+  test("above 1024px all five cards share one row", async () => {
+    for (const width of [1440, 1200, 1025]) {
+      const { cards } = await measure(width);
+      assert.equal(new Set(cards.map((c) => c.top)).size, 1, `at ${width}px the cards are on ${new Set(cards.map((c) => c.top)).size} rows`);
+    }
+  });
+
+  test("the series playlist is as tall as a poster card, wherever the series sits", async () => {
+    for (const width of [1440, 1025, 1024, 820, 641]) {
+      const { playlist, poster } = await measure(width);
+      assert.ok(Math.abs(playlist - poster) <= 2, `at ${width}px the playlist is ${playlist}px and a poster card ${poster}px`);
+    }
+  });
+});
+
 describe("phones", () => {
   test("About shows the words before the headshot", async () => {
     const { context, page } = await openHome({ width: 390, height: 844 });
@@ -624,7 +681,7 @@ describe("phones", () => {
           return { left: Math.round(r.left), width: Math.round(r.width), top: Math.round(r.top + window.scrollY) };
         }),
       );
-      assert.equal(rects.length, 4);
+      assert.equal(rects.length, 5);
       assert.ok(rects.every((r) => r.left === rects[0].left && r.width === rects[0].width), "every card spans the same row width");
       assert.ok(rects.every((r, i) => i === 0 || r.top > rects[i - 1].top), "each card sits below the one before");
       assert.ok(rects[0].width > 300, `the card is ${rects[0].width}px wide`);
@@ -708,20 +765,25 @@ describe("the words", () => {
     try {
       const titles = await page.$$eval(".vcard__title", (els) => els.map((el) => el.textContent?.trim()));
       assert.deepEqual(titles.slice(0, 2), ["China trip recap", "Tax is Networking"]);
-      assert.equal(titles.length, 4);
+      assert.equal(titles.length, 5);
     } finally {
       await context.close();
     }
   });
 
-  test("Builds has four cards, none of them Boot.dev, and RoleCall names no pay floor", async () => {
+  test("Builds has four cards, none of them Boot.dev, and Luxel is in progress", async () => {
     const { context, page } = await openHome();
     try {
       const titles = await page.$$eval(".build__title", (els) => els.map((el) => el.textContent?.trim()));
-      assert.deepEqual(titles, ["My AI OS", "A multi-agent setup", "RoleCall", "HyperFrames video work"]);
+      assert.deepEqual(titles, ["My AI OS", "A multi-agent setup", "Luxel", "HyperFrames video work"]);
       const text = await page.locator("#builds").innerText();
-      assert.ok(!/pay floor/i.test(text));
+      assert.ok(!/rolecall/i.test(await page.locator("body").innerText()));
       assert.ok(!/bookbot/i.test(await page.locator("body").innerText()));
+      assert.match(text, /in progress/i);
+      const luxel = await page.locator(".build", { hasText: "Luxel" }).innerText();
+      for (const fact of ["ongoing", "video generation", "administrative workflows", "fine-tuning", "Qwen3.8-27B", "Qwen3.8-Flash-Next", "Qwen 4 27B"]) {
+        assert.equal(luxel.split(fact).length - 1, 1, `"${fact}" is stated once on the Luxel card`);
+      }
     } finally {
       await context.close();
     }

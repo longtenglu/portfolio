@@ -72,6 +72,42 @@
         "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/china-trip/china-trip-poster.9d1dfde0d998.avif"
       }
     },
+    "claude-for-tax-professionals": {
+      "orientation": "portrait",
+      "full": {
+        "path": "claude-for-tax-professionals/claude-for-tax-professionals.mp4",
+        "fingerprint": "d6b50ea86fcce3ff",
+        "bytes": 39506541,
+        "sha256": "49666ff2ff1afd11ded0115b2e24b6cf468b60d30cb0a3f7634c6f6b4e9b33a7",
+        "width": 1080,
+        "height": 1920,
+        "duration": 74.32,
+        "loudness": {
+          "integrated": -14.2,
+          "truePeak": -2.3
+        },
+        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/claude-for-tax-professionals/claude-for-tax-professionals.49666ff2ff1a.mp4"
+      },
+      "preview": {
+        "path": "claude-for-tax-professionals/claude-for-tax-professionals-preview.mp4",
+        "fingerprint": "32fe592e4f4c3eb3",
+        "bytes": 598877,
+        "sha256": "6fd8b27a864ccc4cf40c1919effb87de88abf57cc75e2885a1863141436f39c8",
+        "width": 540,
+        "height": 960,
+        "duration": 5.51,
+        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/claude-for-tax-professionals/claude-for-tax-professionals-preview.6fd8b27a864c.mp4"
+      },
+      "poster": {
+        "path": "claude-for-tax-professionals/claude-for-tax-professionals-poster.avif",
+        "fingerprint": "ee54f05290d5a691",
+        "bytes": 20643,
+        "sha256": "a006291bf2a766dc482fa2227b957d0ae5c199f64e13c66de3e5ab5b88d12027",
+        "width": 720,
+        "height": 1280,
+        "url": "https://r1z9n92lqlshscfp.public.blob.vercel-storage.com/portfolio/claude-for-tax-professionals/claude-for-tax-professionals-poster.a006291bf2a7.avif"
+      }
+    },
     "iivt-few-words": {
       "orientation": "portrait",
       "full": {

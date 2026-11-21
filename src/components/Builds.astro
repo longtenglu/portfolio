@@ -19,16 +19,18 @@ import SectionLabel from "./SectionLabel.astro";
             </div>
             <h3 class="build__title">{item.title}</h3>
             <p class="build__text">{item.text}</p>
-            <ul class="build__examples">
-              {item.examples.map((example) => (
-                <li>
-                  <span class="build__prompt mono" aria-hidden="true">
-                    {">"}
-                  </span>
-                  {example}
-                </li>
-              ))}
-            </ul>
+            {item.examples && (
+              <ul class="build__examples">
+                {item.examples.map((example) => (
+                  <li>
+                    <span class="build__prompt mono" aria-hidden="true">
+                      {">"}
+                    </span>
+                    {example}
+                  </li>
+                ))}
+              </ul>
+            )}
             {item.link && (
               <a class="link build__link" href={item.link.href} target="_blank" rel="noopener noreferrer">
                 {item.link.label}
