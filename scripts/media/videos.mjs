@@ -20,14 +20,17 @@
 
 // `crop` is the w:h:x:y view of the master that the card actually shows. The
 // masters put the workplace's logo bug, and on-screen titles that name it, in
-// the top or bottom band of the frame, so every card crops that band away.
-// Poster times and preview windows are chosen from stretches where no
-// workplace name is legible, rather than by what looks best.
+// the top or bottom band of the frame, so every card crops that band away,
+// except `claude-for-tax-professionals`, whose source is a portfolio cut with
+// the logos and name already removed from the graphics. Poster times and
+// preview windows are chosen from stretches where no workplace name is
+// legible, rather than by what looks best.
 
 /** @type {VideoJob[]} */
 export const VIDEOS = [
   { id: "tax-is-networking", orientation: "portrait", crop: "945:1680:67:0", poster: 19.4, preview: { start: 3.0, duration: 5.5 } },
   { id: "china-trip", orientation: "portrait", crop: "954:1696:30:224", poster: 12.0, preview: { start: 46.0, duration: 5.5 } },
+  // No crop: the source must be the branding-free portfolio cut, never the master.
   { id: "claude-for-tax-professionals", orientation: "portrait", poster: 46.0, preview: { start: 41.0, duration: 5.5 } },
   { id: "iivt-few-words", orientation: "portrait", crop: "954:1696:63:224", poster: 10.0, preview: { start: 9.0, duration: 5.5 } },
   { id: "bear-amsterdam-pre", orientation: "portrait", crop: "945:1680:67:0", poster: 5.2, preview: { start: 1.5, duration: 5.5 } },

@@ -269,7 +269,7 @@ export type Build = {
   title: string;
   kicker: string;
   text: string;
-  examples: string[];
+  examples?: string[];
   link?: { label: string; href: string };
 };
 
@@ -306,12 +306,6 @@ export const builds: { heading: string; intro: string; items: Build[] } = {
       kicker: "Local AI PC, in progress",
       text:
         "My own local AI PC, currently being set up as an ongoing project. I am setting it up for video generation workflows, administrative workflows and open-weight model fine-tuning. My daily drivers now are Qwen3.8-27B and Qwen3.8-Flash-Next, and I plan to move to Qwen 4 27B once it is released.",
-      examples: [
-        "An ongoing setup for my own local AI workstation",
-        "Video generation workflows and administrative workflows",
-        "Fine-tuning open-weight models locally",
-        "Daily drivers: Qwen3.8-27B and Qwen3.8-Flash-Next, with plans to move to Qwen 4 27B once it is released",
-      ],
     },
     {
       title: "HyperFrames video work",

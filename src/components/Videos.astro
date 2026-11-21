@@ -45,7 +45,7 @@ for (const item of items) {
       {
         singles.map((item, i) =>
           item.media ? (
-            <article class="vcard" data-reveal style={`--reveal-delay: ${(i % 4) * 0.06}s`}>
+            <article class="vcard" data-reveal style={`--reveal-delay: ${(i % 5) * 0.06}s`}>
               <VideoButton id={item.id} title={item.title} media={item.media} />
               <div class="vcard__info">
                 <p class="vcard__num mono">0{i + 1}</p>
@@ -60,7 +60,7 @@ for (const item of items) {
 
       {
         series.map((item) => (
-          <article class="vcard vcard--series" data-reveal style={`--reveal-delay: ${(singles.length % 4) * 0.06}s`}>
+          <article class="vcard vcard--series" data-reveal style={`--reveal-delay: ${(singles.length % 5) * 0.06}s`}>
             <ul class="vcard__films">
               {item.films?.map((film) => (
                 <li>
@@ -126,13 +126,20 @@ for (const item of items) {
     }
   }
 
-  /* Three single cards and the series card fill one row of four. Each card
-     is a container, so the series playlist can match the height of a poster. */
+  /* Four single cards and the series card fill one row of five; at tablet
+     widths three columns hold the four singles and the series card, which
+     takes two. Each card is a container, so the series playlist can match the
+     height of a poster, whatever number of columns the card spans. */
   .vgrid {
+    --col-gap: clamp(16px, 2vw, 28px);
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: clamp(28px, 3vw, 40px) clamp(16px, 2vw, 28px);
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: clamp(28px, 3vw, 40px) var(--col-gap);
     margin-top: 48px;
+  }
+
+  .vcard--series {
+    --span: 1;
   }
 
   .vcard {
@@ -143,8 +150,8 @@ for (const item of items) {
     display: grid;
     grid-template-rows: repeat(3, minmax(0, 1fr));
     gap: 12px;
-    /* A poster is 9:16 and its bar is 42px tall. */
-    height: calc(100cqw * 16 / 9 + 42px);
+    /* A poster is 9:16 and its bar is 42px tall. The poster is one column wide. */
+    height: calc((100cqw - (var(--span) - 1) * var(--col-gap)) / var(--span) * 16 / 9 + 42px);
   }
 
   .vcard__films li {
@@ -190,7 +197,12 @@ for (const item of items) {
 
   @media (max-width: 1024px) {
     .vgrid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .vcard--series {
+      grid-column: span 2;
+      --span: 2;
     }
   }
 
@@ -208,6 +220,10 @@ for (const item of items) {
   @media (max-width: 640px) {
     .vgrid {
       grid-template-columns: 1fr;
+    }
+
+    .vcard--series {
+      grid-column: auto;
     }
 
     .vcard__title {
